@@ -5,11 +5,11 @@ schema:
   file: ./schema.graphql
 dataSources:
   - kind: ethereum
-    name: DOUDOCHAIN
+    name: ICHICHAIN
     network: polygon-amoy
     source:
       address: "0x24513A99D1Dd6cFd8d9c27D3344877e0499180f0"
-      abi: DOUDOCHAIN
+      abi: ICHICHAIN
       startBlock: 15027043
     mapping:
       kind: ethereum/events
@@ -19,21 +19,13 @@ dataSources:
         - Approval
         - ApprovalForAll
         - ConsecutiveTransfer
-        - CoordinatorSet
         - LastPrizeDraw
         - LastPrizeWinner
         - NewSeries
         - NewSubPrize
         - NewTicketStatus
-        - OwnershipTransferRequested
         - OwnershipTransferred
         - RefundSeries
-        - ResetSubPrize
-        - RevealDrawFulfilled
-        - RevealDrawSent
-        - RoleAdminChanged
-        - RoleGranted
-        - RoleRevoked
         - Transfer
         - UpdatePrize
         - UpdateSeriesInformation
@@ -41,7 +33,7 @@ dataSources:
         - UpdateSeriesRemainingTicketNumbers
         - UpdateTicketStatus
       abis:
-        - name: DOUDOCHAIN
+        - name: ICHICHAIN
           file: ./abis/DOUDOCHAIN.json
       eventHandlers:
         - event: Approval(indexed address,indexed address,indexed uint256)
@@ -50,30 +42,112 @@ dataSources:
           handler: handleApprovalForAll
         - event: ConsecutiveTransfer(indexed uint256,uint256,indexed address,indexed address)
           handler: handleConsecutiveTransfer
-        - event: CoordinatorSet(address)
-          handler: handleCoordinatorSet
         - event: LastPrizeDraw(uint256,uint256,uint256)
           handler: handleLastPrizeDraw
         - event: LastPrizeWinner(uint256,uint256[])
           handler: handleLastPrizeWinner
-        - event: NewSeries(indexed uint256,string,uint256,uint256,uint256,uint256,bool,uint256,uint256,string,string,string,string,address,bool,bool)
+        - event: NewSeries(indexed
+            uint256,string,uint256,uint256,uint256,uint256,bool,uint256,uint256,string,string,string,string,address,bool,bool)
           handler: handleNewSeries
-        - event: NewSubPrize(indexed uint256,uint256,string,string,uint256)
-          handler: handleNewSubPrize
-        - event: NewTicketStatus(uint256,uint256,uint256,bool,bool,address)
-          handler: handleNewTicketStatus
-        - event: OwnershipTransferRequested(indexed address,indexed address)
-          handler: handleOwnershipTransferRequested
-        - event: OwnershipTransferred(indexed address,indexed address)
-          handler: handleOwnershipTransferred
         - event: RefundSeries(indexed uint256,bool)
           handler: handleRefundSeries
         - event: ResetSubPrize(indexed uint256)
           handler: handleResetSubPrize
+        - event: NewSubPrize(indexed uint256,uint256,string,string,uint256)
+          handler: handleNewSubPrize
+        - event: NewTicketStatus(uint256,uint256,uint256,bool,bool,address)
+          handler: handleNewTicketStatus
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+        - event: UpdatePrize(indexed uint256,uint256,uint256)
+          handler: handleUpdatePrize
+        - event: UpdateSeriesInformation(indexed
+            uint256,bool,uint256,uint256,string,string,string,string)
+          handler: handleUpdateSeriesInformation
+        - event: UpdateSeriesLastPrizeOwner(indexed uint256,address[])
+          handler: handleUpdateSeriesLastPrizeOwner
+        - event: UpdateSeriesRemainingTicketNumbers(indexed uint256,uint256)
+          handler: handleUpdateSeriesRemainingTicketNumbers
+        - event: UpdateTicketStatus(uint256,uint256,uint256,bool,bool)
+          handler: handleUpdateTicketStatus
+      file: ./src/ichichain.ts
+  - kind: ethereum
+    name: RevealOnChainData
+    network: polygon-amoy
+    source:
+      address: "0x24513A99D1Dd6cFd8d9c27D3344877e0499180f0"
+      abi: ICHICHAIN
+      startBlock: 15027043
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - RevealDrawFulfilled
+        - RevealDrawSent
+      abis:
+        - name: ICHICHAIN
+          file: ./abis/DOUDOCHAIN.json
+      eventHandlers:
         - event: RevealDrawFulfilled(uint256,uint256,uint256[])
           handler: handleRevealDrawFulfilled
         - event: RevealDrawSent(uint256,uint256[])
           handler: handleRevealDrawSent
+      file: ./src/onChainData.ts
+  - kind: ethereum
+    name: Contract
+    network: polygon-amoy
+    source:
+      address: "0xF5E1086Ce5AEc81FfaA88B1FfF73D9e8d4a089d0"
+      abi: Contract
+      startBlock: 15021233
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - ContractApproval
+        - ContractApprovalForAll
+        - MembershipExpired
+        - MembershipLevelCreated
+        - MembershipLevelUpdated
+        - MembershipNFTBurned
+        - MembershipNFTMinted
+        - MembershipRenewed
+        - MembershipTransferred
+        - MembershipUpgraded
+        - RoleAdminChanged
+        - RoleGranted
+        - RoleRevoked
+        - ContractTransfer
+        - VoucherMinted
+        - VoucherTotalRedeemed
+        - VoucherTransferred
+        - VoucherTypeCreated
+        - VoucherTypeUpdated
+        - VouchersIssuedFromSubscription
+      abis:
+        - name: Contract
+          file: ./abis/Contract.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,indexed uint256)
+          handler: handleApproval
+        - event: ApprovalForAll(indexed address,indexed address,bool)
+          handler: handleApprovalForAll
+        - event: MembershipExpired(address,uint256)
+          handler: handleMembershipExpired
+        - event: MembershipLevelCreated(uint256,string,uint256,string,uint256)
+          handler: handleMembershipLevelCreated
+        - event: MembershipLevelUpdated(uint256,uint256,string,uint256)
+          handler: handleMembershipLevelUpdated
+        - event: MembershipNFTBurned(address,uint256)
+          handler: handleMembershipNFTBurned
+        - event: MembershipRenewed(address,uint256,uint256)
+          handler: handleMembershipRenewed
+        - event: MembershipTransferred(address,address,uint256,string)
+          handler: handleMembershipTransferred
+        - event: MembershipUpgraded(address,uint256,uint256,string)
+          handler: handleMembershipUpgraded
         - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
           handler: handleRoleAdminChanged
         - event: RoleGranted(indexed bytes32,indexed address,indexed address)
@@ -82,14 +156,172 @@ dataSources:
           handler: handleRoleRevoked
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
-        - event: UpdatePrize(indexed uint256,uint256,uint256)
-          handler: handleUpdatePrize
-        - event: UpdateSeriesInformation(indexed uint256,bool,uint256,uint256,string,string,string,string)
-          handler: handleUpdateSeriesInformation
-        - event: UpdateSeriesLastPrizeOwner(indexed uint256,address[])
-          handler: handleUpdateSeriesLastPrizeOwner
-        - event: UpdateSeriesRemainingTicketNumbers(indexed uint256,uint256)
-          handler: handleUpdateSeriesRemainingTicketNumbers
-        - event: UpdateTicketStatus(uint256,uint256,uint256,bool,bool)
-          handler: handleUpdateTicketStatus
-      file: ./src/doudochain.ts
+        - event: VoucherMinted(uint256,address,uint256)
+          handler: handleVoucherMinted
+        - event: VoucherTotalRedeemed(uint256[],address,uint256,uint256)
+          handler: handleVoucherTotalRedeemed
+        - event: VoucherTransferred(address,address,uint256)
+          handler: handleVoucherTransferred
+        - event: VoucherTypeCreated(uint256,uint256,uint256,string)
+          handler: handleVoucherTypeCreated
+        - event: VoucherTypeUpdated(uint256,uint256,uint256,string)
+          handler: handleVoucherTypeUpdated
+        - event: VouchersIssuedFromSubscription(indexed address,uint256[],uint256[],uint256)
+          handler: handleVouchersIssuedFromSubscription
+      file: ./src/contract.ts
+  - kind: ethereum
+    name: MarketplaceV3
+    network: polygon-amoy
+    source:
+      address: "0x8eB3Ff102b351fb03ab456c45B2E993dE80E280c"
+      abi: MarketplaceV3
+      startBlock: 17835264
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - ContractURIUpdated
+        - ExtensionAdded
+        - ExtensionRemoved
+        - ExtensionReplaced
+        - FlatPlatformFeeUpdated
+        - FunctionDisabled
+        - FunctionEnabled
+        - Initialized
+        - PlatformFeeInfoUpdated
+        - PlatformFeeTypeUpdated
+        - RoleAdminChanged
+        - RoleGranted
+        - RoleRevoked
+        - RoyaltyEngineUpdated
+      abis:
+        - name: MarketplaceV3
+          file: ./abis/MarketplaceV3.json
+      eventHandlers:
+        - event: ContractURIUpdated(string,string)
+          handler: handleContractURIUpdated
+        - event: ExtensionAdded(indexed string,indexed
+            address,((string,string,address),(bytes4,string)[]))
+          handler: handleExtensionAdded
+        - event: ExtensionRemoved(indexed string,((string,string,address),(bytes4,string)[]))
+          handler: handleExtensionRemoved
+        - event: ExtensionReplaced(indexed string,indexed
+            address,((string,string,address),(bytes4,string)[]))
+          handler: handleExtensionReplaced
+        - event: FlatPlatformFeeUpdated(address,uint256)
+          handler: handleFlatPlatformFeeUpdated
+        - event: FunctionDisabled(indexed string,indexed bytes4,(string,string,address))
+          handler: handleFunctionDisabled
+        - event: FunctionEnabled(indexed string,indexed
+            bytes4,(bytes4,string),(string,string,address))
+          handler: handleFunctionEnabled
+        - event: Initialized(uint8)
+          handler: handleInitialized
+        - event: PlatformFeeInfoUpdated(indexed address,uint256)
+          handler: handlePlatformFeeInfoUpdated
+        - event: PlatformFeeTypeUpdated(uint8)
+          handler: handlePlatformFeeTypeUpdated
+        - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
+          handler: handleRoleAdminChanged
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleGranted
+        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
+          handler: handleRoleRevoked
+        - event: RoyaltyEngineUpdated(indexed address,indexed address)
+          handler: handleRoyaltyEngineUpdated
+        - event: BuyerApprovedForListing(indexed uint256,indexed address,bool)
+          handler: handleBuyerApprovedForListing
+        - event: CancelledListing(indexed address,indexed uint256)
+          handler: handleCancelledListing
+        - event: CurrencyApprovedForListing(indexed uint256,indexed address,uint256)
+          handler: handleCurrencyApprovedForListing
+        - event: NewListing(indexed address,indexed uint256,indexed
+            address,(uint256,uint256,uint256,uint256,uint128,uint128,address,address,address,uint8,uint8,bool))
+          handler: handleNewListing
+        - event: NewSale(indexed address,indexed uint256,indexed
+            address,uint256,address,uint256,uint256)
+          handler: handleNewSale
+        - event: UpdatedListing(indexed address,indexed uint256,indexed
+            address,(uint256,uint256,uint256,uint256,uint128,uint128,address,address,address,uint8,uint8,bool))
+          handler: handleUpdatedListing
+        - event: AuctionClosed(indexed uint256,indexed address,indexed
+            address,uint256,address,address)
+          handler: handleAuctionClosed
+        - event: CancelledAuction(indexed address,indexed uint256)
+          handler: handleCancelledAuction
+        - event: NewAuction(indexed address,indexed uint256,indexed
+            address,(uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64,address,address,address,uint8,uint8))
+          handler: handleNewAuction
+        - event: NewBid(indexed uint256,indexed address,indexed
+            address,uint256,(uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64,address,address,address,uint8,uint8))
+          handler: handleNewBid
+        - event: AcceptedOffer(indexed address,indexed uint256,indexed
+            address,uint256,address,uint256,uint256)
+          handler: handleAcceptedOffer
+        - event: CancelledOffer(indexed address,indexed uint256)
+          handler: handleCancelledOffer
+        - event: NewOffer(indexed address,indexed uint256,indexed
+            address,(uint256,uint256,uint256,uint256,uint256,address,address,address,uint8,uint8))
+          handler: handleNewOffer
+      file: ./src/marketplace-v-3.ts
+templates:
+  - kind: file/ipfs
+    name: IpfsContent
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - IchibanSeries
+        - IchibanKujiPrize
+        - IchibanKujiSubPrize
+      abis:
+        - name: Contract
+          file: ./abis/DOUDOCHAIN.json
+      handler: handleIchibanSeries
+      file: ./src/ichichain.ts
+  - kind: file/ipfs
+    name: DoudoNFTIpfsContent
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - MembershipMetadata
+        - VoucherMetadata
+        - VoucherMetadata
+        - MembershipLevel     # Add this
+        - Membership         # Add this if needed
+        - Voucher   
+      abis:
+       - name: doudonft
+         file: ./abis/Contract.json
+      handler: handleDoudoNFTContent
+      file: ./src/contract.ts
+  - kind: file/ipfs
+    name: UnrevealTokenIpfsContent
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - UnrevealTokenMetadata
+      abis:
+       - name: doudonft
+         file: ./abis/DOUDOCHAIN.json
+      handler: handleUnrevealTokenContent
+      file: ./src/ichichain.ts
+  - kind: file/ipfs
+    name: RevealTokenIpfsContent
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - RevealTokenMetadata
+      abis:
+       - name: doudonft
+         file: ./abis/DOUDOCHAIN.json
+      handler: handleRevealTokenContent
+      file: ./src/ichichain.ts

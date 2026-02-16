@@ -1,6 +1,1025 @@
-type ExampleEntity @entity {
+type AddCurrencyToken @entity(immutable: true) {
   id: Bytes!
-  count: BigInt!
+  currencyToken: Bytes! # address
+  priceFeedAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Approval @entity(immutable: true) {
+  id: Bytes!
   owner: Bytes! # address
   approved: Bytes! # address
+  tokenId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ApprovalForAll @entity(immutable: true) {
+  id: Bytes!
+  owner: Bytes! # address
+  operator: Bytes! # address
+  approved: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ConsecutiveTransfer @entity(immutable: true) {
+  id: Bytes!
+  fromTokenId: BigInt! # uint256
+  toTokenId: BigInt! # uint256
+  from: Bytes! # address
+  to: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type NewSubPrize @entity(immutable: false) {
+  id: Bytes!
+  seriesID: BigInt! # uint256
+  subPrizeID: BigInt! # uint256
+  prizeGroup: String! # string
+  subPrizeName: String! # string
+  subPrizeRemainingQuantity: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+  belongSeries: NewSeries!
+}
+
+type LastPrizeDraw @entity (immutable: false) {
+  id: Bytes!
+  requestId: BigInt! # uint256
+  seriesID: BigInt! # uint256
+  randomWord: [BigInt!] # uint256
+  quantity: BigInt # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type LastPrizeWinner @entity(immutable: true) {
+  id: Bytes!
+  requestId: BigInt! # uint256
+  randomWord: [BigInt!] # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type NewSeries @entity(immutable: false) {
+  id: Bytes!
+  seriesID: BigInt! # uint256
+  seriesName: String! # string
+  totalTicketNumbers: BigInt! # uint256
+  remainingTicketNumbers: BigInt! # uint256
+  priceInUSDTWei: BigInt! # uint256
+  priceInTWD: BigInt! # uint256
+  isGoodsArrived: Boolean! # bool
+  estimateDeliverTime: BigInt! # uint256
+  exchangeExpireTime: BigInt! # uint256
+  exchangeTokenURI: String! # string
+  unrevealTokenURI: String! # string
+  revealTokenURI: String! # string
+  seriesMetaDataURI: String! # string
+  lastPrizeOwner: [Bytes!] # address
+  isRefund: Boolean! # bool
+  isPreOrder: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+  recentIPFSHash: Bytes!
+  currentIchibanSeries: IchibanSeries
+  NewPrizes: [NewSubPrize!] @derivedFrom(field: "belongSeries")
+  NewTicketStatuses: [NewTicketStatus!] @derivedFrom(field: "belongSeries")
+  UnrevealTokenMetadata: UnrevealTokenMetadata @derivedFrom(field: "series")
+}
+
+type IchibanSeries @entity(immutable: true) {
+  id: Bytes!
+  hash: String!
+  belongSeries: NewSeries!
+  onChainSeriesID: BigInt
+  twContent: String
+  enContent: String
+  twTitle: String
+  enTitle: String
+  thumbnailSrc: String
+  backgroundSrc: String
+  twSubContent: String
+  enSubContent: String
+  IchibanKujiPrizes: [IchibanKujiPrize!] @derivedFrom(field: "belongSeries")
+  NewTicketStatuses: [NewTicketStatus!]
+    @derivedFrom(field: "belongIchibanSeries")
+}
+
+type IchibanKujiPrize @entity(immutable: true) {
+  id: Bytes!
+  hash: String!
+  belongSeries: IchibanSeries!
+  prizeId: String
+  type: String
+  twGroupName: String
+  enGroupName: String
+  size: String
+  prizeImageSrc: String
+  groupTotalQuantity: String
+  twGroupDescription: String
+  enGroupDescription: String
+  isBlindBox: Boolean
+  IchibanKujiSubPrizes: [IchibanKujiSubPrize!]
+    @derivedFrom(field: "belongIchibanPrize")
+}
+
+type IchibanKujiSubPrize @entity(immutable: true) {
+  id: Bytes!
+  hash: String!
+  belongIchibanPrize: IchibanKujiPrize!
+  subPrizeId: String
+  prizeGroup: String
+  twName: String
+  enName: String
+  size: String
+  subPrizeImageSrc: String
+  quantity: String
+  twDescription: String
+  enDescription: String
+}
+
+type NewTicketStatus @entity(immutable: false) {
+  id: Bytes!
+  tokenID: BigInt! # uint256
+  seriesID: BigInt! # uint256
+  tokenRevealedPrize: BigInt! # uint256
+  tokenExchange: Boolean! # bool
+  tokenRevealed: Boolean! # bool
+  tokenOwner: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+  belongSeries: NewSeries!
+  belongIchibanSeries: IchibanSeries!
+  belongIchibanSubPrize: IchibanKujiSubPrize
+  testID: Bytes
+  
+  # 關聯到 tokenMetadata (多對一)
+  revealMetadata: RevealTokenMetadata
+  
+  # Add new fields for marketplace tracking
+  listings: [Listing!]! @derivedFrom(field: "ticket")
+  auctions: [Auction!]! @derivedFrom(field: "ticket")
+}
+
+type RefundSeries @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt! # uint256
+  isRefund: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RevealDrawFulfilled @entity(immutable: true) {
+  id: Bytes!
+  requestId: BigInt! # uint256
+  seriesID: BigInt! # uint256
+  randomWords: [BigInt!]! # uint256[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RevealDrawSent @entity(immutable: false) {
+  id: Bytes!
+  requestId: BigInt! # uint256
+  seriesID: BigInt # uint256
+  tokenIDs: [BigInt!]! # uint256[]
+  randomWords: [BigInt!]! # uint256[]
+  subPrizesRemainingQuantities: [BigInt!] # uint256[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Transfer @entity(immutable: true) {
+  id: Bytes!
+  from: Bytes! # address
+  to: Bytes! # address
+  tokenId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type UpdatePrize @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt! # uint256
+  subPrizeID: BigInt! # uint256
+  subPrizeRemainingQuantity: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type UpdateSeriesInformation @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt! # uint256
+  isGoodsArrived: Boolean! # bool
+  estimateDeliverTime: BigInt! # uint256
+  exchangeExpireTime: BigInt! # uint256
+  exchangeTokenURI: String! # string
+  unrevealTokenURI: String! # string
+  revealTokenURI: String! # string
+  seriesMetaDataURI: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type UpdateSeriesLastPrizeOwner @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt! # uint256
+  lastPrizeOwner: [Bytes!] # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type UpdateSeriesRemainingTicketNumbers @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt! # uint256
+  remainingTicketNumbers: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type UpdateTicketStatus @entity(immutable: true) {
+  id: Bytes!
+  tokenID: BigInt! # uint256
+  seriesID: BigInt! # uint256
+  tokenRevealedPrize: BigInt! # uint256
+  tokenExchange: Boolean! # bool
+  tokenRevealed: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+type ContractApproval @entity(immutable: true) {
+  id: Bytes!
+  owner: Bytes! # address
+  approved: Bytes! # address
+  tokenId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ContractApprovalForAll @entity(immutable: true) {
+  id: Bytes!
+  owner: Bytes! # address
+  operator: Bytes! # address
+  approved: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ContractTransfer @entity(immutable: true) {
+  id: Bytes!
+  from: Bytes! # address
+  to: Bytes! # address
+  tokenId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VoucherType @entity(immutable: false) {
+  id: Bytes!
+  voucherTypeId: BigInt! # uint256
+  amount: BigInt! # uint256
+  maxPerUser: BigInt! # uint256
+  tokenURI: String! # string
+  isActive: Boolean! # To track if this type is still active
+  totalMinted: BigInt! # To track total minted vouchers of this type
+  vouchers: [Voucher!]! @derivedFrom(field: "voucherType")
+  createdAt: BigInt!
+  updatedAt: BigInt
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# type VoucherMetadata @entity {
+#   id: Bytes!
+#   hash: String!
+#   voucher: Voucher!
+#   name: String
+#   description: String
+#   animationUrl: String
+#   image: String
+# }
+
+type Voucher @entity(immutable: false) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  owner: Bytes! # address
+  voucherType: VoucherType!
+  isRedeemed: Boolean!
+  metadataURI: String
+  recentIPFSHash: Bytes
+  # metadata: VoucherMetadata @derivedFrom(field: "voucher")
+  createdAt: BigInt!
+  redeemedAt: BigInt
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VoucherMinted @entity(immutable: true) {
+  id: Bytes!
+  voucher: Voucher! # Reference to the minted voucher
+  recipient: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VoucherTotalRedeemed @entity(immutable: true) {
+  id: Bytes!
+  vouchers: [Voucher!]! # Reference to the redeemed vouchers
+  redeemer: Bytes! # address
+  totalAmount: BigInt! # uint256
+  additionalReward: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VoucherTransferred @entity(immutable: true) {
+  id: Bytes!
+  voucher: Voucher! # Reference to the transferred voucher
+  from: Bytes! # address
+  to: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VoucherTypeCreated @entity(immutable: true) {
+  id: Bytes!
+  voucherType: VoucherType! # Reference to the created voucher type
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VoucherTypeUpdated @entity(immutable: true) {
+  id: Bytes!
+  voucherType: VoucherType! # Reference to the updated voucher type
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VouchersIssuedFromSubscription @entity(immutable: true) {
+  id: Bytes!
+  user: Bytes! # address
+  voucherTypeIds: [BigInt!]! # uint256[]
+  amounts: [BigInt!]! # uint256[]
+  totalAmount: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# Main entity for membership levels
+type MembershipLevel @entity(immutable: false) {
+  id: Bytes!
+  levelIndex: BigInt! # uint256
+  name: String! # string
+  threshold: BigInt! # uint256
+  membershipTokenURI: String! # string
+  rewardBasisPoints: BigInt! # uint256
+  isActive: Boolean! # Track if level is active
+  totalMembers: BigInt! # Track total members in this level
+  members: [MembershipNFT!]! @derivedFrom(field: "level")
+  createdAt: BigInt!
+  updatedAt: BigInt
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# Main entity for membership NFTs
+type MembershipNFT @entity(immutable: false) {
+  id: Bytes!
+  tokenId: BigInt! # uint256
+  owner: Bytes! # address
+  level: MembershipLevel!
+  expiryDate: BigInt! # uint256
+  isActive: Boolean! # Track if membership is active
+  lastActivityTime: BigInt!
+  createdAt: BigInt!
+  updatedAt: BigInt
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+  transferHistory: [MembershipTransferred!]! @derivedFrom(field: "membershipNFT")
+  renewalHistory: [MembershipRenewed!]! @derivedFrom(field: "membershipNFT")
+  # metadata: MembershipMetadata @derivedFrom(field: "membershipNFT")
+}
+
+# Event entities
+type MembershipExpired @entity(immutable: true) {
+  id: Bytes!
+  membershipNFT: MembershipNFT!
+  user: Bytes! # address
+  tokenId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipLevelCreated @entity(immutable: true) {
+  id: Bytes!
+  membershipLevel: MembershipLevel!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipLevelUpdated @entity(immutable: true) {
+  id: Bytes!
+  membershipLevel: MembershipLevel!
+  previousThreshold: BigInt! # uint256
+  previousRewardBasisPoints: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipNFTBurned @entity(immutable: true) {
+  id: Bytes!
+  membershipNFT: MembershipNFT!
+  user: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipNFTMinted @entity(immutable: true) {
+  id: Bytes!
+  membershipNFT: MembershipNFT!
+  user: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipRenewed @entity(immutable: true) {
+  id: Bytes!
+  membershipNFT: MembershipNFT!
+  user: Bytes! # address
+  tokenId: BigInt! # uint256
+  newExpiryDate: BigInt! # uint256
+  previousExpiryDate: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipTransferred @entity(immutable: true) {
+  id: Bytes!
+  membershipNFT: MembershipNFT!
+  tokenId: BigInt! # uint256
+  from: Bytes! # address
+  to: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipUpgraded @entity(immutable: true) {
+  id: Bytes!
+  membershipNFT: MembershipNFT!
+  user: Bytes! # address
+  tokenId: BigInt! # uint256
+  previousLevel: MembershipLevel # 允許為 null，因為新會員沒有 previousLevel
+  newLevel: MembershipLevel!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+# type MembershipMetadata @entity {
+#   id: Bytes!
+#   membershipNFT: MembershipNFT!
+#   name: String
+#   description: String
+#   image: String
+# }
+
+type ContractURIUpdated @entity(immutable: true) {
+  id: Bytes!
+  prevURI: String! # string
+  newURI: String! # string
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ExtensionAdded @entity(immutable: true) {
+  id: Bytes!
+  name: Bytes! # bytes
+  implementation: Bytes! # address
+  extension_metadata_name: String!
+  extension_metadata_metadataURI: String! # string
+  extension_metadata_implementation: Bytes! # address
+  extension_functions: [Bytes!]! # tuple[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ExtensionRemoved @entity(immutable: true) {
+  id: Bytes!
+  name: Bytes! # bytes
+  extension_metadata_name: String!
+  extension_metadata_metadataURI: String! # string
+  extension_metadata_implementation: Bytes! # address
+  extension_functions: [Bytes!]! # tuple[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ExtensionReplaced @entity(immutable: true) {
+  id: Bytes!
+  name: Bytes! # bytes
+  implementation: Bytes! # address
+  extension_metadata_name: String!
+  extension_metadata_metadataURI: String! # string
+  extension_metadata_implementation: Bytes! # address
+  extension_functions: [Bytes!]! # tuple[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FlatPlatformFeeUpdated @entity(immutable: true) {
+  id: Bytes!
+  platformFeeRecipient: Bytes! # address
+  flatFee: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FunctionDisabled @entity(immutable: true) {
+  id: Bytes!
+  name: Bytes! # bytes
+  functionSelector: Bytes! # bytes4
+  extMetadata_name: String! # bytes
+  extMetadata_metadataURI: String! # string
+  extMetadata_implementation: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type FunctionEnabled @entity(immutable: true) {
+  id: Bytes!
+  name: Bytes! # bytes
+  functionSelector: Bytes! # bytes4
+  extFunction_functionSelector: Bytes! # bytes4
+  extFunction_functionSignature: String! # string
+  extMetadata_name: String! # bytes
+  extMetadata_metadataURI: String! # string
+  extMetadata_implementation: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Initialized @entity(immutable: true) {
+  id: Bytes!
+  version: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PlatformFeeInfoUpdated @entity(immutable: true) {
+  id: Bytes!
+  platformFeeRecipient: Bytes! # address
+  platformFeeBps: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PlatformFeeTypeUpdated @entity(immutable: true) {
+  id: Bytes!
+  feeType: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RoleAdminChanged @entity(immutable: true) {
+  id: Bytes!
+  role: Bytes! # bytes32
+  previousAdminRole: Bytes! # bytes32
+  newAdminRole: Bytes! # bytes32
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RoleGranted @entity(immutable: true) {
+  id: Bytes!
+  role: Bytes! # bytes32
+  account: Bytes! # address
+  sender: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RoleRevoked @entity(immutable: true) {
+  id: Bytes!
+  role: Bytes! # bytes32
+  account: Bytes! # address
+  sender: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RoyaltyEngineUpdated @entity(immutable: true) {
+  id: Bytes!
+  previousAddress: Bytes! # address
+  newAddress: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Listing @entity (immutable: false) {
+  id: ID!
+  listingId: BigInt!
+  listingCreator: Bytes! # address
+  assetContract: Bytes! # address
+  tokenId: BigInt!
+  quantity: BigInt!
+  currency: Bytes! # address
+  pricePerToken: BigInt!
+  startTimestamp: BigInt!
+  endTimestamp: BigInt!
+  reserved: Boolean!
+  tokenType: Int! # 0 for ERC721, 1 for ERC1155
+  status: String! # CREATED, COMPLETED, CANCELLED
+  
+  # Additional tracking fields
+  currentQuantity: BigInt! # Remaining quantity available
+  totalSales: BigInt! # Total number of sales from this listing
+  approvedCurrencies: [Currency!]! @derivedFrom(field: "listing")
+  approvedBuyers: [ApprovedBuyer!]! @derivedFrom(field: "listing")
+  sales: [Sale!]! @derivedFrom(field: "listing")
+
+  # Metadata
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+
+  # Add ticket reference
+  ticket: NewTicketStatus!
+}
+
+type Currency @entity (immutable: false) {
+  id: ID!
+  listing: Listing!
+  currencyAddress: Bytes! # address
+  pricePerToken: BigInt!
+  approved: Boolean!
+}
+
+type ApprovedBuyer @entity (immutable: false){
+  id: ID!
+  listing: Listing!
+  buyer: Bytes! # address
+  approved: Boolean!
+}
+
+type Sale @entity (immutable: false) {
+  id: ID!
+  listing: Listing!
+  buyer: Bytes! # address
+  quantity: BigInt!
+  totalPrice: BigInt!
+  currency: Bytes! # address
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BuyerApprovedForListing @entity(immutable: true) {
+  id: Bytes!
+  listingId: BigInt! # uint256
+  buyer: Bytes! # address
+  approved: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CancelledListing @entity(immutable: true) {
+  id: Bytes!
+  listingCreator: Bytes! # address
+  listingId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CurrencyApprovedForListing @entity(immutable: true) {
+  id: Bytes!
+  listingId: BigInt! # uint256
+  currency: Bytes! # address
+  pricePerToken: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type NewListing @entity(immutable: true) {
+  id: Bytes!
+  listingCreator: Bytes! # address
+  listingId: BigInt! # uint256
+  assetContract: Bytes! # address
+  listing_listingId: BigInt! # uint256
+  listing_tokenId: BigInt! # uint256
+  listing_quantity: BigInt! # uint256
+  listing_pricePerToken: BigInt! # uint256
+  listing_startTimestamp: BigInt! # uint128
+  listing_endTimestamp: BigInt! # uint128
+  listing_listingCreator: Bytes! # address
+  listing_assetContract: Bytes! # address
+  listing_currency: Bytes! # address
+  listing_tokenType: Int! # uint8
+  listing_status: Int! # uint8
+  listing_reserved: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type NewSale @entity(immutable: true) {
+  id: Bytes!
+  listingCreator: Bytes! # address
+  listingId: BigInt! # uint256
+  assetContract: Bytes! # address
+  tokenId: BigInt! # uint256
+  buyer: Bytes! # address
+  quantityBought: BigInt! # uint256
+  totalPricePaid: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type UpdatedListing @entity(immutable: true) {
+  id: Bytes!
+  listingCreator: Bytes! # address
+  listingId: BigInt! # uint256
+  assetContract: Bytes! # address
+  listing_listingId: BigInt! # uint256
+  listing_tokenId: BigInt! # uint256
+  listing_quantity: BigInt! # uint256
+  listing_pricePerToken: BigInt! # uint256
+  listing_startTimestamp: BigInt! # uint128
+  listing_endTimestamp: BigInt! # uint128
+  listing_listingCreator: Bytes! # address
+  listing_assetContract: Bytes! # address
+  listing_currency: Bytes! # address
+  listing_tokenType: Int! # uint8
+  listing_status: Int! # uint8
+  listing_reserved: Boolean! # bool
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Auction @entity (immutable: false) {
+  id: ID!
+  auctionId: BigInt!
+  auctionCreator: Bytes! # address
+  assetContract: Bytes! # address
+  tokenId: BigInt!
+  quantity: BigInt!
+  currency: Bytes! # address
+  minimumBidAmount: BigInt!
+  buyoutBidAmount: BigInt!
+  timeBufferInSeconds: BigInt!
+  bidBufferBps: BigInt!
+  startTimestamp: BigInt!
+  endTimestamp: BigInt!
+  tokenType: Int! # 0 for ERC721, 1 for ERC1155
+  status: String! # CREATED, COMPLETED, CANCELLED
+  
+  # Additional tracking fields
+  currentWinningBid: Bid # Current highest bid
+  totalBids: BigInt! # Total number of bids placed
+  winningBidder: Bytes # Final winner address
+  bids: [Bid!]! @derivedFrom(field: "auction")
+
+  # Metadata
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+
+  # Add ticket reference
+  ticket: NewTicketStatus!
+}
+
+type Bid @entity (immutable: false) {
+  id: ID!
+  auction: Auction!
+  bidder: Bytes!
+  bidAmount: BigInt!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+  isWinningBid: Boolean!
+}
+
+type AuctionClosed @entity(immutable: true) {
+  id: Bytes!
+  auctionId: BigInt!
+  assetContract: Bytes!
+  closer: Bytes!
+  tokenId: BigInt!
+  auctionCreator: Bytes!
+  winningBidder: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CancelledAuction @entity(immutable: true) {
+  id: Bytes!
+  auctionCreator: Bytes!
+  auctionId: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type NewAuction @entity(immutable: true) {
+  id: Bytes!
+  auctionCreator: Bytes!
+  auctionId: BigInt!
+  assetContract: Bytes!
+  auction_auctionId: BigInt!
+  auction_tokenId: BigInt!
+  auction_quantity: BigInt!
+  auction_minimumBidAmount: BigInt!
+  auction_buyoutBidAmount: BigInt!
+  auction_timeBufferInSeconds: BigInt!
+  auction_bidBufferBps: BigInt!
+  auction_startTimestamp: BigInt!
+  auction_endTimestamp: BigInt!
+  auction_auctionCreator: Bytes!
+  auction_assetContract: Bytes!
+  auction_currency: Bytes!
+  auction_tokenType: Int!
+  auction_status: Int!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type NewBid @entity(immutable: true) {
+  id: Bytes!
+  auctionId: BigInt!
+  bidder: Bytes!
+  assetContract: Bytes!
+  bidAmount: BigInt!
+  auction_auctionId: BigInt!
+  auction_tokenId: BigInt!
+  auction_quantity: BigInt!
+  auction_minimumBidAmount: BigInt!
+  auction_buyoutBidAmount: BigInt!
+  auction_timeBufferInSeconds: BigInt!
+  auction_bidBufferBps: BigInt!
+  auction_startTimestamp: BigInt!
+  auction_endTimestamp: BigInt!
+  auction_auctionCreator: Bytes!
+  auction_assetContract: Bytes!
+  auction_currency: Bytes!
+  auction_tokenType: Int!
+  auction_status: Int!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+type AcceptedOffer @entity(immutable: true) {
+  id: Bytes!
+  offeror: Bytes! # address
+  offerId: BigInt! # uint256
+  assetContract: Bytes! # address
+  tokenId: BigInt! # uint256
+  seller: Bytes! # address
+  quantityBought: BigInt! # uint256
+  totalPricePaid: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CancelledOffer @entity(immutable: true) {
+  id: Bytes!
+  offeror: Bytes! # address
+  offerId: BigInt! # uint256
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type NewOffer @entity(immutable: true) {
+  id: Bytes!
+  offeror: Bytes! # address
+  offerId: BigInt! # uint256
+  assetContract: Bytes! # address
+  offer_offerId: BigInt! # uint256
+  offer_tokenId: BigInt! # uint256
+  offer_quantity: BigInt! # uint256
+  offer_totalPrice: BigInt! # uint256
+  offer_expirationTimestamp: BigInt! # uint256
+  offer_offeror: Bytes! # address
+  offer_assetContract: Bytes! # address
+  offer_currency: Bytes! # address
+  offer_tokenType: Int! # uint8
+  offer_status: Int! # uint8
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Offer @entity (immutable: false) {
+  id: ID!                    # offerId
+  offeror: Bytes!           # address
+  assetContract: Bytes!     # address
+  tokenId: BigInt!
+  quantity: BigInt!
+  currency: Bytes!          # address
+  totalPrice: BigInt!
+  pricePerToken: BigInt!
+  expirationTimestamp: BigInt!
+  status: String!           # "PENDING", "ACCEPTED", "CANCELLED"
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OfferAccepted @entity(immutable: true) {
+  id: ID!
+  offeror: Bytes!          # address
+  offerId: BigInt!
+  assetContract: Bytes!    # address
+  tokenId: BigInt!
+  currency: Bytes!         # address
+  totalPrice: BigInt!
+  quantity: BigInt!
+  seller: Bytes!          # address
+  quantityBought: BigInt!
+  totalPricePaid: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RevealTokenMetadata @entity(immutable: false) {
+  id: Bytes!                    # seriesId + subPrizeID
+  series: NewSeries!
+  subPrizeID: BigInt!
+  name: String!
+  description: String!
+  image: String!
+  animationUrl: String
+  prizeType: String
+  category: String
+  tickets: [NewTicketStatus!]! @derivedFrom(field: "revealMetadata")
+}
+
+type UnrevealTokenMetadata @entity(immutable: false) {
+  id: Bytes!                    # seriesId
+  series: NewSeries!
+  name: String!
+  image: String!
+  # estimateDeliverTime: BigInt
 }

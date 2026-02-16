@@ -1,8 +1,15 @@
 {
   "polygon-amoy": {
-    "DOUDOCHAIN": {
+    "ICHICHAIN": {
       "address": "0x24513A99D1Dd6cFd8d9c27D3344877e0499180f0",
       "startBlock": 15027043
+    },
+    "Contract": {
+      "address": "0xF5E1086Ce5AEc81FfaA88B1FfF73D9e8d4a089d0"
+    },
+    "MarketplaceV3": {
+      "address": "0x8eB3Ff102b351fb03ab456c45B2E993dE80E280c",
+      "startBlock": 17835264
     }
   }
 }
