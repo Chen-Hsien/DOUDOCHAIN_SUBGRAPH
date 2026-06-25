@@ -176,10 +176,16 @@ export function handleMembershipLevelCreated(
 export function handleMembershipLevelUpdated(
   event: MembershipLevelUpdatedEvent
 ): void {
+  let membershipLevelId = Bytes.fromUTF8(event.params.levelIndex.toString());
   let membershipLevel = MembershipLevel.load(
-    Bytes.fromUTF8(event.params.levelIndex.toString())
+    membershipLevelId
   );
+  let previousThreshold: BigInt | null = null;
+  let previousRewardBasisPoints: BigInt | null = null;
+
   if (membershipLevel) {
+    previousThreshold = membershipLevel.threshold;
+    previousRewardBasisPoints = membershipLevel.rewardBasisPoints;
     membershipLevel.threshold = event.params.threshold;
     membershipLevel.membershipTokenURI = event.params.membershipTokenURI;
     membershipLevel.rewardBasisPoints = event.params.rewardBasisPoints;
@@ -191,7 +197,9 @@ export function handleMembershipLevelUpdated(
   let entity = new MembershipLevelUpdated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   );
-  entity.membershipLevel = membershipLevel ? membershipLevel.id : Bytes.empty();
+  entity.membershipLevel = membershipLevelId;
+  entity.previousThreshold = previousThreshold;
+  entity.previousRewardBasisPoints = previousRewardBasisPoints;
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;

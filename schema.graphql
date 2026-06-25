@@ -73,11 +73,13 @@ type LastPrizeWinner @entity(immutable: true) {
 
 type NewSeries @entity(immutable: false) {
   id: Bytes!
+  seriesContract: Bytes! # address
   seriesID: BigInt! # uint256
   seriesName: String! # string
   totalTicketNumbers: BigInt! # uint256
   remainingTicketNumbers: BigInt! # uint256
   priceInUSDTWei: BigInt! # uint256
+  priceInPoints: BigInt! # uint256, V2 alias of priceInUSDTWei
   priceInTWD: BigInt! # uint256
   isGoodsArrived: Boolean! # bool
   estimateDeliverTime: BigInt! # uint256
@@ -89,6 +91,12 @@ type NewSeries @entity(immutable: false) {
   lastPrizeOwner: [Bytes!] # address
   isRefund: Boolean! # bool
   isPreOrder: Boolean! # bool
+  merchantRef: Bytes # bytes32, set by MerchantSeriesRegistry
+  merchantLinkedAt: BigInt
+  merchantUpdatedAt: BigInt
+  merchantLinkOperator: Bytes # address
+  merchantLinkTransactionHash: Bytes
+  merchantRelinkCount: Int!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -97,6 +105,19 @@ type NewSeries @entity(immutable: false) {
   NewPrizes: [NewSubPrize!] @derivedFrom(field: "belongSeries")
   NewTicketStatuses: [NewTicketStatus!] @derivedFrom(field: "belongSeries")
   UnrevealTokenMetadata: UnrevealTokenMetadata @derivedFrom(field: "series")
+}
+
+type SeriesMerchantCorrection @entity(immutable: true) {
+  id: Bytes!
+  series: NewSeries
+  seriesContract: Bytes! # address
+  seriesID: BigInt! # uint256
+  previousMerchantRef: Bytes! # bytes32
+  newMerchantRef: Bytes! # bytes32
+  operator: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
 }
 
 type IchibanSeries @entity(immutable: true) {
@@ -157,12 +178,16 @@ type NewTicketStatus @entity(immutable: false) {
   tokenRevealedPrize: BigInt! # uint256
   tokenExchange: Boolean! # bool
   tokenRevealed: Boolean! # bool
+  tokenRevealTimestamp: BigInt! # reveal block timestamp, 0 before reveal or for legacy data
   tokenOwner: Bytes! # address
+  luckyNumber: BigInt! # uint16
+  tokenSource: String! # DRAW, COLLECTION_REWARD, CONSOLATION, LAST_PRIZE
+  isReward: Boolean!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
   belongSeries: NewSeries!
-  belongIchibanSeries: IchibanSeries!
+  belongIchibanSeries: IchibanSeries
   belongIchibanSubPrize: IchibanKujiSubPrize
   testID: Bytes
   
@@ -178,6 +203,265 @@ type RefundSeries @entity(immutable: true) {
   id: Bytes!
   seriesID: BigInt! # uint256
   isRefund: Boolean! # bool
+  refundPointsPerTicket: BigInt # uint256, V2 refund module only
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type AdminMinted @entity(immutable: true) {
+  id: Bytes!
+  operator: Bytes!
+  to: Bytes!
+  seriesID: BigInt!
+  quantity: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VrfRouterUpdated @entity(immutable: true) {
+  id: Bytes!
+  vrfRouter: Bytes!
+  operator: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MintLockUpdated @entity(immutable: false) {
+  id: Bytes!
+  seriesID: BigInt!
+  owner: Bytes!
+  until: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SeriesUnlockedFor @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  user: Bytes!
+  expires: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RequesterUpdated @entity(immutable: true) {
+  id: Bytes!
+  requester: Bytes!
+  allowed: Boolean!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VrfConfigUpdated @entity(immutable: true) {
+  id: Bytes!
+  vrfCoordinator: Bytes!
+  subscriptionId: BigInt!
+  keyHash: Bytes!
+  callbackGasLimit: BigInt!
+  requestConfirmations: Int!
+  operator: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type VrfRequest @entity(immutable: false) {
+  id: Bytes!
+  requestId: BigInt!
+  requester: Bytes!
+  callbackTarget: Bytes!
+  numWords: BigInt!
+  fulfilled: Boolean!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BundleConfig @entity(immutable: false) {
+  id: Bytes!
+  seriesID: BigInt!
+  bundleID: BigInt!
+  ticketQuantity: BigInt!
+  priceInPoints: BigInt!
+  rebatePoints: BigInt!
+  consolationDrawCredits: BigInt!
+  active: Boolean!
+}
+
+type BundleMint @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  bundleID: BigInt!
+  buyer: Bytes!
+  quantity: BigInt!
+  firstTokenID: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RefundConfig @entity(immutable: false) {
+  id: Bytes!
+  seriesID: BigInt!
+  isRefund: Boolean!
+  refundPointsPerTicket: BigInt!
+}
+
+type RefundClaim @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  user: Bytes!
+  tokenIDs: [BigInt!]!
+  refundPoints: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RouterUpdated @entity(immutable: true) {
+  id: Bytes!
+  router: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type RedrawConfig @entity(immutable: false) {
+  id: Bytes!
+  seriesID: BigInt!
+  mainBurnCount: Int!
+  consolationBurnCount: Int!
+  enabled: Boolean!
+}
+
+type RedrawMint @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  user: Bytes!
+  quantity: BigInt!
+  firstTokenID: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type ConsolationPrize @entity(immutable: false) {
+  id: Bytes!
+  seriesID: BigInt!
+  subPrizeID: BigInt!
+  prizeGroup: String!
+  subPrizeName: String!
+  remainingQuantity: BigInt!
+}
+
+type ConsolationDrawBalance @entity(immutable: false) {
+  id: Bytes!
+  seriesID: BigInt!
+  user: Bytes!
+  balance: BigInt!
+}
+
+type ConsolationDraw @entity(immutable: false) {
+  id: Bytes!
+  requestId: BigInt!
+  seriesID: BigInt!
+  user: Bytes!
+  tokenID: BigInt
+  fulfilled: Boolean!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CollectionRewardConfig @entity(immutable: false) {
+  id: Bytes!
+  collectionBookID: BigInt!
+  rewardKind: Int!
+  pointsAmount: BigInt!
+  seriesID: BigInt!
+  prizeID: BigInt!
+  active: Boolean!
+}
+
+type CollectionRewardMint @entity(immutable: true) {
+  id: Bytes!
+  collectionBookID: BigInt!
+  user: Bytes!
+  rewardKind: Int!
+  amount: BigInt!
+  tokenID: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CollectionBook @entity(immutable: false) {
+  id: Bytes!
+  bookId: BigInt!
+  name: String!
+  rewardKind: Int!
+  rewardData: BigInt!
+  active: Boolean!
+  totalRequired: BigInt!
+  slots: [CollectionBookSlot!]! @derivedFrom(field: "book")
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CollectionBookSlot @entity(immutable: false) {
+  id: Bytes!
+  book: CollectionBook!
+  bookId: BigInt!
+  slotIndex: BigInt!
+  sourceContract: Bytes!
+  seriesID: BigInt!
+  prizeId: BigInt!
+  quantity: BigInt!
+}
+
+type CollectionBookUserProgress @entity(immutable: false) {
+  id: Bytes!
+  user: Bytes!
+  book: CollectionBook!
+  filledCount: BigInt!
+  claimed: Boolean!
+  updatedAt: BigInt!
+}
+
+type CollectionBookDeposit @entity(immutable: false) {
+  id: Bytes!
+  user: Bytes!
+  book: CollectionBook!
+  slotIndex: BigInt!
+  sourceContract: Bytes!
+  tokenId: BigInt!
+  deposited: Boolean!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CollectionBookClaim @entity(immutable: true) {
+  id: Bytes!
+  user: Bytes!
+  book: CollectionBook!
+  rewardKind: Int!
+  rewardData: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type CollectionBookRewardTargetUpdated @entity(immutable: true) {
+  id: Bytes!
+  doudochainV2RewardTarget: Bytes!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -188,6 +472,8 @@ type RevealDrawFulfilled @entity(immutable: true) {
   requestId: BigInt! # uint256
   seriesID: BigInt! # uint256
   randomWords: [BigInt!]! # uint256[]
+  randomSeed: BigInt # V2 uses randomWords[0] as the reveal seed
+  revealTokenCount: Int!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -199,6 +485,9 @@ type RevealDrawSent @entity(immutable: false) {
   seriesID: BigInt # uint256
   tokenIDs: [BigInt!]! # uint256[]
   randomWords: [BigInt!]! # uint256[]
+  randomSeed: BigInt # V2 uses randomWords[0] as the reveal seed
+  revealTokenCount: Int!
+  vrfNumWords: BigInt # V2 reveal requests one VRF word regardless of token count
   subPrizesRemainingQuantities: [BigInt!] # uint256[]
   blockNumber: BigInt!
   blockTimestamp: BigInt!
@@ -265,6 +554,7 @@ type UpdateTicketStatus @entity(immutable: true) {
   tokenRevealedPrize: BigInt! # uint256
   tokenExchange: Boolean! # bool
   tokenRevealed: Boolean! # bool
+  tokenRevealTimestamp: BigInt! # reveal block timestamp, 0 when unchanged/unavailable
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -457,8 +747,8 @@ type MembershipLevelCreated @entity(immutable: true) {
 type MembershipLevelUpdated @entity(immutable: true) {
   id: Bytes!
   membershipLevel: MembershipLevel!
-  previousThreshold: BigInt! # uint256
-  previousRewardBasisPoints: BigInt! # uint256
+  previousThreshold: BigInt # uint256, null if the previous level state was not indexed
+  previousRewardBasisPoints: BigInt # uint256, null if the previous level state was not indexed
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

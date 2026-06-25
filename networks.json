@@ -2,14 +2,56 @@
   "polygon-amoy": {
     "ICHICHAIN": {
       "address": "0x24513A99D1Dd6cFd8d9c27D3344877e0499180f0",
-      "startBlock": 15027043
+      "startBlock": 17835264
     },
     "Contract": {
       "address": "0xF5E1086Ce5AEc81FfaA88B1FfF73D9e8d4a089d0"
     },
     "MarketplaceV3": {
-      "address": "0x8eB3Ff102b351fb03ab456c45B2E993dE80E280c",
+      "address": "0xda99EBe85d00F777d5687FCaaA60DA1f982F4432",
       "startBlock": 17835264
+    }
+  },
+  "arbitrum-sepolia": {
+    "ICHICHAIN": {
+      "address": "0xf75395A8cd753f47135cfcaE00D2706252c3E0F5",
+      "startBlock": 273178800
+    },
+    "RevealOnChainData": {
+      "address": "0xf75395A8cd753f47135cfcaE00D2706252c3E0F5",
+      "startBlock": 273178800
+    },
+    "MerchantSeriesRegistry": {
+      "address": "0x03dBEE1f231A29b06032aa24D2CFb96a1321C1A6",
+      "startBlock": 277513499
+    },
+    "DoudoVRFRouter": {
+      "address": "0x5A59D45437559C7CE0A012630a456321180C21e1",
+      "startBlock": 273178800
+    },
+    "DoudoBundleModule": {
+      "address": "0x68cBA2b3c72Be39be748B06c1e6dDab2855E91b6",
+      "startBlock": 273178800
+    },
+    "DoudoRefundModule": {
+      "address": "0x8ee19238DAa466B7792BE33569c6E4f6993CCf20",
+      "startBlock": 273178800
+    },
+    "DoudoRedrawModule": {
+      "address": "0xE75461828f41C890fbc811e7cABFe2143B3F4afE",
+      "startBlock": 273178800
+    },
+    "DoudoCollectionRewardModule": {
+      "address": "0x680618a6933DD68fF84Ff9F64760120d27400B3C",
+      "startBlock": 273178800
+    },
+    "CollectionBookUpgradeable": {
+      "address": "0x4284be399cA9591fBd98248969fCcb969E21B2C6",
+      "startBlock": 273178800
+    },
+    "Contract": {
+      "address": "0x35d6650973B713193C9D0Ef96E4EbFB61B96B7B7",
+      "startBlock": 275143005
     }
   }
 }

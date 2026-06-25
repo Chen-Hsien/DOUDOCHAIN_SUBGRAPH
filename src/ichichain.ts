@@ -4,19 +4,19 @@ import {
   ConsecutiveTransfer as ConsecutiveTransferEvent,
   LastPrizeDraw as LastPrizeDrawEvent,
   LastPrizeWinner as LastPrizeWinnerEvent,
+  AdminMinted as AdminMintedEvent,
+  MintLockUpdated as MintLockUpdatedEvent,
   NewSeries as NewSeriesEvent,
   NewSubPrize as NewSubPrizeEvent,
   NewTicketStatus as NewTicketStatusEvent,
-  RefundSeries as RefundSeriesEvent,
-  ResetSubPrize as ResetSubPrizeEvent,
+  SeriesUnlockedFor as SeriesUnlockedForEvent,
   Transfer as TransferEvent,
   UpdatePrize as UpdatePrizeEvent,
   UpdateSeriesInformation as UpdateSeriesInformationEvent,
   UpdateSeriesLastPrizeOwner as UpdateSeriesLastPrizeOwnerEvent,
   UpdateSeriesRemainingTicketNumbers as UpdateSeriesRemainingTicketNumbersEvent,
   UpdateTicketStatus as UpdateTicketStatusEvent,
-  ICHICHAIN__getSubPrizesDetailResultValue0Struct as SubPrizeContract,
-  ICHICHAIN,
+  VrfRouterUpdated as VrfRouterUpdatedEvent,
 } from "../generated/ICHICHAIN/ICHICHAIN";
 import {
   Approval,
@@ -24,16 +24,19 @@ import {
   ConsecutiveTransfer,
   LastPrizeDraw,
   LastPrizeWinner,
+  AdminMinted,
+  MintLockUpdated,
   NewSeries,
   NewSubPrize,
   NewTicketStatus,
-  RefundSeries,
+  SeriesUnlockedFor,
   Transfer,
   UpdatePrize,
   UpdateSeriesInformation,
   UpdateSeriesLastPrizeOwner,
   UpdateSeriesRemainingTicketNumbers,
   UpdateTicketStatus,
+  VrfRouterUpdated,
   IchibanSeries,
   IchibanKujiPrize,
   IchibanKujiSubPrize,
@@ -49,12 +52,68 @@ import {
   dataSource,
   DataSourceContext,
   DataSourceTemplate,
+  JSONValue,
   JSONValueKind,
-  store,
-  Address,
 } from "@graphprotocol/graph-ts";
 
 const SERIES_ID_KEY = "seriesID";
+const SUB_PRIZE_ID_KEY = "subPrizeID";
+const LAST_PRIZE_ID = "999";
+const TOKEN_SOURCE_DRAW = "DRAW";
+const TOKEN_SOURCE_LAST_PRIZE = "LAST_PRIZE";
+
+export function ticketId(tokenID: BigInt): Bytes {
+  return Bytes.fromUTF8(tokenID.toString());
+}
+
+function jsonScalarToString(value: JSONValue | null): string | null {
+  if (value == null || value.kind == JSONValueKind.NULL) {
+    return null;
+  }
+  if (value.kind == JSONValueKind.STRING) {
+    return value.toString();
+  }
+  if (value.kind == JSONValueKind.NUMBER) {
+    return value.toI64().toString();
+  }
+  if (value.kind == JSONValueKind.BOOL) {
+    return value.toBool() ? "true" : "false";
+  }
+  return null;
+}
+
+function createRevealTokenIpfsContent(
+  seriesEntity: NewSeries | null,
+  subPrizeID: BigInt
+): void {
+  if (seriesEntity == null) return;
+
+  let revealIpfsIndex = seriesEntity.revealTokenURI.indexOf("/ipfs/");
+  if (revealIpfsIndex == -1) return;
+
+  let baseRevealHash = seriesEntity.revealTokenURI
+    .slice(revealIpfsIndex + 6)
+    .trim();
+
+  if (baseRevealHash.endsWith("/")) {
+    baseRevealHash = baseRevealHash.slice(0, -1);
+  }
+
+  let revealContext = new DataSourceContext();
+  revealContext.setBytes(SERIES_ID_KEY, seriesEntity.id);
+  revealContext.setBigInt(SUB_PRIZE_ID_KEY, subPrizeID);
+
+  let fullRevealHash = baseRevealHash + "/" + subPrizeID.toString();
+  DataSourceTemplate.createWithContext(
+    "RevealTokenIpfsContent",
+    [fullRevealHash],
+    revealContext
+  );
+
+  log.debug("Creating RevealTokenIpfsContent with hash: {}", [
+    fullRevealHash,
+  ]);
+}
 
 export function handleApproval(event: ApprovalEvent): void {
   let entity = new Approval(
@@ -140,43 +199,7 @@ export function handleNewSubPrize(event: NewSubPrizeEvent): void {
   // 加載對應的系列資料
   let seriesEntity = NewSeries.load(Bytes.fromUTF8(ID));
 
-  // 如果系列存在且有 revealTokenURI
-  if (seriesEntity && seriesEntity.revealTokenURI) {
-    let revealIpfsIndex = seriesEntity.revealTokenURI.indexOf("/ipfs/");
-
-    if (revealIpfsIndex != -1) {
-      // 創建上下文
-      let revealContext = new DataSourceContext();
-      revealContext.setBytes(SERIES_ID_KEY, seriesEntity.id);
-      revealContext.setBigInt("subPrizeID", event.params.subPrizeID);
-
-      // 提取基本的 IPFS 哈希
-      let baseRevealHash = seriesEntity.revealTokenURI.slice(
-        revealIpfsIndex + 6
-      );
-
-      // 移除可能的結尾斜線，然後添加 subPrizeID
-      if (baseRevealHash.endsWith("/")) {
-        baseRevealHash = baseRevealHash.slice(0, -1);
-      }
-
-      // 創建完整的哈希，包含 subPrizeID
-      let fullRevealHash =
-        baseRevealHash + "/" + event.params.subPrizeID.toString();
-
-      // 使用完整哈希創建模板
-      DataSourceTemplate.createWithContext(
-        "RevealTokenIpfsContent",
-        [fullRevealHash],
-        revealContext
-      );
-
-      // 記錄一下這個操作
-      log.debug("Creating RevealTokenIpfsContent with hash: {}", [
-        fullRevealHash,
-      ]);
-    }
-  }
+  createRevealTokenIpfsContent(seriesEntity, event.params.subPrizeID);
 
   entity.save();
 }
@@ -186,11 +209,13 @@ export function handleNewSeries(event: NewSeriesEvent): void {
   // Create a new Series ID and turn it to bytes format
   let ID = event.params.seriesID.toString();
   let entity = new NewSeries(Bytes.fromUTF8(ID));
+  entity.seriesContract = event.address;
   entity.seriesID = event.params.seriesID;
   entity.seriesName = event.params.seriesName;
   entity.totalTicketNumbers = event.params.totalTicketNumbers;
   entity.remainingTicketNumbers = event.params.remainingTicketNumbers;
   entity.priceInUSDTWei = event.params.priceInUSDTWei;
+  entity.priceInPoints = event.params.priceInUSDTWei;
   entity.priceInTWD = event.params.priceInTWD;
   entity.isGoodsArrived = event.params.isGoodsArrived;
   entity.estimateDeliverTime = event.params.estimateDeliverTime;
@@ -203,6 +228,8 @@ export function handleNewSeries(event: NewSeriesEvent): void {
   entity.lastPrizeOwner = [];
   entity.isRefund = event.params.isRefund;
   entity.isPreOrder = event.params.isPreOrder;
+  entity.recentIPFSHash = Bytes.empty();
+  entity.merchantRelinkCount = 0;
 
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
@@ -210,7 +237,6 @@ export function handleNewSeries(event: NewSeriesEvent): void {
 
   let ipfsIndex = entity.seriesMetaDataURI.indexOf("/ipfs/");
   log.debug("ipfsIndex: {}", [ipfsIndex.toString()]);
-  if (ipfsIndex == -1) return;
 
   let context = new DataSourceContext();
   context.setBytes(SERIES_ID_KEY, entity.id);
@@ -230,7 +256,6 @@ export function handleNewSeries(event: NewSeriesEvent): void {
   }
 
   let unrevealIpfsIndex = entity.unrevealTokenURI.indexOf("/ipfs/");
-  if (unrevealIpfsIndex == -1) return;
 
   let unrevealContext = new DataSourceContext();
   unrevealContext.setBytes(SERIES_ID_KEY, entity.id);
@@ -383,9 +408,8 @@ export function handleIchibanSeries(content: Bytes): void {
               newPrize.prizeImageSrc = prizeImageSrc
                 ? prizeImageSrc.toString()
                 : null;
-              newPrize.groupTotalQuantity = groupTotalQuantity
-                ? groupTotalQuantity.toI64().toString()
-                : null; // Assuming quantity is an integer
+              newPrize.groupTotalQuantity =
+                jsonScalarToString(groupTotalQuantity);
               newPrize.twGroupDescription = twGroupDescription
                 ? twGroupDescription.toString()
                 : null;
@@ -445,9 +469,7 @@ export function handleIchibanSeries(content: Bytes): void {
                     newSubPrize.enDescription = enDescription
                       ? enDescription.toString()
                       : null;
-                    newSubPrize.quantity = quantity
-                      ? quantity.toI64().toString()
-                      : null;
+                    newSubPrize.quantity = jsonScalarToString(quantity);
                     newSubPrize.save();
                   }
                 }
@@ -506,7 +528,7 @@ export function handleRevealTokenContent(revealContext: Bytes): void {
   let hash = dataSource.stringParam();
   let ctx = dataSource.context();
   let seriesID = ctx.getBytes(SERIES_ID_KEY);
-  let subPrizeID = ctx.getBigInt("subPrizeID");
+  let subPrizeID = ctx.getBigInt(SUB_PRIZE_ID_KEY);
 
   // 創建一個包含 seriesID 和 subPrizeID 的唯一 ID
   let uniqueId = seriesID
@@ -578,14 +600,26 @@ export function handleRevealTokenContent(revealContext: Bytes): void {
 }
 
 export function handleNewTicketStatus(event: NewTicketStatusEvent): void {
-  let NewTicketStatusEventID = event.params.tokenID.toString();
-  let entity = new NewTicketStatus(Bytes.fromUTF8(NewTicketStatusEventID));
+  let entity = NewTicketStatus.load(ticketId(event.params.tokenID));
+  if (!entity) {
+    entity = new NewTicketStatus(ticketId(event.params.tokenID));
+  }
   entity.tokenID = event.params.tokenID;
   entity.seriesID = event.params.seriesID;
   entity.tokenRevealedPrize = event.params.tokenRevealedPrize;
   entity.tokenExchange = event.params.tokenExchange;
   entity.tokenRevealed = event.params.tokenRevealed;
+  entity.tokenRevealTimestamp = event.params.tokenRevealed
+    ? event.block.timestamp
+    : BigInt.fromI32(0);
   entity.tokenOwner = event.params.tokenOwner;
+  entity.luckyNumber = BigInt.fromI32(event.params.luckyNumber);
+  entity.tokenSource = event.params.tokenRevealedPrize.equals(
+    BigInt.fromString(LAST_PRIZE_ID)
+  )
+    ? TOKEN_SOURCE_LAST_PRIZE
+    : TOKEN_SOURCE_DRAW;
+  entity.isReward = false;
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
@@ -600,6 +634,15 @@ export function handleNewTicketStatus(event: NewTicketStatusEvent): void {
     // 使用相同的 ID 生成邏輯
     let uniqueId = Bytes.fromUTF8(ID).concat(newSeries.recentIPFSHash);
     entity.belongIchibanSeries = uniqueId;
+  }
+
+  // Link revealMetadata if tokenRevealedPrize > 0
+  if (event.params.tokenRevealedPrize.gt(BigInt.fromI32(0))) {
+    let metadataId = Bytes.fromUTF8(ID)
+      .concat(Bytes.fromUTF8("_subPrize_"))
+      .concat(Bytes.fromUTF8(event.params.tokenRevealedPrize.toString()));
+    entity.revealMetadata = metadataId;
+    createRevealTokenIpfsContent(newSeries, event.params.tokenRevealedPrize);
   }
 
   // check if tokenRevealedPrize is 999, then set belongIchibanSubPrize
@@ -621,49 +664,6 @@ export function handleNewTicketStatus(event: NewTicketStatusEvent): void {
   entity.save();
 }
 
-export function handleRefundSeries(event: RefundSeriesEvent): void {
-  let entity = new RefundSeries(
-    event.transaction.hash.concatI32(event.logIndex.toI32())
-  );
-  entity.seriesID = event.params.seriesID;
-  entity.isRefund = event.params.isRefund;
-  entity.blockNumber = event.block.number;
-  entity.blockTimestamp = event.block.timestamp;
-  entity.transactionHash = event.transaction.hash;
-
-  entity.save();
-
-  // update isRefund in NewSeries entity
-  let seriesID = event.params.seriesID.toString();
-  let updateSeries = NewSeries.load(Bytes.fromUTF8(seriesID));
-  if (updateSeries) {
-    updateSeries.isRefund = event.params.isRefund;
-    updateSeries.save();
-  }
-}
-
-export function handleResetSubPrize(event: ResetSubPrizeEvent): void {
-  // check if subPrize is setting, than delete all subPrize
-  let series = NewSeries.load(Bytes.fromUTF8(event.params.seriesID.toString()));
-  if (series) {
-    log.info("handleResetSubPrize Series is: {}", [series.seriesID.toString()]);
-    let subPrize = series.NewPrizes.load();
-    if (subPrize) {
-      for (let i = 0; i < subPrize.length; i++) {
-        log.info("handleResetSubPrize subPrize is: {}", [
-          subPrize[i].subPrizeID.toString(),
-        ]);
-        let subPrizeID = Bytes.fromUTF8(
-          event.params.seriesID
-            .toString()
-            .concat(subPrize[i].subPrizeID.toString())
-        );
-        store.remove("NewSubPrize", subPrizeID.toHexString());
-      }
-    }
-  }
-}
-
 export function handleTransfer(event: TransferEvent): void {
   let entity = new Transfer(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -678,9 +678,8 @@ export function handleTransfer(event: TransferEvent): void {
 
   entity.save();
 
-  let updateTicketStatusID = event.params.tokenId.toString();
   let updateTicketStatus = NewTicketStatus.load(
-    Bytes.fromUTF8(updateTicketStatusID)
+    ticketId(event.params.tokenId)
   );
 
   if (updateTicketStatus) {
@@ -833,19 +832,30 @@ export function handleUpdateSeriesRemainingTicketNumbers(
 
 export function handleUpdateTicketStatus(event: UpdateTicketStatusEvent): void {
   // update NewTicketStatus entity
-  let updateTicketStatusID = event.params.tokenID.toString();
   let updateTicketStatus = NewTicketStatus.load(
-    Bytes.fromUTF8(updateTicketStatusID)
+    ticketId(event.params.tokenID)
   );
+  let tokenRevealTimestamp = BigInt.fromI32(0);
 
   let ID = event.params.seriesID.toString();
   // load newSeries to get currentHash
   let newSeries = NewSeries.load(Bytes.fromUTF8(ID));
 
   if (updateTicketStatus) {
+    let wasRevealed = updateTicketStatus.tokenRevealed;
+    tokenRevealTimestamp = updateTicketStatus.tokenRevealTimestamp;
+    if (
+      event.params.tokenRevealed &&
+      !event.params.tokenExchange &&
+      (!wasRevealed || tokenRevealTimestamp.equals(BigInt.fromI32(0)))
+    ) {
+      tokenRevealTimestamp = event.block.timestamp;
+    }
+
     updateTicketStatus.tokenRevealedPrize = event.params.tokenRevealedPrize;
     updateTicketStatus.tokenExchange = event.params.tokenExchange;
     updateTicketStatus.tokenRevealed = event.params.tokenRevealed;
+    updateTicketStatus.tokenRevealTimestamp = tokenRevealTimestamp;
     // update ticket status belongIchibanPrize
     let prizeID = Bytes.fromUTF8(event.params.seriesID.toString());
     if (newSeries) {
@@ -865,23 +875,17 @@ export function handleUpdateTicketStatus(event: UpdateTicketStatusEvent): void {
         .concat(Bytes.fromUTF8("_subPrize_"))
         .concat(Bytes.fromUTF8(event.params.tokenRevealedPrize.toString()));
       updateTicketStatus.testID = metadataId;
-      // 嘗試加載 RevealTokenMetadata
       let revealMetadata = RevealTokenMetadata.load(metadataId);
 
-      if (revealMetadata) {
-        // 如果找到了對應的 RevealTokenMetadata，建立關聯
+      // Always link metadata if prize is valid, resolving handling race condition
+      if (event.params.tokenRevealedPrize.gt(BigInt.fromI32(0))) {
         updateTicketStatus.revealMetadata = metadataId;
-        log.debug("Associated ticket {} with RevealTokenMetadata {}", [
-          updateTicketStatusID,
-          metadataId.toString(),
-        ]);
-      } else {
-        log.warning("RevealTokenMetadata not found for subPrizeID: {}", [
-          event.params.tokenRevealedPrize.toString(),
-        ]);
+        createRevealTokenIpfsContent(newSeries, event.params.tokenRevealedPrize);
       }
     }
     updateTicketStatus.save();
+  } else if (event.params.tokenRevealed && !event.params.tokenExchange) {
+    tokenRevealTimestamp = event.block.timestamp;
   }
 
   let entity = new UpdateTicketStatus(
@@ -892,10 +896,65 @@ export function handleUpdateTicketStatus(event: UpdateTicketStatusEvent): void {
   entity.tokenRevealedPrize = event.params.tokenRevealedPrize;
   entity.tokenExchange = event.params.tokenExchange;
   entity.tokenRevealed = event.params.tokenRevealed;
+  entity.tokenRevealTimestamp = tokenRevealTimestamp;
 
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
 
+  entity.save();
+}
+
+export function handleAdminMinted(event: AdminMintedEvent): void {
+  let entity = new AdminMinted(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  );
+  entity.operator = event.params.operator;
+  entity.to = event.params.to;
+  entity.seriesID = event.params.seriesID;
+  entity.quantity = event.params.quantity;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+export function handleVrfRouterUpdated(event: VrfRouterUpdatedEvent): void {
+  let entity = new VrfRouterUpdated(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  );
+  entity.vrfRouter = event.params.vrfRouter;
+  entity.operator = event.params.operator;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+export function handleMintLockUpdated(event: MintLockUpdatedEvent): void {
+  let id = event.params.seriesID
+    .toString()
+    .concat("-")
+    .concat(event.params.owner.toHexString());
+  let entity = new MintLockUpdated(Bytes.fromUTF8(id));
+  entity.seriesID = event.params.seriesID;
+  entity.owner = event.params.owner;
+  entity.until = event.params.until;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+export function handleSeriesUnlockedFor(event: SeriesUnlockedForEvent): void {
+  let entity = new SeriesUnlockedFor(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  );
+  entity.seriesID = event.params.seriesID;
+  entity.user = event.params.user;
+  entity.expires = event.params.expires;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
   entity.save();
 }

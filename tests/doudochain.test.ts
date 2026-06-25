@@ -6,57 +6,69 @@ import {
   beforeAll,
   afterAll
 } from "matchstick-as/assembly/index"
-import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
-import { ExampleEntity } from "../generated/schema"
-import { Approval } from "../generated/DOUDOCHAIN/DOUDOCHAIN"
-import { handleApproval } from "../src/doudochain"
-import { createApprovalEvent } from "./doudochain-utils"
+import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts"
+import { Approval } from "../generated/ICHICHAIN/ICHICHAIN"
+import { handleApproval } from "../src/ichichain"
+import { newMockEvent } from "matchstick-as"
 
-// Tests structure (matchstick-as >=0.5.0)
-// https://thegraph.com/docs/en/developer/matchstick/#tests-structure-0-5-0
+function createApprovalEvent(
+  owner: Address,
+  approved: Address,
+  tokenId: BigInt
+): Approval {
+  let approvalEvent = changetype<Approval>(newMockEvent())
+  approvalEvent.parameters = new Array()
 
-describe("Describe entity assertions", () => {
+  approvalEvent.parameters.push(
+    new ethereum.EventParam("owner", ethereum.Value.fromAddress(owner))
+  )
+  approvalEvent.parameters.push(
+    new ethereum.EventParam("approved", ethereum.Value.fromAddress(approved))
+  )
+  approvalEvent.parameters.push(
+    new ethereum.EventParam(
+      "tokenId",
+      ethereum.Value.fromUnsignedBigInt(tokenId)
+    )
+  )
+
+  return approvalEvent
+}
+
+describe("ICHICHAIN handlers", () => {
   beforeAll(() => {
     let owner = Address.fromString("0x0000000000000000000000000000000000000001")
     let approved = Address.fromString(
-      "0x0000000000000000000000000000000000000001"
+      "0x0000000000000000000000000000000000000002"
     )
     let tokenId = BigInt.fromI32(234)
-    let newApprovalEvent = createApprovalEvent(owner, approved, tokenId)
-    handleApproval(newApprovalEvent)
+    let event = createApprovalEvent(owner, approved, tokenId)
+    handleApproval(event)
   })
 
   afterAll(() => {
     clearStore()
   })
 
-  // For more test scenarios, see:
-  // https://thegraph.com/docs/en/developer/matchstick/#write-a-unit-test
+  test("Approval created and stored", () => {
+    assert.entityCount("Approval", 1)
 
-  test("ExampleEntity created and stored", () => {
-    assert.entityCount("ExampleEntity", 1)
+    let id = Bytes.fromHexString(
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a"
+    ).concatI32(1)
 
-    // 0xa16081f360e3847006db660bae1c6d1b2e17ec2a is the default address used in newMockEvent() function
     assert.fieldEquals(
-      "ExampleEntity",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a",
+      "Approval",
+      id.toHexString(),
       "owner",
       "0x0000000000000000000000000000000000000001"
     )
     assert.fieldEquals(
-      "ExampleEntity",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a",
+      "Approval",
+      id.toHexString(),
       "approved",
-      "0x0000000000000000000000000000000000000001"
+      "0x0000000000000000000000000000000000000002"
     )
-    assert.fieldEquals(
-      "ExampleEntity",
-      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a",
-      "tokenId",
-      "234"
-    )
-
-    // More assert options:
-    // https://thegraph.com/docs/en/developer/matchstick/#asserts
+    assert.fieldEquals("Approval", id.toHexString(), "tokenId", "234")
   })
 })

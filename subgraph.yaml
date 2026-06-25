@@ -6,11 +6,11 @@ schema:
 dataSources:
   - kind: ethereum
     name: ICHICHAIN
-    network: polygon-amoy
+    network: arbitrum-sepolia
     source:
-      address: "0x24513A99D1Dd6cFd8d9c27D3344877e0499180f0"
+      address: "0xf75395A8cd753f47135cfcaE00D2706252c3E0F5"
       abi: ICHICHAIN
-      startBlock: 15027043
+      startBlock: 273178800
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -21,20 +21,22 @@ dataSources:
         - ConsecutiveTransfer
         - LastPrizeDraw
         - LastPrizeWinner
+        - AdminMinted
+        - MintLockUpdated
         - NewSeries
         - NewSubPrize
         - NewTicketStatus
-        - OwnershipTransferred
-        - RefundSeries
+        - SeriesUnlockedFor
         - Transfer
         - UpdatePrize
         - UpdateSeriesInformation
         - UpdateSeriesLastPrizeOwner
         - UpdateSeriesRemainingTicketNumbers
         - UpdateTicketStatus
+        - VrfRouterUpdated
       abis:
         - name: ICHICHAIN
-          file: ./abis/DOUDOCHAIN.json
+          file: ./abis/DOUDOCHAINV2CoreUpgradeable.json
       eventHandlers:
         - event: Approval(indexed address,indexed address,indexed uint256)
           handler: handleApproval
@@ -46,23 +48,23 @@ dataSources:
           handler: handleLastPrizeDraw
         - event: LastPrizeWinner(uint256,uint256[])
           handler: handleLastPrizeWinner
-        - event: NewSeries(indexed
-            uint256,string,uint256,uint256,uint256,uint256,bool,uint256,uint256,string,string,string,string,address,bool,bool)
+        - event: AdminMinted(indexed address,indexed address,indexed uint256,uint256)
+          handler: handleAdminMinted
+        - event: MintLockUpdated(indexed uint256,indexed address,uint256)
+          handler: handleMintLockUpdated
+        - event: NewSeries(indexed uint256,string,uint256,uint256,uint256,uint256,bool,uint256,uint256,string,string,string,string,address,bool,bool)
           handler: handleNewSeries
-        - event: RefundSeries(indexed uint256,bool)
-          handler: handleRefundSeries
-        - event: ResetSubPrize(indexed uint256)
-          handler: handleResetSubPrize
         - event: NewSubPrize(indexed uint256,uint256,string,string,uint256)
           handler: handleNewSubPrize
-        - event: NewTicketStatus(uint256,uint256,uint256,bool,bool,address)
+        - event: NewTicketStatus(indexed uint256,indexed uint256,uint256,bool,bool,address,uint16)
           handler: handleNewTicketStatus
+        - event: SeriesUnlockedFor(indexed uint256,indexed address,uint256)
+          handler: handleSeriesUnlockedFor
         - event: Transfer(indexed address,indexed address,indexed uint256)
           handler: handleTransfer
         - event: UpdatePrize(indexed uint256,uint256,uint256)
           handler: handleUpdatePrize
-        - event: UpdateSeriesInformation(indexed
-            uint256,bool,uint256,uint256,string,string,string,string)
+        - event: UpdateSeriesInformation(indexed uint256,bool,uint256,uint256,string,string,string,string)
           handler: handleUpdateSeriesInformation
         - event: UpdateSeriesLastPrizeOwner(indexed uint256,address[])
           handler: handleUpdateSeriesLastPrizeOwner
@@ -70,14 +72,17 @@ dataSources:
           handler: handleUpdateSeriesRemainingTicketNumbers
         - event: UpdateTicketStatus(uint256,uint256,uint256,bool,bool)
           handler: handleUpdateTicketStatus
+        - event: VrfRouterUpdated(indexed address,indexed address)
+          handler: handleVrfRouterUpdated
       file: ./src/ichichain.ts
+
   - kind: ethereum
     name: RevealOnChainData
-    network: polygon-amoy
+    network: arbitrum-sepolia
     source:
-      address: "0x24513A99D1Dd6cFd8d9c27D3344877e0499180f0"
+      address: "0xf75395A8cd753f47135cfcaE00D2706252c3E0F5"
       abi: ICHICHAIN
-      startBlock: 15027043
+      startBlock: 273178800
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -87,45 +92,258 @@ dataSources:
         - RevealDrawSent
       abis:
         - name: ICHICHAIN
-          file: ./abis/DOUDOCHAIN.json
+          file: ./abis/DOUDOCHAINV2CoreUpgradeable.json
       eventHandlers:
         - event: RevealDrawFulfilled(uint256,uint256,uint256[])
           handler: handleRevealDrawFulfilled
         - event: RevealDrawSent(uint256,uint256[])
           handler: handleRevealDrawSent
       file: ./src/onChainData.ts
+
   - kind: ethereum
-    name: Contract
-    network: polygon-amoy
+    name: MerchantSeriesRegistry
+    network: arbitrum-sepolia
     source:
-      address: "0xF5E1086Ce5AEc81FfaA88B1FfF73D9e8d4a089d0"
-      abi: Contract
-      startBlock: 15021233
+      address: "0x03dBEE1f231A29b06032aa24D2CFb96a1321C1A6"
+      abi: MerchantSeriesRegistry
+      startBlock: 277513499
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - ContractApproval
-        - ContractApprovalForAll
+        - NewSeries
+        - SeriesMerchantCorrection
+      abis:
+        - name: MerchantSeriesRegistry
+          file: ./abis/MerchantSeriesRegistry.json
+      eventHandlers:
+        - event: SeriesMerchantLinked(indexed address,indexed uint256,indexed bytes32,address)
+          handler: handleSeriesMerchantLinked
+        - event: SeriesMerchantRelinked(indexed address,indexed uint256,bytes32,bytes32,address)
+          handler: handleSeriesMerchantRelinked
+      file: ./src/merchant-series-registry.ts
+
+  - kind: ethereum
+    name: DoudoVRFRouter
+    network: arbitrum-sepolia
+    source:
+      address: "0x5A59D45437559C7CE0A012630a456321180C21e1"
+      abi: DoudoVRFRouter
+      startBlock: 273178800
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - RequesterUpdated
+        - VrfConfigUpdated
+        - VrfRequest
+      abis:
+        - name: DoudoVRFRouter
+          file: ./abis/DoudoVRFRouter.json
+      eventHandlers:
+        - event: RequesterUpdated(indexed address,bool)
+          handler: handleRequesterUpdated
+        - event: VrfConfigUpdated(indexed address,uint256,bytes32,uint32,uint16,indexed address)
+          handler: handleVrfConfigUpdated
+        - event: VrfRandomWordsRequested(indexed uint256,indexed address,indexed address,uint32)
+          handler: handleVrfRandomWordsRequested
+        - event: VrfRandomWordsFulfilled(indexed uint256,indexed address)
+          handler: handleVrfRandomWordsFulfilled
+      file: ./src/router.ts
+
+  - kind: ethereum
+    name: DoudoBundleModule
+    network: arbitrum-sepolia
+    source:
+      address: "0x68cBA2b3c72Be39be748B06c1e6dDab2855E91b6"
+      abi: DoudoBundleModuleUpgradeable
+      startBlock: 273178800
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - BundleConfig
+        - BundleMint
+      abis:
+        - name: DoudoBundleModuleUpgradeable
+          file: ./abis/DoudoBundleModuleUpgradeable.json
+      eventHandlers:
+        - event: BundleConfigured(indexed uint256,indexed uint256,uint256,uint256,uint256,uint256,bool)
+          handler: handleBundleConfigured
+        - event: BundleMinted(indexed uint256,indexed uint256,indexed address,uint256,uint256)
+          handler: handleBundleMinted
+      file: ./src/bundle.ts
+
+  - kind: ethereum
+    name: DoudoRefundModule
+    network: arbitrum-sepolia
+    source:
+      address: "0x8ee19238DAa466B7792BE33569c6E4f6993CCf20"
+      abi: DoudoRefundModuleUpgradeable
+      startBlock: 273178800
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - RefundConfig
+        - RefundSeries
+        - RefundClaim
+      abis:
+        - name: DoudoRefundModuleUpgradeable
+          file: ./abis/DoudoRefundModuleUpgradeable.json
+      eventHandlers:
+        - event: RefundSeries(indexed uint256,bool,uint256)
+          handler: handleRefundSeries
+        - event: RefundClaimed(indexed uint256,indexed address,uint256[],uint256)
+          handler: handleRefundClaimed
+      file: ./src/refund.ts
+
+  - kind: ethereum
+    name: DoudoRedrawModule
+    network: arbitrum-sepolia
+    source:
+      address: "0xE75461828f41C890fbc811e7cABFe2143B3F4afE"
+      abi: DoudoRedrawModuleUpgradeable
+      startBlock: 273178800
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - RouterUpdated
+        - RedrawConfig
+        - RedrawMint
+        - ConsolationPrize
+        - ConsolationDrawBalance
+        - ConsolationDraw
+      abis:
+        - name: DoudoRedrawModuleUpgradeable
+          file: ./abis/DoudoRedrawModuleUpgradeable.json
+      eventHandlers:
+        - event: RouterUpdated(indexed address)
+          handler: handleRouterUpdated
+        - event: RedrawConfigUpdated(indexed uint256,uint16,uint16)
+          handler: handleRedrawConfigUpdated
+        - event: RedrawEnabledUpdated(indexed uint256,bool)
+          handler: handleRedrawEnabledUpdated
+        - event: RedrawRequested(indexed uint256,indexed uint256,indexed address,bool)
+          handler: handleRedrawRequested
+        - event: RedrawFulfilled(indexed uint256,indexed uint256,indexed address,uint256,bool)
+          handler: handleRedrawFulfilled
+        - event: RedrawMinted(indexed uint256,indexed address,uint256,uint256)
+          handler: handleRedrawMinted
+        - event: ConsolationDrawBalanceUpdated(indexed uint256,indexed address,uint256)
+          handler: handleConsolationDrawBalanceUpdated
+        - event: NewConsolationPrize(indexed uint256,uint256,string,string,uint256)
+          handler: handleNewConsolationPrize
+        - event: UpdateConsolationPrize(indexed uint256,uint256,uint256)
+          handler: handleUpdateConsolationPrize
+      file: ./src/redraw.ts
+
+  - kind: ethereum
+    name: DoudoCollectionRewardModule
+    network: arbitrum-sepolia
+    source:
+      address: "0x680618a6933DD68fF84Ff9F64760120d27400B3C"
+      abi: DoudoCollectionRewardModuleUpgradeable
+      startBlock: 273178800
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CollectionRewardConfig
+        - CollectionRewardMint
+        - SeriesUnlockedFor
+      abis:
+        - name: DoudoCollectionRewardModuleUpgradeable
+          file: ./abis/DoudoCollectionRewardModuleUpgradeable.json
+      eventHandlers:
+        - event: CollectionRewardConfigSet(indexed uint256,uint8,uint256,uint256,uint256,bool)
+          handler: handleCollectionRewardConfigSet
+        - event: CollectionRewardMinted(indexed uint256,indexed address,uint8,uint256,uint256)
+          handler: handleCollectionRewardMinted
+        - event: SeriesUnlockedFor(indexed uint256,indexed address,uint256)
+          handler: handleSeriesUnlockedFor
+      file: ./src/collection-reward.ts
+
+  - kind: ethereum
+    name: CollectionBookUpgradeable
+    network: arbitrum-sepolia
+    source:
+      address: "0x4284be399cA9591fBd98248969fCcb969E21B2C6"
+      abi: CollectionBookUpgradeable
+      startBlock: 273178800
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - CollectionBook
+        - CollectionBookSlot
+        - CollectionBookUserProgress
+        - CollectionBookDeposit
+        - CollectionBookClaim
+        - CollectionBookRewardTargetUpdated
+      abis:
+        - name: CollectionBookUpgradeable
+          file: ./abis/CollectionBookUpgradeable.json
+      eventHandlers:
+        - event: CollectionBookCreated(indexed uint256,string,uint8,uint256,bool)
+          handler: handleCollectionBookCreated
+        - event: CollectionBookSlotDefined(indexed uint256,indexed uint256,indexed address,uint256,uint256,uint32)
+          handler: handleCollectionBookSlotDefined
+        - event: CollectionBookStatusUpdated(indexed uint256,bool)
+          handler: handleCollectionBookStatusUpdated
+        - event: CollectionBookRewardTargetUpdated(address)
+          handler: handleCollectionBookRewardTargetUpdated
+        - event: CollectionBookSlotFilled(indexed address,indexed uint256,indexed uint256,address,uint256,uint32)
+          handler: handleCollectionBookSlotFilled
+        - event: CollectionBookSlotEmptied(indexed address,indexed uint256,indexed uint256,address,uint256,uint32)
+          handler: handleCollectionBookSlotEmptied
+        - event: CollectionBookClaimed(indexed address,indexed uint256,uint8,uint256)
+          handler: handleCollectionBookClaimed
+      file: ./src/collection-book.ts
+
+  - kind: ethereum
+    name: Contract
+    network: arbitrum-sepolia
+    source:
+      address: "0x35d6650973B713193C9D0Ef96E4EbFB61B96B7B7"
+      abi: Contract
+      startBlock: 275143005
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Approval
+        - ApprovalForAll
         - MembershipExpired
         - MembershipLevelCreated
         - MembershipLevelUpdated
         - MembershipNFTBurned
-        - MembershipNFTMinted
         - MembershipRenewed
         - MembershipTransferred
         - MembershipUpgraded
         - RoleAdminChanged
         - RoleGranted
         - RoleRevoked
-        - ContractTransfer
+        - Transfer
         - VoucherMinted
         - VoucherTotalRedeemed
         - VoucherTransferred
         - VoucherTypeCreated
         - VoucherTypeUpdated
         - VouchersIssuedFromSubscription
+        - VoucherType
+        - Voucher
+        - MembershipLevel
+        - MembershipNFT
       abis:
         - name: Contract
           file: ./abis/Contract.json
@@ -169,102 +387,7 @@ dataSources:
         - event: VouchersIssuedFromSubscription(indexed address,uint256[],uint256[],uint256)
           handler: handleVouchersIssuedFromSubscription
       file: ./src/contract.ts
-  - kind: ethereum
-    name: MarketplaceV3
-    network: polygon-amoy
-    source:
-      address: "0x8eB3Ff102b351fb03ab456c45B2E993dE80E280c"
-      abi: MarketplaceV3
-      startBlock: 17835264
-    mapping:
-      kind: ethereum/events
-      apiVersion: 0.0.7
-      language: wasm/assemblyscript
-      entities:
-        - ContractURIUpdated
-        - ExtensionAdded
-        - ExtensionRemoved
-        - ExtensionReplaced
-        - FlatPlatformFeeUpdated
-        - FunctionDisabled
-        - FunctionEnabled
-        - Initialized
-        - PlatformFeeInfoUpdated
-        - PlatformFeeTypeUpdated
-        - RoleAdminChanged
-        - RoleGranted
-        - RoleRevoked
-        - RoyaltyEngineUpdated
-      abis:
-        - name: MarketplaceV3
-          file: ./abis/MarketplaceV3.json
-      eventHandlers:
-        - event: ContractURIUpdated(string,string)
-          handler: handleContractURIUpdated
-        - event: ExtensionAdded(indexed string,indexed
-            address,((string,string,address),(bytes4,string)[]))
-          handler: handleExtensionAdded
-        - event: ExtensionRemoved(indexed string,((string,string,address),(bytes4,string)[]))
-          handler: handleExtensionRemoved
-        - event: ExtensionReplaced(indexed string,indexed
-            address,((string,string,address),(bytes4,string)[]))
-          handler: handleExtensionReplaced
-        - event: FlatPlatformFeeUpdated(address,uint256)
-          handler: handleFlatPlatformFeeUpdated
-        - event: FunctionDisabled(indexed string,indexed bytes4,(string,string,address))
-          handler: handleFunctionDisabled
-        - event: FunctionEnabled(indexed string,indexed
-            bytes4,(bytes4,string),(string,string,address))
-          handler: handleFunctionEnabled
-        - event: Initialized(uint8)
-          handler: handleInitialized
-        - event: PlatformFeeInfoUpdated(indexed address,uint256)
-          handler: handlePlatformFeeInfoUpdated
-        - event: PlatformFeeTypeUpdated(uint8)
-          handler: handlePlatformFeeTypeUpdated
-        - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
-          handler: handleRoleAdminChanged
-        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
-          handler: handleRoleGranted
-        - event: RoleRevoked(indexed bytes32,indexed address,indexed address)
-          handler: handleRoleRevoked
-        - event: RoyaltyEngineUpdated(indexed address,indexed address)
-          handler: handleRoyaltyEngineUpdated
-        - event: BuyerApprovedForListing(indexed uint256,indexed address,bool)
-          handler: handleBuyerApprovedForListing
-        - event: CancelledListing(indexed address,indexed uint256)
-          handler: handleCancelledListing
-        - event: CurrencyApprovedForListing(indexed uint256,indexed address,uint256)
-          handler: handleCurrencyApprovedForListing
-        - event: NewListing(indexed address,indexed uint256,indexed
-            address,(uint256,uint256,uint256,uint256,uint128,uint128,address,address,address,uint8,uint8,bool))
-          handler: handleNewListing
-        - event: NewSale(indexed address,indexed uint256,indexed
-            address,uint256,address,uint256,uint256)
-          handler: handleNewSale
-        - event: UpdatedListing(indexed address,indexed uint256,indexed
-            address,(uint256,uint256,uint256,uint256,uint128,uint128,address,address,address,uint8,uint8,bool))
-          handler: handleUpdatedListing
-        - event: AuctionClosed(indexed uint256,indexed address,indexed
-            address,uint256,address,address)
-          handler: handleAuctionClosed
-        - event: CancelledAuction(indexed address,indexed uint256)
-          handler: handleCancelledAuction
-        - event: NewAuction(indexed address,indexed uint256,indexed
-            address,(uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64,address,address,address,uint8,uint8))
-          handler: handleNewAuction
-        - event: NewBid(indexed uint256,indexed address,indexed
-            address,uint256,(uint256,uint256,uint256,uint256,uint256,uint64,uint64,uint64,uint64,address,address,address,uint8,uint8))
-          handler: handleNewBid
-        - event: AcceptedOffer(indexed address,indexed uint256,indexed
-            address,uint256,address,uint256,uint256)
-          handler: handleAcceptedOffer
-        - event: CancelledOffer(indexed address,indexed uint256)
-          handler: handleCancelledOffer
-        - event: NewOffer(indexed address,indexed uint256,indexed
-            address,(uint256,uint256,uint256,uint256,uint256,address,address,address,uint8,uint8))
-          handler: handleNewOffer
-      file: ./src/marketplace-v-3.ts
+
 templates:
   - kind: file/ipfs
     name: IpfsContent
@@ -278,7 +401,7 @@ templates:
         - IchibanKujiSubPrize
       abis:
         - name: Contract
-          file: ./abis/DOUDOCHAIN.json
+          file: ./abis/DOUDOCHAINV2CoreUpgradeable.json
       handler: handleIchibanSeries
       file: ./src/ichichain.ts
   - kind: file/ipfs
@@ -290,13 +413,12 @@ templates:
       entities:
         - MembershipMetadata
         - VoucherMetadata
-        - VoucherMetadata
-        - MembershipLevel     # Add this
-        - Membership         # Add this if needed
-        - Voucher   
+        - MembershipLevel
+        - Membership
+        - Voucher
       abis:
-       - name: doudonft
-         file: ./abis/Contract.json
+        - name: doudonft
+          file: ./abis/Contract.json
       handler: handleDoudoNFTContent
       file: ./src/contract.ts
   - kind: file/ipfs
@@ -308,8 +430,8 @@ templates:
       entities:
         - UnrevealTokenMetadata
       abis:
-       - name: doudonft
-         file: ./abis/DOUDOCHAIN.json
+        - name: doudonft
+          file: ./abis/DOUDOCHAINV2CoreUpgradeable.json
       handler: handleUnrevealTokenContent
       file: ./src/ichichain.ts
   - kind: file/ipfs
@@ -321,7 +443,7 @@ templates:
       entities:
         - RevealTokenMetadata
       abis:
-       - name: doudonft
-         file: ./abis/DOUDOCHAIN.json
+        - name: doudonft
+          file: ./abis/DOUDOCHAINV2CoreUpgradeable.json
       handler: handleRevealTokenContent
       file: ./src/ichichain.ts

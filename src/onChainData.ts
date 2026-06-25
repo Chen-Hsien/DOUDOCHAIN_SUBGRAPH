@@ -1,21 +1,15 @@
 import {
   RevealDrawFulfilled as RevealDrawFulfilledEvent,
   RevealDrawSent as RevealDrawSentEvent,
-  ICHICHAIN,
 } from "../generated/ICHICHAIN/ICHICHAIN";
 
-import { RevealDrawFulfilled, RevealDrawSent } from "../generated/schema";
-
 import {
-  json,
-  BigInt,
-  Bytes,
-  log,
-  dataSource,
-  DataSourceContext,
-  DataSourceTemplate,
-  JSONValueKind,
-} from "@graphprotocol/graph-ts";
+  RevealDrawFulfilled,
+  RevealDrawSent,
+  VrfRequest,
+} from "../generated/schema";
+
+import { Bytes } from "@graphprotocol/graph-ts";
 
 export function handleRevealDrawFulfilled(
   event: RevealDrawFulfilledEvent
@@ -26,22 +20,11 @@ export function handleRevealDrawFulfilled(
   entity.requestId = event.params.requestId;
   entity.randomWords = event.params.randomWords;
   entity.seriesID = event.params.seriesID;
+  entity.randomSeed =
+    event.params.randomWords.length > 0 ? event.params.randomWords[0] : null;
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
-
-  entity.save();
-
-  // fill in subprize details
-  let contract = ICHICHAIN.bind(event.address);
-  let subPrizesDetail = contract.getSubPrizesDetail(event.params.seriesID);
-
-  // Iterate through each subprize and construct a comma-separated string
-  let subPrizesRemainingQuantities: BigInt[] = [];
-  for (let i = 0; i < subPrizesDetail.length; i++) {
-    let subprize = subPrizesDetail[i];
-    subPrizesRemainingQuantities.push(subprize.subPrizeRemainingQuantity);
-  }
 
   // update revealDrawSent entity
   let revealDrawSentID = Bytes.fromUTF8(event.params.requestId.toString());
@@ -49,9 +32,14 @@ export function handleRevealDrawFulfilled(
   if (revealDrawSent) {
     revealDrawSent.seriesID = event.params.seriesID;
     revealDrawSent.randomWords = event.params.randomWords;
-    revealDrawSent.subPrizesRemainingQuantities = subPrizesRemainingQuantities;
+    revealDrawSent.randomSeed = entity.randomSeed;
     revealDrawSent.save();
+    entity.revealTokenCount = revealDrawSent.revealTokenCount;
+  } else {
+    entity.revealTokenCount = 0;
   }
+
+  entity.save();
 }
 
 export function handleRevealDrawSent(event: RevealDrawSentEvent): void {
@@ -61,7 +49,11 @@ export function handleRevealDrawSent(event: RevealDrawSentEvent): void {
   entity.requestId = event.params.requestId;
   entity.tokenIDs = event.params.tokenIDs;
   entity.randomWords = [];
+  entity.randomSeed = null;
+  entity.revealTokenCount = event.params.tokenIDs.length;
   entity.subPrizesRemainingQuantities = [];
+  let vrfRequest = VrfRequest.load(Bytes.fromUTF8(event.params.requestId.toString()));
+  entity.vrfNumWords = vrfRequest ? vrfRequest.numWords : null;
 
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
