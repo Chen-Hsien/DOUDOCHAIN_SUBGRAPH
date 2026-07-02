@@ -2,6 +2,9 @@ import {
   SeriesMerchantLinked as SeriesMerchantLinkedEvent,
   SeriesMerchantRelinked as SeriesMerchantRelinkedEvent
 } from "../generated/MerchantSeriesRegistry/MerchantSeriesRegistry"
+import {
+  SeriesSourceTagged as SeriesSourceTaggedEvent
+} from "../generated/MerchantSeriesPublisher/MerchantSeriesPublisher"
 import { NewSeries, SeriesMerchantCorrection } from "../generated/schema"
 import { BigInt, Bytes, log } from "@graphprotocol/graph-ts"
 
@@ -68,4 +71,19 @@ export function handleSeriesMerchantRelinked(
   correction.blockTimestamp = event.block.timestamp
   correction.transactionHash = event.transaction.hash
   correction.save()
+}
+
+export function handleSeriesSourceTagged(event: SeriesSourceTaggedEvent): void {
+  let series = NewSeries.load(seriesEntityId(event.params.seriesID))
+  if (series == null) {
+    log.warning(
+      "SeriesSourceTagged without indexed NewSeries: core={}, seriesID={}",
+      [event.params.core.toHexString(), event.params.seriesID.toString()]
+    )
+    return
+  }
+
+  series.packingType = event.params.packingType
+  series.sourceType = event.params.sourceType
+  series.save()
 }

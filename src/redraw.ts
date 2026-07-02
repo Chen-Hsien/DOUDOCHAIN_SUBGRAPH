@@ -4,6 +4,7 @@ import {
   RedrawConfigUpdated as RedrawConfigUpdatedEvent,
   RedrawEnabledUpdated as RedrawEnabledUpdatedEvent,
   RedrawFulfilled as RedrawFulfilledEvent,
+  RedrawMainConfigUpdated as RedrawMainConfigUpdatedEvent,
   RedrawMinted as RedrawMintedEvent,
   RedrawRequested as RedrawRequestedEvent,
   RouterUpdated as RouterUpdatedEvent,
@@ -44,6 +45,20 @@ function requestId(requestIdValue: BigInt): Bytes {
   return Bytes.fromUTF8(requestIdValue.toString());
 }
 
+function ensureRedrawConfig(seriesID: BigInt): RedrawConfig {
+  let entity = RedrawConfig.load(seriesId(seriesID));
+  if (!entity) {
+    entity = new RedrawConfig(seriesId(seriesID));
+    entity.seriesID = seriesID;
+    entity.mainBurnCount = 0;
+    entity.mainMintCount = 0;
+    entity.consolationBurnCount = 0;
+    entity.enabled = false;
+  }
+
+  return entity;
+}
+
 export function handleRouterUpdated(event: RouterUpdatedEvent): void {
   let entity = new RouterUpdated(
     event.transaction.hash.concatI32(event.logIndex.toI32())
@@ -58,27 +73,26 @@ export function handleRouterUpdated(event: RouterUpdatedEvent): void {
 export function handleRedrawConfigUpdated(
   event: RedrawConfigUpdatedEvent
 ): void {
-  let entity = RedrawConfig.load(seriesId(event.params.seriesID));
-  if (!entity) {
-    entity = new RedrawConfig(seriesId(event.params.seriesID));
-    entity.seriesID = event.params.seriesID;
-    entity.enabled = false;
-  }
+  let entity = ensureRedrawConfig(event.params.seriesID);
   entity.mainBurnCount = event.params.mainBurnCount;
+  entity.mainMintCount = event.params.mainBurnCount;
   entity.consolationBurnCount = event.params.consolationBurnCount;
+  entity.save();
+}
+
+export function handleRedrawMainConfigUpdated(
+  event: RedrawMainConfigUpdatedEvent
+): void {
+  let entity = ensureRedrawConfig(event.params.seriesID);
+  entity.mainBurnCount = event.params.mainBurnCount;
+  entity.mainMintCount = event.params.mainMintCount;
   entity.save();
 }
 
 export function handleRedrawEnabledUpdated(
   event: RedrawEnabledUpdatedEvent
 ): void {
-  let entity = RedrawConfig.load(seriesId(event.params.seriesID));
-  if (!entity) {
-    entity = new RedrawConfig(seriesId(event.params.seriesID));
-    entity.seriesID = event.params.seriesID;
-    entity.mainBurnCount = 0;
-    entity.consolationBurnCount = 0;
-  }
+  let entity = ensureRedrawConfig(event.params.seriesID);
   entity.enabled = event.params.enabled;
   entity.save();
 }

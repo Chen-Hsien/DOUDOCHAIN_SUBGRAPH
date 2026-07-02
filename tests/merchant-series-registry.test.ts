@@ -9,11 +9,13 @@ import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { NewSeries } from "../generated/schema"
 import {
   handleSeriesMerchantLinked,
-  handleSeriesMerchantRelinked
+  handleSeriesMerchantRelinked,
+  handleSeriesSourceTagged
 } from "../src/merchant-series-registry"
 import {
   createSeriesMerchantLinkedEvent,
-  createSeriesMerchantRelinkedEvent
+  createSeriesMerchantRelinkedEvent,
+  createSeriesSourceTaggedEvent
 } from "./merchant-series-registry-utils"
 
 const CORE = "0x00000000000000000000000000000000000000c0"
@@ -47,6 +49,8 @@ function seedSeries(seriesID: BigInt): void {
   series.lastPrizeOwner = []
   series.isRefund = false
   series.isPreOrder = false
+  series.packingType = 0
+  series.sourceType = 0
   series.blockNumber = BigInt.fromI32(1)
   series.blockTimestamp = BigInt.fromI32(1)
   series.transactionHash = Bytes.fromHexString(
@@ -110,5 +114,22 @@ describe("MerchantSeriesRegistry handlers", () => {
     assert.fieldEquals("NewSeries", id, "merchantUpdatedAt", "5678")
     assert.fieldEquals("NewSeries", id, "merchantRelinkCount", "1")
     assert.entityCount("SeriesMerchantCorrection", 1)
+  })
+
+  test("SeriesSourceTagged patches packing and source fields onto an existing series", () => {
+    let seriesID = BigInt.fromI32(11)
+    seedSeries(seriesID)
+
+    let event = createSeriesSourceTaggedEvent(
+      Address.fromString(CORE),
+      seriesID,
+      2,
+      1
+    )
+    handleSeriesSourceTagged(event)
+
+    let id = seriesEntityId(seriesID).toHexString()
+    assert.fieldEquals("NewSeries", id, "packingType", "2")
+    assert.fieldEquals("NewSeries", id, "sourceType", "1")
   })
 })

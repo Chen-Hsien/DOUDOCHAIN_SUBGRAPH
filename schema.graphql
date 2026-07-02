@@ -91,6 +91,8 @@ type NewSeries @entity(immutable: false) {
   lastPrizeOwner: [Bytes!] # address
   isRefund: Boolean! # bool
   isPreOrder: Boolean! # bool
+  packingType: Int! # uint8, 0 Unknown, 1 Assorted, 2 OriginalCase
+  sourceType: Int! # uint8, 0 Unknown, 1 Japan, 2 Distributor
   merchantRef: Bytes # bytes32, set by MerchantSeriesRegistry
   merchantLinkedAt: BigInt
   merchantUpdatedAt: BigInt
@@ -306,6 +308,75 @@ type BundleMint @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type SeriesRebateTierConfig @entity(immutable: false) {
+  id: Bytes!
+  seriesID: BigInt!
+  version: BigInt!
+  tierCount: BigInt!
+  lastClearedAt: BigInt
+  updatedAt: BigInt!
+  transactionHash: Bytes!
+  tiers: [SeriesRebateTier!] @derivedFrom(field: "config")
+}
+
+type SeriesRebateTier @entity(immutable: false) {
+  id: Bytes!
+  config: SeriesRebateTierConfig!
+  seriesID: BigInt!
+  configVersion: BigInt!
+  tierIndex: BigInt!
+  minimumTicketQuantity: BigInt!
+  rebatePoints: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BundleRebateTiersCleared @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  configVersion: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type BundleRebateTierConfigured @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  configVersion: BigInt!
+  tierIndex: BigInt!
+  minimumTicketQuantity: BigInt!
+  rebatePoints: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TicketPurchaseMint @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  buyer: Bytes!
+  ticketQuantity: BigInt!
+  priceInPoints: BigInt!
+  revealImmediately: Boolean!
+  firstTokenID: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type TicketPurchaseRebate @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  buyer: Bytes!
+  ticketQuantity: BigInt!
+  rebatePoints: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type RefundConfig @entity(immutable: false) {
   id: Bytes!
   seriesID: BigInt!
@@ -336,6 +407,7 @@ type RedrawConfig @entity(immutable: false) {
   id: Bytes!
   seriesID: BigInt!
   mainBurnCount: Int!
+  mainMintCount: Int!
   consolationBurnCount: Int!
   enabled: Boolean!
 }

@@ -125,6 +125,27 @@ dataSources:
       file: ./src/merchant-series-registry.ts
 
   - kind: ethereum
+    name: MerchantSeriesPublisher
+    network: arbitrum-sepolia
+    source:
+      address: "0xB0EC5ca70a9AeCaeb260FdCDF238a64Ad37F5515"
+      abi: MerchantSeriesPublisher
+      startBlock: 282588588
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - NewSeries
+      abis:
+        - name: MerchantSeriesPublisher
+          file: ./abis/MerchantSeriesPublisher.json
+      eventHandlers:
+        - event: SeriesSourceTagged(indexed address,indexed uint256,uint8,uint8)
+          handler: handleSeriesSourceTagged
+      file: ./src/merchant-series-registry.ts
+
+  - kind: ethereum
     name: DoudoVRFRouter
     network: arbitrum-sepolia
     source:
@@ -165,16 +186,24 @@ dataSources:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
-        - BundleConfig
-        - BundleMint
+        - BundleRebateTierConfigured
+        - BundleRebateTiersCleared
+        - SeriesRebateTier
+        - SeriesRebateTierConfig
+        - TicketPurchaseMint
+        - TicketPurchaseRebate
       abis:
         - name: DoudoBundleModuleUpgradeable
           file: ./abis/DoudoBundleModuleUpgradeable.json
       eventHandlers:
-        - event: BundleConfigured(indexed uint256,indexed uint256,uint256,uint256,uint256,uint256,bool)
-          handler: handleBundleConfigured
-        - event: BundleMinted(indexed uint256,indexed uint256,indexed address,uint256,uint256)
-          handler: handleBundleMinted
+        - event: BundleRebateTiersCleared(indexed uint256)
+          handler: handleBundleRebateTiersCleared
+        - event: BundleRebateTierConfigured(indexed uint256,indexed uint256,uint256,uint256)
+          handler: handleBundleRebateTierConfigured
+        - event: TicketPurchaseMinted(indexed uint256,indexed address,uint256,uint256,bool,uint256)
+          handler: handleTicketPurchaseMinted
+        - event: TicketPurchaseRebatePaid(indexed uint256,indexed address,uint256,uint256)
+          handler: handleTicketPurchaseRebatePaid
       file: ./src/bundle.ts
 
   - kind: ethereum
@@ -228,6 +257,8 @@ dataSources:
           handler: handleRouterUpdated
         - event: RedrawConfigUpdated(indexed uint256,uint16,uint16)
           handler: handleRedrawConfigUpdated
+        - event: RedrawMainConfigUpdated(indexed uint256,uint16,uint16)
+          handler: handleRedrawMainConfigUpdated
         - event: RedrawEnabledUpdated(indexed uint256,bool)
           handler: handleRedrawEnabledUpdated
         - event: RedrawRequested(indexed uint256,indexed uint256,indexed address,bool)

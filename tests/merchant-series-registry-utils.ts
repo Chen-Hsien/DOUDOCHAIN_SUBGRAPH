@@ -4,6 +4,9 @@ import {
   SeriesMerchantLinked,
   SeriesMerchantRelinked
 } from "../generated/MerchantSeriesRegistry/MerchantSeriesRegistry"
+import {
+  SeriesSourceTagged
+} from "../generated/MerchantSeriesPublisher/MerchantSeriesPublisher"
 
 export function createSeriesMerchantLinkedEvent(
   seriesContract: Address,
@@ -75,6 +78,40 @@ export function createSeriesMerchantRelinkedEvent(
   )
   event.parameters.push(
     new ethereum.EventParam("operator", ethereum.Value.fromAddress(operator))
+  )
+
+  return event
+}
+
+export function createSeriesSourceTaggedEvent(
+  core: Address,
+  seriesID: BigInt,
+  packingType: i32,
+  sourceType: i32
+): SeriesSourceTagged {
+  let event = changetype<SeriesSourceTagged>(newMockEvent())
+  event.parameters = new Array()
+
+  event.parameters.push(
+    new ethereum.EventParam("core", ethereum.Value.fromAddress(core))
+  )
+  event.parameters.push(
+    new ethereum.EventParam(
+      "seriesID",
+      ethereum.Value.fromUnsignedBigInt(seriesID)
+    )
+  )
+  event.parameters.push(
+    new ethereum.EventParam(
+      "packingType",
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(packingType))
+    )
+  )
+  event.parameters.push(
+    new ethereum.EventParam(
+      "sourceType",
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(sourceType))
+    )
   )
 
   return event

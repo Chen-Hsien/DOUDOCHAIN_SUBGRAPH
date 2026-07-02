@@ -228,6 +228,8 @@ export function handleNewSeries(event: NewSeriesEvent): void {
   entity.lastPrizeOwner = [];
   entity.isRefund = event.params.isRefund;
   entity.isPreOrder = event.params.isPreOrder;
+  entity.packingType = 0;
+  entity.sourceType = 0;
   entity.recentIPFSHash = Bytes.empty();
   entity.merchantRelinkCount = 0;
 

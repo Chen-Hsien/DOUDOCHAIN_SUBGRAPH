@@ -25,6 +25,10 @@
       "address": "0x03dBEE1f231A29b06032aa24D2CFb96a1321C1A6",
       "startBlock": 277513499
     },
+    "MerchantSeriesPublisher": {
+      "address": "0xB0EC5ca70a9AeCaeb260FdCDF238a64Ad37F5515",
+      "startBlock": 282588588
+    },
     "DoudoVRFRouter": {
       "address": "0x5A59D45437559C7CE0A012630a456321180C21e1",
       "startBlock": 273178800
