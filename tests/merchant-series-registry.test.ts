@@ -39,6 +39,7 @@ function seedSeries(seriesID: BigInt): void {
   series.priceInUSDTWei = BigInt.fromI32(1)
   series.priceInPoints = BigInt.fromI32(1)
   series.priceInTWD = BigInt.fromI32(100)
+  series.maxPerWallet = BigInt.zero()
   series.isGoodsArrived = false
   series.estimateDeliverTime = BigInt.fromI32(1)
   series.exchangeExpireTime = BigInt.fromI32(1)

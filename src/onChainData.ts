@@ -5,11 +5,17 @@ import {
 
 import {
   RevealDrawFulfilled,
+  RedrawRevealBatchContext,
   RevealDrawSent,
   VrfRequest,
 } from "../generated/schema";
 
 import { Bytes } from "@graphprotocol/graph-ts";
+import {
+  applyRedrawRevealLink,
+  redrawRevealBatchId,
+  saveRedrawRevealCandidate,
+} from "./redraw-reveal-link";
 
 export function handleRevealDrawFulfilled(
   event: RevealDrawFulfilledEvent
@@ -54,6 +60,31 @@ export function handleRevealDrawSent(event: RevealDrawSentEvent): void {
   entity.subPrizesRemainingQuantities = [];
   let vrfRequest = VrfRequest.load(Bytes.fromUTF8(event.params.requestId.toString()));
   entity.vrfNumWords = vrfRequest ? vrfRequest.numWords : null;
+
+  if (event.params.tokenIDs.length > 0) {
+    let batchId = redrawRevealBatchId(
+      event.transaction.hash,
+      event.params.tokenIDs[0]
+    );
+    let redrawContext = RedrawRevealBatchContext.load(batchId);
+    if (redrawContext) {
+      applyRedrawRevealLink(
+        entity,
+        redrawContext.redrawMint,
+        redrawContext.batchIndex
+      );
+    } else {
+      saveRedrawRevealCandidate(
+        batchId,
+        event.params.requestId,
+        entity.id,
+        event.transaction.hash,
+        event.params.tokenIDs[0],
+        event.block.number,
+        event.block.timestamp
+      );
+    }
+  }
 
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;

@@ -7,9 +7,23 @@ import {
   afterAll
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts"
-import { Approval } from "../generated/ICHICHAIN/ICHICHAIN"
-import { handleApproval } from "../src/ichichain"
+import {
+  Approval,
+  LastPrizeWinner,
+  NewSeries,
+  UpdateSeriesInformation
+} from "../generated/ICHICHAIN/ICHICHAIN"
+import {
+  handleApproval,
+  handleLastPrizeWinner,
+  handleNewSeries,
+  handleUpdateSeriesInformation
+} from "../src/ichichain"
 import { newMockEvent } from "matchstick-as"
+import {
+  createNewSeriesEvent,
+  createUpdateSeriesInformationEvent
+} from "./doudochain-utils"
 
 function createApprovalEvent(
   owner: Address,
@@ -33,6 +47,29 @@ function createApprovalEvent(
   )
 
   return approvalEvent
+}
+
+function createLastPrizeWinnerEvent(
+  requestId: BigInt,
+  randomWord: Array<BigInt>
+): LastPrizeWinner {
+  let lastPrizeWinnerEvent = changetype<LastPrizeWinner>(newMockEvent())
+  lastPrizeWinnerEvent.parameters = new Array()
+
+  lastPrizeWinnerEvent.parameters.push(
+    new ethereum.EventParam(
+      "requestId",
+      ethereum.Value.fromUnsignedBigInt(requestId)
+    )
+  )
+  lastPrizeWinnerEvent.parameters.push(
+    new ethereum.EventParam(
+      "randomWord",
+      ethereum.Value.fromUnsignedBigIntArray(randomWord)
+    )
+  )
+
+  return lastPrizeWinnerEvent
 }
 
 describe("ICHICHAIN handlers", () => {
@@ -70,5 +107,159 @@ describe("ICHICHAIN handlers", () => {
       "0x0000000000000000000000000000000000000002"
     )
     assert.fieldEquals("Approval", id.toHexString(), "tokenId", "234")
+  })
+
+  test("LastPrizeWinner uses event id so repeated requestId zero does not collide", () => {
+    clearStore()
+
+    let firstEvent = createLastPrizeWinnerEvent(BigInt.zero(), [
+      BigInt.fromI32(267)
+    ])
+    firstEvent.logIndex = BigInt.fromI32(46)
+    let secondEvent = createLastPrizeWinnerEvent(BigInt.zero(), [
+      BigInt.fromI32(268)
+    ])
+    secondEvent.logIndex = BigInt.fromI32(47)
+
+    handleLastPrizeWinner(firstEvent)
+    handleLastPrizeWinner(secondEvent)
+
+    let firstId = firstEvent.transaction.hash.concatI32(
+      firstEvent.logIndex.toI32()
+    )
+    let secondId = secondEvent.transaction.hash.concatI32(
+      secondEvent.logIndex.toI32()
+    )
+
+    assert.entityCount("LastPrizeWinner", 2)
+    assert.fieldEquals(
+      "LastPrizeWinner",
+      firstId.toHexString(),
+      "requestId",
+      "0"
+    )
+    assert.fieldEquals(
+      "LastPrizeWinner",
+      firstId.toHexString(),
+      "randomWord",
+      "[267]"
+    )
+    assert.fieldEquals(
+      "LastPrizeWinner",
+      secondId.toHexString(),
+      "requestId",
+      "0"
+    )
+    assert.fieldEquals(
+      "LastPrizeWinner",
+      secondId.toHexString(),
+      "randomWord",
+      "[268]"
+    )
+  })
+
+  test("NewSeries accepts ipfs scheme metadata URIs", () => {
+    clearStore()
+
+    let seriesId = BigInt.fromI32(12)
+    let metadataHash = "QmNvKoUciLngtreMGz1xfAdgQE1erehahG87juvUS5k6i1"
+    let owner = Address.fromString("0x0000000000000000000000000000000000000001")
+    let event = createNewSeriesEvent(
+      seriesId,
+      "ipfs series",
+      BigInt.fromI32(60),
+      BigInt.fromI32(60),
+      BigInt.fromI32(100),
+      BigInt.fromI32(0),
+      false,
+      BigInt.zero(),
+      BigInt.zero(),
+      "ipfs://QmExchange/",
+      "ipfs://QmUnreveal",
+      "ipfs://QmReveal/",
+      "ipfs://".concat(metadataHash),
+      owner,
+      false,
+      false
+    )
+
+    handleNewSeries(changetype<NewSeries>(event))
+
+    let id = Bytes.fromUTF8("12")
+    let expectedIchibanSeries = id.concat(Bytes.fromUTF8(metadataHash))
+
+    assert.fieldEquals(
+      "NewSeries",
+      id.toHexString(),
+      "recentIPFSHash",
+      Bytes.fromUTF8(metadataHash).toHexString()
+    )
+    assert.fieldEquals(
+      "NewSeries",
+      id.toHexString(),
+      "currentIchibanSeries",
+      expectedIchibanSeries.toHexString()
+    )
+  })
+
+  test("UpdateSeriesInformation accepts ipfs scheme metadata URIs", () => {
+    clearStore()
+
+    let seriesId = BigInt.fromI32(12)
+    let owner = Address.fromString("0x0000000000000000000000000000000000000001")
+    handleNewSeries(
+      changetype<NewSeries>(
+        createNewSeriesEvent(
+        seriesId,
+        "ipfs series",
+        BigInt.fromI32(60),
+        BigInt.fromI32(60),
+        BigInt.fromI32(100),
+        BigInt.fromI32(0),
+        false,
+        BigInt.zero(),
+        BigInt.zero(),
+        "https://gateway.example/ipfs/QmExchange",
+        "https://gateway.example/ipfs/QmUnreveal",
+        "https://gateway.example/ipfs/QmReveal/",
+        "https://gateway.example/ipfs/QmOldMetadata",
+        owner,
+        false,
+        false
+      )
+      )
+    )
+
+    let metadataHash = "QmNvKoUciLngtreMGz1xfAdgQE1erehahG87juvUS5k6i1"
+    handleUpdateSeriesInformation(
+      changetype<UpdateSeriesInformation>(
+        createUpdateSeriesInformationEvent(
+        seriesId,
+        false,
+        BigInt.zero(),
+        BigInt.zero(),
+        "ipfs://QmExchange/",
+        "ipfs://QmUnreveal",
+        "ipfs://QmReveal/",
+        "ipfs://".concat(metadataHash)
+      )
+      )
+    )
+
+    let id = Bytes.fromUTF8("12")
+    let expectedIchibanSeries = id.concat(Bytes.fromUTF8(metadataHash))
+
+    assert.fieldEquals(
+      "NewSeries",
+      id.toHexString(),
+      "recentIPFSHash",
+      Bytes.fromUTF8(metadataHash).toHexString()
+    )
+    assert.fieldEquals(
+      "NewSeries",
+      id.toHexString(),
+      "currentIchibanSeries",
+      expectedIchibanSeries.toHexString()
+    )
   })
 })

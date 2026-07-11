@@ -81,6 +81,7 @@ type NewSeries @entity(immutable: false) {
   priceInUSDTWei: BigInt! # uint256
   priceInPoints: BigInt! # uint256, V2 alias of priceInUSDTWei
   priceInTWD: BigInt! # uint256
+  maxPerWallet: BigInt! # uint256, 0 means unlimited
   isGoodsArrived: Boolean! # bool
   estimateDeliverTime: BigInt! # uint256
   exchangeExpireTime: BigInt! # uint256
@@ -236,6 +237,15 @@ type MintLockUpdated @entity(immutable: false) {
   seriesID: BigInt!
   owner: Bytes!
   until: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SeriesMaxPerWalletUpdated @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  maxPerWallet: BigInt!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -418,6 +428,7 @@ type RedrawMint @entity(immutable: true) {
   user: Bytes!
   quantity: BigInt!
   firstTokenID: BigInt!
+  revealRequests: [RevealDrawSent!]! @derivedFrom(field: "redrawMint")
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
@@ -556,6 +567,9 @@ type RevealDrawSent @entity(immutable: false) {
   requestId: BigInt! # uint256
   seriesID: BigInt # uint256
   tokenIDs: [BigInt!]! # uint256[]
+  source: String # USER, REDRAW_MAIN, or null for legacy/unknown requests
+  redrawMint: RedrawMint
+  redrawBatchIndex: Int
   randomWords: [BigInt!]! # uint256[]
   randomSeed: BigInt # V2 uses randomWords[0] as the reveal seed
   revealTokenCount: Int!
@@ -564,6 +578,26 @@ type RevealDrawSent @entity(immutable: false) {
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!
+}
+
+type RedrawRevealCandidate @entity(immutable: false) {
+  id: Bytes!
+  requestId: BigInt!
+  revealDrawSent: RevealDrawSent!
+  transactionHash: Bytes!
+  tokenStart: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+}
+
+type RedrawRevealBatchContext @entity(immutable: false) {
+  id: Bytes!
+  redrawMint: RedrawMint!
+  batchIndex: Int!
+  transactionHash: Bytes!
+  tokenStart: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
 }
 
 type Transfer @entity(immutable: true) {

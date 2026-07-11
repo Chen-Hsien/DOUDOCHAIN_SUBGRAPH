@@ -20,8 +20,14 @@ import {
   RouterUpdated,
 } from "../generated/schema";
 import { BigInt, Bytes } from "@graphprotocol/graph-ts";
+import {
+  linkExistingRedrawRevealCandidate,
+  redrawRevealBatchId,
+  saveRedrawRevealBatchContext,
+} from "./redraw-reveal-link";
 
 const TOKEN_SOURCE_CONSOLATION = "CONSOLATION";
+const MAX_REVEAL_BATCH = 20;
 
 function seriesId(seriesID: BigInt): Bytes {
   return Bytes.fromUTF8(seriesID.toString());
@@ -152,6 +158,26 @@ export function handleRedrawMinted(event: RedrawMintedEvent): void {
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
   entity.save();
+
+  let quantity = event.params.quantity.toI32();
+  for (
+    let offset = 0, batchIndex = 0;
+    offset < quantity;
+    offset += MAX_REVEAL_BATCH, batchIndex++
+  ) {
+    let tokenStart = event.params.firstTokenID.plus(BigInt.fromI32(offset));
+    let batchId = redrawRevealBatchId(event.transaction.hash, tokenStart);
+    saveRedrawRevealBatchContext(
+      batchId,
+      entity.id,
+      batchIndex,
+      event.transaction.hash,
+      tokenStart,
+      event.block.number,
+      event.block.timestamp
+    );
+    linkExistingRedrawRevealCandidate(batchId, entity.id, batchIndex);
+  }
 }
 
 export function handleConsolationDrawBalanceUpdated(

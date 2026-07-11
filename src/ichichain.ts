@@ -82,22 +82,37 @@ function jsonScalarToString(value: JSONValue | null): string | null {
   return null;
 }
 
+function trimTrailingSlash(value: string): string {
+  let result = value.trim();
+  while (result.endsWith("/")) {
+    result = result.slice(0, -1);
+  }
+  return result;
+}
+
+function extractIpfsPath(uri: string): string {
+  let value = uri.trim();
+  let schemeIndex = value.indexOf("ipfs://");
+  if (schemeIndex != -1) {
+    return trimTrailingSlash(value.slice(schemeIndex + 7));
+  }
+
+  let gatewayIndex = value.indexOf("/ipfs/");
+  if (gatewayIndex != -1) {
+    return trimTrailingSlash(value.slice(gatewayIndex + 6));
+  }
+
+  return "";
+}
+
 function createRevealTokenIpfsContent(
   seriesEntity: NewSeries | null,
   subPrizeID: BigInt
 ): void {
   if (seriesEntity == null) return;
 
-  let revealIpfsIndex = seriesEntity.revealTokenURI.indexOf("/ipfs/");
-  if (revealIpfsIndex == -1) return;
-
-  let baseRevealHash = seriesEntity.revealTokenURI
-    .slice(revealIpfsIndex + 6)
-    .trim();
-
-  if (baseRevealHash.endsWith("/")) {
-    baseRevealHash = baseRevealHash.slice(0, -1);
-  }
+  let baseRevealHash = extractIpfsPath(seriesEntity.revealTokenURI);
+  if (baseRevealHash.length == 0) return;
 
   let revealContext = new DataSourceContext();
   revealContext.setBytes(SERIES_ID_KEY, seriesEntity.id);
@@ -217,6 +232,7 @@ export function handleNewSeries(event: NewSeriesEvent): void {
   entity.priceInUSDTWei = event.params.priceInUSDTWei;
   entity.priceInPoints = event.params.priceInUSDTWei;
   entity.priceInTWD = event.params.priceInTWD;
+  entity.maxPerWallet = BigInt.zero();
   entity.isGoodsArrived = event.params.isGoodsArrived;
   entity.estimateDeliverTime = event.params.estimateDeliverTime;
   entity.exchangeExpireTime = event.params.exchangeExpireTime;
@@ -237,33 +253,33 @@ export function handleNewSeries(event: NewSeriesEvent): void {
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
 
-  let ipfsIndex = entity.seriesMetaDataURI.indexOf("/ipfs/");
-  log.debug("ipfsIndex: {}", [ipfsIndex.toString()]);
+  let seriesIpfsHash = extractIpfsPath(entity.seriesMetaDataURI);
 
   let context = new DataSourceContext();
   context.setBytes(SERIES_ID_KEY, entity.id);
   log.debug("context: {}", [entity.id.toString()]);
   // "https://lime-basic-thrush-351.mypinata.cloud/ipfs/QmYxweAJixyVVAeQeGf6y8CVk4GmUBTfNiVJvusgcaUuMU/series10.json" is the example URI
   // "https://lime-basic-thrush-351.mypinata.cloud/ipfs/QmXqCGcxXxpf67wRswRPvY3Xm8RpicXDe3JtfJ6m2rnyHf is the new example URI
-  if (ipfsIndex != -1) {
-    log.debug("IPFS Index: {}", [ipfsIndex.toString()]);
-    let hash = entity.seriesMetaDataURI.slice(ipfsIndex + 6).trim();
-    entity.recentIPFSHash = Bytes.fromUTF8(hash);
+  if (seriesIpfsHash.length > 0) {
+    entity.recentIPFSHash = Bytes.fromUTF8(seriesIpfsHash);
 
     // 使用相同的 ID 生成邏輯
-    let uniqueId = entity.id.concat(Bytes.fromUTF8(hash));
+    let uniqueId = entity.id.concat(Bytes.fromUTF8(seriesIpfsHash));
     entity.currentIchibanSeries = uniqueId;
 
-    DataSourceTemplate.createWithContext("IpfsContent", [hash], context);
+    DataSourceTemplate.createWithContext(
+      "IpfsContent",
+      [seriesIpfsHash],
+      context
+    );
   }
 
-  let unrevealIpfsIndex = entity.unrevealTokenURI.indexOf("/ipfs/");
+  let unrevealHash = extractIpfsPath(entity.unrevealTokenURI);
 
   let unrevealContext = new DataSourceContext();
   unrevealContext.setBytes(SERIES_ID_KEY, entity.id);
 
-  if (unrevealIpfsIndex != -1) {
-    let unrevealHash = entity.unrevealTokenURI.slice(unrevealIpfsIndex + 6);
+  if (unrevealHash.length > 0) {
     DataSourceTemplate.createWithContext(
       "UnrevealTokenIpfsContent",
       [unrevealHash],
@@ -275,7 +291,7 @@ export function handleNewSeries(event: NewSeriesEvent): void {
 
 export function handleLastPrizeWinner(event: LastPrizeWinnerEvent): void {
   let entity = new LastPrizeWinner(
-    Bytes.fromUTF8(event.params.requestId.toString())
+    event.transaction.hash.concatI32(event.logIndex.toI32())
   );
 
   entity.requestId = event.params.requestId;
@@ -309,6 +325,7 @@ export function handleIchibanSeries(content: Bytes): void {
 
   // 保存原始 hash 值作為參考
   newIchibanSeries.hash = hash;
+  newIchibanSeries.belongSeries = seriesID;
 
   const value = json.fromBytes(content).toObject();
 
@@ -752,26 +769,22 @@ export function handleUpdateSeriesInformation(
       creatNewIPFS = true;
     }
     updateSeries.seriesMetaDataURI = event.params.seriesMetaDataURI;
-    let ipfsIndex = event.params.seriesMetaDataURI.indexOf("/ipfs/");
-    let hash = event.params.seriesMetaDataURI.slice(ipfsIndex + 6);
-    updateSeries.recentIPFSHash = Bytes.fromUTF8(hash);
+    let hash = extractIpfsPath(event.params.seriesMetaDataURI);
 
-    // 使用相同的 ID 生成邏輯
-    let uniqueId = updateSeries.id.concat(Bytes.fromUTF8(hash));
-    updateSeries.currentIchibanSeries = uniqueId;
+    if (hash.length > 0) {
+      updateSeries.recentIPFSHash = Bytes.fromUTF8(hash);
 
-    if (creatNewIPFS) {
-      log.debug("ipfsIndex: {}", [ipfsIndex.toString()]);
-      if (ipfsIndex == -1) return;
+      // 使用相同的 ID 生成邏輯
+      let uniqueId = updateSeries.id.concat(Bytes.fromUTF8(hash));
+      updateSeries.currentIchibanSeries = uniqueId;
 
-      let context = new DataSourceContext();
-      let seriesID = Bytes.fromUTF8(event.params.seriesID.toString());
-      context.setBytes(SERIES_ID_KEY, seriesID);
-      log.debug("context: {}", [entity.id.toString()]);
-      // "https://lime-basic-thrush-351.mypinata.cloud/ipfs/QmYxweAJixyVVAeQeGf6y8CVk4GmUBTfNiVJvusgcaUuMU/series10.json" is the example URI
-      // "https://lime-basic-thrush-351.mypinata.cloud/ipfs/QmXqCGcxXxpf67wRswRPvY3Xm8RpicXDe3JtfJ6m2rnyHf is the new example URI
-      if (ipfsIndex != -1) {
-        log.debug("IPFS Index: {}", [ipfsIndex.toString()]);
+      if (creatNewIPFS) {
+        let context = new DataSourceContext();
+        let seriesID = Bytes.fromUTF8(event.params.seriesID.toString());
+        context.setBytes(SERIES_ID_KEY, seriesID);
+        log.debug("context: {}", [entity.id.toString()]);
+        // "https://lime-basic-thrush-351.mypinata.cloud/ipfs/QmYxweAJixyVVAeQeGf6y8CVk4GmUBTfNiVJvusgcaUuMU/series10.json" is the example URI
+        // "https://lime-basic-thrush-351.mypinata.cloud/ipfs/QmXqCGcxXxpf67wRswRPvY3Xm8RpicXDe3JtfJ6m2rnyHf is the new example URI
         DataSourceTemplate.createWithContext("IpfsContent", [hash], context);
       }
     }

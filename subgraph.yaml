@@ -90,6 +90,8 @@ dataSources:
       entities:
         - RevealDrawFulfilled
         - RevealDrawSent
+        - RedrawRevealCandidate
+        - RedrawRevealBatchContext
       abis:
         - name: ICHICHAIN
           file: ./abis/DOUDOCHAINV2CoreUpgradeable.json
@@ -99,6 +101,31 @@ dataSources:
         - event: RevealDrawSent(uint256,uint256[])
           handler: handleRevealDrawSent
       file: ./src/onChainData.ts
+
+  - kind: ethereum
+    name: DoudoSeriesOpsModule
+    network: arbitrum-sepolia
+    source:
+      address: "0x2FF7521dEF3903fc5c6f2877252cdf5019380070"
+      abi: DoudoSeriesOpsModuleUpgradeable
+      startBlock: 283984396
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - MintLockUpdated
+        - NewSeries
+        - SeriesMaxPerWalletUpdated
+      abis:
+        - name: DoudoSeriesOpsModuleUpgradeable
+          file: ./abis/DoudoSeriesOpsModuleUpgradeable.json
+      eventHandlers:
+        - event: MintLockUpdated(indexed uint256,indexed address,uint256)
+          handler: handleSeriesOpsMintLockUpdated
+        - event: SeriesMaxPerWalletUpdated(indexed uint256,uint256)
+          handler: handleSeriesMaxPerWalletUpdated
+      file: ./src/series-ops.ts
 
   - kind: ethereum
     name: MerchantSeriesRegistry
@@ -246,6 +273,8 @@ dataSources:
         - RouterUpdated
         - RedrawConfig
         - RedrawMint
+        - RedrawRevealCandidate
+        - RedrawRevealBatchContext
         - ConsolationPrize
         - ConsolationDrawBalance
         - ConsolationDraw
