@@ -17,9 +17,41 @@ export function ensureSeriesRuntimeState(
     state.seriesID = seriesID;
     state.unrevealedCount = BigInt.zero();
     state.mintLockUntil = BigInt.zero();
+    state.lockDuration = BigInt.zero();
+    state.revealEnabled = false;
   }
 
   return state;
+}
+
+export function updateSeriesLockDuration(
+  seriesID: BigInt,
+  duration: BigInt,
+  blockNumber: BigInt,
+  blockTimestamp: BigInt,
+  transactionHash: Bytes
+): void {
+  let state = ensureSeriesRuntimeState(seriesID);
+  state.lockDuration = duration;
+  state.lockDurationBlockNumber = blockNumber;
+  state.lockDurationBlockTimestamp = blockTimestamp;
+  state.lockDurationTransactionHash = transactionHash;
+  state.save();
+}
+
+export function updateSeriesRevealEnabled(
+  seriesID: BigInt,
+  enabled: boolean,
+  blockNumber: BigInt,
+  blockTimestamp: BigInt,
+  transactionHash: Bytes
+): void {
+  let state = ensureSeriesRuntimeState(seriesID);
+  state.revealEnabled = enabled;
+  state.revealEnabledBlockNumber = blockNumber;
+  state.revealEnabledBlockTimestamp = blockTimestamp;
+  state.revealEnabledTransactionHash = transactionHash;
+  state.save();
 }
 
 export function initializeSeriesRuntimeState(seriesID: BigInt): void {

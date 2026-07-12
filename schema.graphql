@@ -122,6 +122,14 @@ type SeriesRuntimeState @entity(immutable: false) {
   mintLockBlockNumber: BigInt
   mintLockBlockTimestamp: BigInt
   mintLockTransactionHash: Bytes
+  lockDuration: BigInt!
+  lockDurationBlockNumber: BigInt
+  lockDurationBlockTimestamp: BigInt
+  lockDurationTransactionHash: Bytes
+  revealEnabled: Boolean!
+  revealEnabledBlockNumber: BigInt
+  revealEnabledBlockTimestamp: BigInt
+  revealEnabledTransactionHash: Bytes
 }
 
 type SeriesMerchantCorrection @entity(immutable: true) {
@@ -260,6 +268,24 @@ type SeriesMaxPerWalletUpdated @entity(immutable: true) {
   id: Bytes!
   seriesID: BigInt!
   maxPerWallet: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SeriesLockDurationUpdated @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  duration: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SeriesRevealEnabledUpdated @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  enabled: Boolean!
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

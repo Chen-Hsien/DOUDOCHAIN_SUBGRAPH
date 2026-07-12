@@ -13,14 +13,22 @@ import {
   NewTicketStatus,
   UpdateTicketStatus,
 } from "../generated/ICHICHAIN/ICHICHAIN";
-import { MintLockUpdated as SeriesOpsMintLockUpdated } from "../generated/DoudoSeriesOpsModule/DoudoSeriesOpsModuleUpgradeable";
+import {
+  MintLockUpdated as SeriesOpsMintLockUpdated,
+  SeriesLockDurationUpdated,
+  SeriesRevealEnabledUpdated,
+} from "../generated/DoudoSeriesOpsModule/DoudoSeriesOpsModuleUpgradeable";
 import {
   handleMintLockUpdated,
   handleNewSeries,
   handleNewTicketStatus,
   handleUpdateTicketStatus,
 } from "../src/ichichain";
-import { handleSeriesOpsMintLockUpdated } from "../src/series-ops";
+import {
+  handleSeriesLockDurationUpdated,
+  handleSeriesOpsMintLockUpdated,
+  handleSeriesRevealEnabledUpdated,
+} from "../src/series-ops";
 import {
   createNewSeriesEvent,
   createNewTicketStatusEvent,
@@ -83,6 +91,53 @@ function createMintLockEvent(
   );
   event.block.number = BigInt.fromI32(blockNumber);
   event.block.timestamp = BigInt.fromI32(blockTimestamp);
+  event.transaction.hash = transactionHash;
+  return event;
+}
+
+function createSeriesLockDurationUpdatedEvent(
+  seriesID: BigInt,
+  duration: BigInt,
+  transactionHash: Bytes
+): ethereum.Event {
+  let event = newMockEvent();
+  event.parameters = new Array();
+  event.parameters.push(
+    new ethereum.EventParam(
+      "seriesID",
+      ethereum.Value.fromUnsignedBigInt(seriesID)
+    )
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "duration",
+      ethereum.Value.fromUnsignedBigInt(duration)
+    )
+  );
+  event.block.number = BigInt.fromI32(40);
+  event.block.timestamp = BigInt.fromI32(400);
+  event.transaction.hash = transactionHash;
+  return event;
+}
+
+function createSeriesRevealEnabledUpdatedEvent(
+  seriesID: BigInt,
+  enabled: boolean,
+  transactionHash: Bytes
+): ethereum.Event {
+  let event = newMockEvent();
+  event.parameters = new Array();
+  event.parameters.push(
+    new ethereum.EventParam(
+      "seriesID",
+      ethereum.Value.fromUnsignedBigInt(seriesID)
+    )
+  );
+  event.parameters.push(
+    new ethereum.EventParam("enabled", ethereum.Value.fromBoolean(enabled))
+  );
+  event.block.number = BigInt.fromI32(50);
+  event.block.timestamp = BigInt.fromI32(500);
   event.transaction.hash = transactionHash;
   return event;
 }
@@ -270,5 +325,49 @@ describe("Series runtime state", () => {
     );
     assert.fieldEquals("SeriesRuntimeState", id, "mintLockUntil", "0");
     assert.entityCount("MintLockUpdated", 3);
+  });
+
+  test("projects lock duration and reveal availability updates", () => {
+    let seriesID = BigInt.fromI32(18);
+    let lockTx = Bytes.fromHexString(
+      "0x4444444444444444444444444444444444444444444444444444444444444444"
+    );
+    let revealTx = Bytes.fromHexString(
+      "0x5555555555555555555555555555555555555555555555555555555555555555"
+    );
+    seedSeries(seriesID);
+
+    handleSeriesLockDurationUpdated(
+      changetype<SeriesLockDurationUpdated>(
+        createSeriesLockDurationUpdatedEvent(
+          seriesID,
+          BigInt.fromI32(3600),
+          lockTx
+        )
+      )
+    );
+    handleSeriesRevealEnabledUpdated(
+      changetype<SeriesRevealEnabledUpdated>(
+        createSeriesRevealEnabledUpdatedEvent(seriesID, true, revealTx)
+      )
+    );
+
+    let id = runtimeId(seriesID);
+    assert.fieldEquals("SeriesRuntimeState", id, "lockDuration", "3600");
+    assert.fieldEquals(
+      "SeriesRuntimeState",
+      id,
+      "lockDurationTransactionHash",
+      lockTx.toHexString()
+    );
+    assert.fieldEquals("SeriesRuntimeState", id, "revealEnabled", "true");
+    assert.fieldEquals(
+      "SeriesRuntimeState",
+      id,
+      "revealEnabledTransactionHash",
+      revealTx.toHexString()
+    );
+    assert.entityCount("SeriesLockDurationUpdated", 1);
+    assert.entityCount("SeriesRevealEnabledUpdated", 1);
   });
 });

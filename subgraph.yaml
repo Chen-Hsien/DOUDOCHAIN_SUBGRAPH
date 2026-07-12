@@ -120,15 +120,21 @@ dataSources:
         - MintLockUpdated
         - NewSeries
         - SeriesRuntimeState
+        - SeriesLockDurationUpdated
         - SeriesMaxPerWalletUpdated
+        - SeriesRevealEnabledUpdated
       abis:
         - name: DoudoSeriesOpsModuleUpgradeable
           file: ./abis/DoudoSeriesOpsModuleUpgradeable.json
       eventHandlers:
         - event: MintLockUpdated(indexed uint256,indexed address,uint256)
           handler: handleSeriesOpsMintLockUpdated
+        - event: SeriesLockDurationUpdated(indexed uint256,uint256)
+          handler: handleSeriesLockDurationUpdated
         - event: SeriesMaxPerWalletUpdated(indexed uint256,uint256)
           handler: handleSeriesMaxPerWalletUpdated
+        - event: SeriesRevealEnabledUpdated(indexed uint256,bool)
+          handler: handleSeriesRevealEnabledUpdated
       file: ./src/series-ops.ts
 
   - kind: ethereum
