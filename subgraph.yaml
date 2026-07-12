@@ -26,6 +26,7 @@ dataSources:
         - NewSeries
         - NewSubPrize
         - NewTicketStatus
+        - SeriesRuntimeState
         - SeriesUnlockedFor
         - Transfer
         - UpdatePrize
@@ -92,6 +93,8 @@ dataSources:
         - RevealDrawSent
         - RedrawRevealCandidate
         - RedrawRevealBatchContext
+        - SeriesRevealSummary
+        - SeriesRevealToken
       abis:
         - name: ICHICHAIN
           file: ./abis/DOUDOCHAINV2CoreUpgradeable.json
@@ -116,6 +119,7 @@ dataSources:
       entities:
         - MintLockUpdated
         - NewSeries
+        - SeriesRuntimeState
         - SeriesMaxPerWalletUpdated
       abis:
         - name: DoudoSeriesOpsModuleUpgradeable

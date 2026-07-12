@@ -108,6 +108,20 @@ type NewSeries @entity(immutable: false) {
   NewPrizes: [NewSubPrize!] @derivedFrom(field: "belongSeries")
   NewTicketStatuses: [NewTicketStatus!] @derivedFrom(field: "belongSeries")
   UnrevealTokenMetadata: UnrevealTokenMetadata @derivedFrom(field: "series")
+  runtimeState: SeriesRuntimeState @derivedFrom(field: "series")
+  revealSummary: SeriesRevealSummary @derivedFrom(field: "series")
+}
+
+type SeriesRuntimeState @entity(immutable: false) {
+  id: Bytes! # seriesID, matching NewSeries.id
+  series: NewSeries!
+  seriesID: BigInt!
+  unrevealedCount: BigInt!
+  mintLockOwner: Bytes
+  mintLockUntil: BigInt!
+  mintLockBlockNumber: BigInt
+  mintLockBlockTimestamp: BigInt
+  mintLockTransactionHash: Bytes
 }
 
 type SeriesMerchantCorrection @entity(immutable: true) {
@@ -575,6 +589,28 @@ type RevealDrawSent @entity(immutable: false) {
   revealTokenCount: Int!
   vrfNumWords: BigInt # V2 reveal requests one VRF word regardless of token count
   subPrizesRemainingQuantities: [BigInt!] # uint256[]
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type SeriesRevealSummary @entity(immutable: false) {
+  id: Bytes! # seriesID, matching NewSeries.id
+  series: NewSeries!
+  seriesID: BigInt!
+  proofCount: BigInt!
+  tokenCount: BigInt!
+  latestBlockTimestamp: BigInt!
+  latestTransactionHash: Bytes!
+  tokens: [SeriesRevealToken!]! @derivedFrom(field: "summary")
+}
+
+type SeriesRevealToken @entity(immutable: true) {
+  id: Bytes! # reveal request id + occurrence index
+  summary: SeriesRevealSummary!
+  seriesID: BigInt!
+  tokenID: BigInt!
+  ticket: NewTicketStatus
   blockNumber: BigInt!
   blockTimestamp: BigInt!
   transactionHash: Bytes!

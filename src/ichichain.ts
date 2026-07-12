@@ -55,6 +55,11 @@ import {
   JSONValue,
   JSONValueKind,
 } from "@graphprotocol/graph-ts";
+import {
+  adjustUnrevealedCount,
+  initializeSeriesRuntimeState,
+  updateCurrentMintLock,
+} from "./series-runtime";
 
 const SERIES_ID_KEY = "seriesID";
 const SUB_PRIZE_ID_KEY = "subPrizeID";
@@ -287,6 +292,7 @@ export function handleNewSeries(event: NewSeriesEvent): void {
     );
   }
   entity.save();
+  initializeSeriesRuntimeState(event.params.seriesID);
 }
 
 export function handleLastPrizeWinner(event: LastPrizeWinnerEvent): void {
@@ -620,8 +626,12 @@ export function handleRevealTokenContent(revealContext: Bytes): void {
 
 export function handleNewTicketStatus(event: NewTicketStatusEvent): void {
   let entity = NewTicketStatus.load(ticketId(event.params.tokenID));
-  if (!entity) {
+  let existed = entity != null;
+  let wasRevealed = false;
+  if (entity == null) {
     entity = new NewTicketStatus(ticketId(event.params.tokenID));
+  } else {
+    wasRevealed = entity.tokenRevealed;
   }
   entity.tokenID = event.params.tokenID;
   entity.seriesID = event.params.seriesID;
@@ -681,6 +691,15 @@ export function handleNewTicketStatus(event: NewTicketStatusEvent): void {
   }
 
   entity.save();
+
+  if (!existed && !event.params.tokenRevealed) {
+    adjustUnrevealedCount(event.params.seriesID, 1);
+  } else if (existed && wasRevealed != event.params.tokenRevealed) {
+    adjustUnrevealedCount(
+      event.params.seriesID,
+      event.params.tokenRevealed ? -1 : 1
+    );
+  }
 }
 
 export function handleTransfer(event: TransferEvent): void {
@@ -899,6 +918,12 @@ export function handleUpdateTicketStatus(event: UpdateTicketStatusEvent): void {
       }
     }
     updateTicketStatus.save();
+    if (wasRevealed != event.params.tokenRevealed) {
+      adjustUnrevealedCount(
+        event.params.seriesID,
+        event.params.tokenRevealed ? -1 : 1
+      );
+    }
   } else if (event.params.tokenRevealed && !event.params.tokenExchange) {
     tokenRevealTimestamp = event.block.timestamp;
   }
@@ -959,6 +984,14 @@ export function handleMintLockUpdated(event: MintLockUpdatedEvent): void {
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
   entity.save();
+  updateCurrentMintLock(
+    event.params.seriesID,
+    event.params.owner,
+    event.params.until,
+    event.block.number,
+    event.block.timestamp,
+    event.transaction.hash
+  );
 }
 
 export function handleSeriesUnlockedFor(event: SeriesUnlockedForEvent): void {

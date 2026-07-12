@@ -7,8 +7,14 @@ import {
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts"
 import { newMockEvent } from "matchstick-as"
-import { RevealDrawSent } from "../generated/ICHICHAIN/ICHICHAIN"
-import { handleRevealDrawSent } from "../src/onChainData"
+import {
+  RevealDrawFulfilled,
+  RevealDrawSent
+} from "../generated/ICHICHAIN/ICHICHAIN"
+import {
+  handleRevealDrawFulfilled,
+  handleRevealDrawSent
+} from "../src/onChainData"
 import { handleRedrawMainConfigUpdated, handleRedrawMinted } from "../src/redraw"
 import {
   createRedrawMainConfigUpdatedEvent,
@@ -36,6 +42,36 @@ function createCoreRevealDrawSentEvent(
     new ethereum.EventParam(
       "tokenIDs",
       ethereum.Value.fromUnsignedBigIntArray(tokenIDs)
+    )
+  )
+
+  return event
+}
+
+function createCoreRevealDrawFulfilledEvent(
+  requestId: BigInt,
+  seriesID: BigInt,
+  randomWords: Array<BigInt>
+): RevealDrawFulfilled {
+  let event = changetype<RevealDrawFulfilled>(newMockEvent())
+  event.parameters = new Array()
+
+  event.parameters.push(
+    new ethereum.EventParam(
+      "requestId",
+      ethereum.Value.fromUnsignedBigInt(requestId)
+    )
+  )
+  event.parameters.push(
+    new ethereum.EventParam(
+      "seriesID",
+      ethereum.Value.fromUnsignedBigInt(seriesID)
+    )
+  )
+  event.parameters.push(
+    new ethereum.EventParam(
+      "randomWords",
+      ethereum.Value.fromUnsignedBigIntArray(randomWords)
     )
   )
 
@@ -148,5 +184,119 @@ describe("Redraw config handlers", () => {
       "redrawBatchIndex",
       "1"
     )
+  })
+
+  test("materializes per-series reveal proof and token summaries", () => {
+    let seriesID = BigInt.fromI32(3)
+    let firstSentTx = Bytes.fromHexString(
+      "0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+    )
+    let secondSentTx = Bytes.fromHexString(
+      "0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
+    )
+
+    let firstSent = createCoreRevealDrawSentEvent(BigInt.fromI32(71), [
+      BigInt.fromI32(501),
+      BigInt.fromI32(502)
+    ])
+    firstSent.block.number = BigInt.fromI32(10)
+    firstSent.block.timestamp = BigInt.fromI32(100)
+    firstSent.transaction.hash = firstSentTx
+    handleRevealDrawSent(firstSent)
+
+    let firstFulfilled = createCoreRevealDrawFulfilledEvent(
+      BigInt.fromI32(71),
+      seriesID,
+      [BigInt.fromI32(111)]
+    )
+    firstFulfilled.logIndex = BigInt.fromI32(10)
+    handleRevealDrawFulfilled(firstFulfilled)
+
+    let summaryId = Bytes.fromUTF8("3").toHexString()
+    assert.fieldEquals("SeriesRevealSummary", summaryId, "series", summaryId)
+    assert.fieldEquals("SeriesRevealSummary", summaryId, "proofCount", "1")
+    assert.fieldEquals("SeriesRevealSummary", summaryId, "tokenCount", "2")
+    assert.fieldEquals(
+      "SeriesRevealSummary",
+      summaryId,
+      "latestBlockTimestamp",
+      "100"
+    )
+    assert.fieldEquals(
+      "SeriesRevealSummary",
+      summaryId,
+      "latestTransactionHash",
+      firstSentTx.toHexString()
+    )
+
+    let firstTokenId = Bytes.fromUTF8("71").concatI32(0).toHexString()
+    let firstTicketId = Bytes.fromUTF8("501").toHexString()
+    assert.fieldEquals(
+      "SeriesRevealToken",
+      firstTokenId,
+      "summary",
+      summaryId
+    )
+    assert.fieldEquals("SeriesRevealToken", firstTokenId, "seriesID", "3")
+    assert.fieldEquals("SeriesRevealToken", firstTokenId, "tokenID", "501")
+    assert.fieldEquals(
+      "SeriesRevealToken",
+      firstTokenId,
+      "ticket",
+      firstTicketId
+    )
+    assert.fieldEquals("SeriesRevealToken", firstTokenId, "blockNumber", "10")
+    assert.fieldEquals(
+      "SeriesRevealToken",
+      firstTokenId,
+      "transactionHash",
+      firstSentTx.toHexString()
+    )
+
+    let secondSent = createCoreRevealDrawSentEvent(BigInt.fromI32(72), [
+      BigInt.fromI32(501),
+      BigInt.fromI32(503)
+    ])
+    secondSent.block.number = BigInt.fromI32(20)
+    secondSent.block.timestamp = BigInt.fromI32(200)
+    secondSent.transaction.hash = secondSentTx
+    handleRevealDrawSent(secondSent)
+
+    let secondFulfilled = createCoreRevealDrawFulfilledEvent(
+      BigInt.fromI32(72),
+      seriesID,
+      [BigInt.fromI32(222)]
+    )
+    secondFulfilled.logIndex = BigInt.fromI32(11)
+    handleRevealDrawFulfilled(secondFulfilled)
+
+    assert.fieldEquals("SeriesRevealSummary", summaryId, "proofCount", "2")
+    assert.fieldEquals("SeriesRevealSummary", summaryId, "tokenCount", "4")
+    assert.fieldEquals(
+      "SeriesRevealSummary",
+      summaryId,
+      "latestBlockTimestamp",
+      "200"
+    )
+    assert.fieldEquals(
+      "SeriesRevealSummary",
+      summaryId,
+      "latestTransactionHash",
+      secondSentTx.toHexString()
+    )
+    assert.entityCount("SeriesRevealToken", 4)
+  })
+
+  test("does not create a ghost reveal summary without the sent event", () => {
+    let fulfilled = createCoreRevealDrawFulfilledEvent(
+      BigInt.fromI32(999),
+      BigInt.fromI32(3),
+      [BigInt.fromI32(222)]
+    )
+
+    handleRevealDrawFulfilled(fulfilled)
+
+    assert.entityCount("SeriesRevealSummary", 0)
+    assert.entityCount("SeriesRevealToken", 0)
   })
 })

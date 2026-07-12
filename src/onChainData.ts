@@ -7,15 +7,75 @@ import {
   RevealDrawFulfilled,
   RedrawRevealBatchContext,
   RevealDrawSent,
+  SeriesRevealSummary,
+  SeriesRevealToken,
   VrfRequest,
 } from "../generated/schema";
 
-import { Bytes } from "@graphprotocol/graph-ts";
+import { BigInt, Bytes, log } from "@graphprotocol/graph-ts";
 import {
   applyRedrawRevealLink,
   redrawRevealBatchId,
   saveRedrawRevealCandidate,
 } from "./redraw-reveal-link";
+
+function seriesRevealSummaryId(seriesID: BigInt): Bytes {
+  return Bytes.fromUTF8(seriesID.toString());
+}
+
+function recordSeriesRevealProof(
+  seriesID: BigInt,
+  revealDrawSent: RevealDrawSent | null
+): void {
+  if (revealDrawSent == null) {
+    log.warning(
+      "Skipping SeriesRevealSummary for series {} because RevealDrawSent is missing",
+      [seriesID.toString()]
+    );
+    return;
+  }
+
+  let id = seriesRevealSummaryId(seriesID);
+  let summary = SeriesRevealSummary.load(id);
+  if (summary == null) {
+    summary = new SeriesRevealSummary(id);
+    summary.series = id;
+    summary.seriesID = seriesID;
+    summary.proofCount = BigInt.zero();
+    summary.tokenCount = BigInt.zero();
+    summary.latestBlockTimestamp = BigInt.zero();
+    summary.latestTransactionHash = Bytes.empty();
+  }
+
+  summary.proofCount = summary.proofCount.plus(BigInt.fromI32(1));
+
+  for (let i = 0; i < revealDrawSent.tokenIDs.length; i++) {
+    let tokenID = revealDrawSent.tokenIDs[i];
+    let tokenEntityId = revealDrawSent.id.concatI32(i);
+    if (SeriesRevealToken.load(tokenEntityId) != null) continue;
+
+    let token = new SeriesRevealToken(tokenEntityId);
+    token.summary = id;
+    token.seriesID = seriesID;
+    token.tokenID = tokenID;
+    token.ticket = Bytes.fromUTF8(tokenID.toString());
+    token.blockNumber = revealDrawSent.blockNumber;
+    token.blockTimestamp = revealDrawSent.blockTimestamp;
+    token.transactionHash = revealDrawSent.transactionHash;
+    token.save();
+  }
+
+  summary.tokenCount = summary.tokenCount.plus(
+    BigInt.fromI32(revealDrawSent.revealTokenCount)
+  );
+
+  if (!revealDrawSent.blockTimestamp.lt(summary.latestBlockTimestamp)) {
+    summary.latestBlockTimestamp = revealDrawSent.blockTimestamp;
+    summary.latestTransactionHash = revealDrawSent.transactionHash;
+  }
+
+  summary.save();
+}
 
 export function handleRevealDrawFulfilled(
   event: RevealDrawFulfilledEvent
@@ -45,6 +105,7 @@ export function handleRevealDrawFulfilled(
     entity.revealTokenCount = 0;
   }
 
+  recordSeriesRevealProof(event.params.seriesID, revealDrawSent);
   entity.save();
 }
 

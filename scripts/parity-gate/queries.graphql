@@ -1,0 +1,256 @@
+query ParityMeta {
+  _meta {
+    block {
+      number
+      hash
+    }
+    hasIndexingErrors
+  }
+}
+
+query ParityBlock($block: Block_height!) {
+  _meta(block: $block) {
+    block {
+      number
+      hash
+    }
+    hasIndexingErrors
+  }
+}
+
+query ParityBaseFirst($block: Block_height!, $first: Int!) {
+  _meta(block: $block) {
+    block {
+      number
+      hash
+    }
+  }
+  series: newSeries_collection(
+    block: $block
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) {
+    id
+    seriesID
+  }
+  unrevealedTickets: newTicketStatuses(
+    block: $block
+    where: { tokenRevealed: false }
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) {
+    id
+    tokenID
+    seriesID
+  }
+  fulfilled: revealDrawFulfilleds(
+    block: $block
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) {
+    id
+    requestId
+    seriesID
+    revealTokenCount
+    blockNumber
+    blockTimestamp
+    transactionHash
+  }
+  sentWithSeries: revealDrawSents(
+    block: $block
+    where: { seriesID_not: null }
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) {
+    id
+    requestId
+    seriesID
+    tokenIDs
+    revealTokenCount
+    blockNumber
+    blockTimestamp
+    transactionHash
+  }
+}
+
+query ParityBaseNext(
+  $block: Block_height!
+  $first: Int!
+  $seriesCursor: Bytes!
+  $ticketCursor: Bytes!
+  $fulfilledCursor: Bytes!
+  $sentCursor: Bytes!
+  $includeSeries: Boolean!
+  $includeTickets: Boolean!
+  $includeFulfilled: Boolean!
+  $includeSent: Boolean!
+) {
+  series: newSeries_collection(
+    block: $block
+    where: { id_gt: $seriesCursor }
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) @include(if: $includeSeries) {
+    id
+    seriesID
+  }
+  unrevealedTickets: newTicketStatuses(
+    block: $block
+    where: { tokenRevealed: false, id_gt: $ticketCursor }
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) @include(if: $includeTickets) {
+    id
+    tokenID
+    seriesID
+  }
+  fulfilled: revealDrawFulfilleds(
+    block: $block
+    where: { id_gt: $fulfilledCursor }
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) @include(if: $includeFulfilled) {
+    id
+    requestId
+    seriesID
+    revealTokenCount
+    blockNumber
+    blockTimestamp
+    transactionHash
+  }
+  sentWithSeries: revealDrawSents(
+    block: $block
+    where: { seriesID_not: null, id_gt: $sentCursor }
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) @include(if: $includeSent) {
+    id
+    requestId
+    seriesID
+    tokenIDs
+    revealTokenCount
+    blockNumber
+    blockTimestamp
+    transactionHash
+  }
+}
+
+query ParityProjectionFirst($block: Block_height!, $first: Int!) {
+  _meta(block: $block) {
+    block {
+      number
+      hash
+    }
+  }
+  runtimeStates: seriesRuntimeStates(
+    block: $block
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) {
+    id
+    seriesID
+    unrevealedCount
+    mintLockOwner
+    mintLockUntil
+    mintLockBlockNumber
+    mintLockBlockTimestamp
+    mintLockTransactionHash
+  }
+  revealSummaries: seriesRevealSummaries(
+    block: $block
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) {
+    id
+    seriesID
+    proofCount
+    tokenCount
+    latestBlockTimestamp
+    latestTransactionHash
+  }
+  revealTokens: seriesRevealTokens(
+    block: $block
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) {
+    id
+    seriesID
+    tokenID
+    summary {
+      seriesID
+    }
+    ticket {
+      tokenID
+    }
+  }
+}
+
+query ParityProjectionNext(
+  $block: Block_height!
+  $first: Int!
+  $runtimeCursor: Bytes!
+  $summaryCursor: Bytes!
+  $tokenCursor: Bytes!
+  $includeRuntime: Boolean!
+  $includeSummaries: Boolean!
+  $includeTokens: Boolean!
+) {
+  runtimeStates: seriesRuntimeStates(
+    block: $block
+    where: { id_gt: $runtimeCursor }
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) @include(if: $includeRuntime) {
+    id
+    seriesID
+    unrevealedCount
+    mintLockOwner
+    mintLockUntil
+    mintLockBlockNumber
+    mintLockBlockTimestamp
+    mintLockTransactionHash
+  }
+  revealSummaries: seriesRevealSummaries(
+    block: $block
+    where: { id_gt: $summaryCursor }
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) @include(if: $includeSummaries) {
+    id
+    seriesID
+    proofCount
+    tokenCount
+    latestBlockTimestamp
+    latestTransactionHash
+  }
+  revealTokens: seriesRevealTokens(
+    block: $block
+    where: { id_gt: $tokenCursor }
+    first: $first
+    orderBy: id
+    orderDirection: asc
+  ) @include(if: $includeTokens) {
+    id
+    seriesID
+    tokenID
+    summary {
+      seriesID
+    }
+    ticket {
+      tokenID
+    }
+  }
+}

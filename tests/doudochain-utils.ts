@@ -342,7 +342,8 @@ export function createNewTicketStatusEvent(
   tokenRevealedPrize: BigInt,
   tokenExchange: boolean,
   tokenRevealed: boolean,
-  tokenOwner: Address
+  tokenOwner: Address,
+  luckyNumber: i32
 ): NewTicketStatus {
   let newTicketStatusEvent = changetype<NewTicketStatus>(newMockEvent())
 
@@ -382,6 +383,12 @@ export function createNewTicketStatusEvent(
     new ethereum.EventParam(
       "tokenOwner",
       ethereum.Value.fromAddress(tokenOwner)
+    )
+  )
+  newTicketStatusEvent.parameters.push(
+    new ethereum.EventParam(
+      "luckyNumber",
+      ethereum.Value.fromI32(luckyNumber)
     )
   )
 

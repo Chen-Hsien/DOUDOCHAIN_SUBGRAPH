@@ -8,6 +8,7 @@
     "create-local": "graph create --node http://localhost:8020/ doudochain_amoy",
     "remove-local": "graph remove --node http://localhost:8020/ doudochain_amoy",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 doudochain_amoy",
+    "parity-gate": "node scripts/parity-gate/run.mjs",
     "test": "graph test"
   },
   "dependencies": {

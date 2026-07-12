@@ -9,6 +9,7 @@ import {
 } from "../generated/schema";
 
 import { Bytes, log } from "@graphprotocol/graph-ts";
+import { updateCurrentMintLock } from "./series-runtime";
 
 export function handleSeriesOpsMintLockUpdated(
   event: MintLockUpdatedEvent
@@ -25,6 +26,14 @@ export function handleSeriesOpsMintLockUpdated(
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
   entity.save();
+  updateCurrentMintLock(
+    event.params.seriesID,
+    event.params.owner,
+    event.params.until,
+    event.block.number,
+    event.block.timestamp,
+    event.transaction.hash
+  );
 }
 
 export function handleSeriesMaxPerWalletUpdated(
