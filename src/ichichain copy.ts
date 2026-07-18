@@ -120,6 +120,7 @@ export function handleLastPrizeDraw(event: LastPrizeDrawEvent): void {
 export function handleNewSubPrize(event: NewSubPrizeEvent): void {
   let prizeID = event.params.seriesID
     .toString()
+    .concat("-")
     .concat(event.params.subPrizeID.toString());
   let entity = new NewSubPrize(Bytes.fromUTF8(prizeID));
   entity.seriesID = event.params.seriesID;
@@ -540,6 +541,7 @@ export function handleUpdatePrize(event: UpdatePrizeEvent): void {
   // update prizeRemainingQuantity in NewPrize entity
   let prizeID = event.params.seriesID
     .toString()
+    .concat("-")
     .concat(event.params.subPrizeID.toString());
   let updatePrize = NewSubPrize.load(Bytes.fromUTF8(prizeID));
   if (updatePrize) {

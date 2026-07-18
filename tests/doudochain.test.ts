@@ -10,18 +10,24 @@ import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts"
 import {
   Approval,
   LastPrizeWinner,
+  NewSubPrize,
   NewSeries,
+  UpdatePrize,
   UpdateSeriesInformation
 } from "../generated/ICHICHAIN/ICHICHAIN"
 import {
   handleApproval,
   handleLastPrizeWinner,
+  handleNewSubPrize,
   handleNewSeries,
+  handleUpdatePrize,
   handleUpdateSeriesInformation
 } from "../src/ichichain"
 import { newMockEvent } from "matchstick-as"
 import {
+  createNewSubPrizeEvent,
   createNewSeriesEvent,
+  createUpdatePrizeEvent,
   createUpdateSeriesInformationEvent
 } from "./doudochain-utils"
 
@@ -155,6 +161,63 @@ describe("ICHICHAIN handlers", () => {
       secondId.toHexString(),
       "randomWord",
       "[268]"
+    )
+  })
+
+  test("NewSubPrize IDs separate series and prize numbers", () => {
+    clearStore()
+
+    handleNewSubPrize(
+      changetype<NewSubPrize>(
+        createNewSubPrizeEvent(
+          BigInt.fromI32(1),
+          BigInt.fromI32(23),
+          "A",
+          "series 1 prize 23",
+          BigInt.fromI32(1)
+        )
+      )
+    )
+    handleNewSubPrize(
+      changetype<NewSubPrize>(
+        createNewSubPrizeEvent(
+          BigInt.fromI32(12),
+          BigInt.fromI32(3),
+          "B",
+          "series 12 prize 3",
+          BigInt.fromI32(1)
+        )
+      )
+    )
+
+    assert.entityCount("NewSubPrize", 2)
+    assert.fieldEquals(
+      "NewSubPrize",
+      Bytes.fromUTF8("1-23").toHexString(),
+      "seriesID",
+      "1"
+    )
+    assert.fieldEquals(
+      "NewSubPrize",
+      Bytes.fromUTF8("12-3").toHexString(),
+      "seriesID",
+      "12"
+    )
+
+    handleUpdatePrize(
+      changetype<UpdatePrize>(
+        createUpdatePrizeEvent(
+          BigInt.fromI32(1),
+          BigInt.fromI32(23),
+          BigInt.fromI32(7)
+        )
+      )
+    )
+    assert.fieldEquals(
+      "NewSubPrize",
+      Bytes.fromUTF8("1-23").toHexString(),
+      "subPrizeRemainingQuantity",
+      "7"
     )
   })
 

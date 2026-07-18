@@ -97,6 +97,8 @@ npm run parity-gate
 
 工具會以每頁 1,000 筆、`id_gt` cursor 讀完所有資料，並同時比對舊／新 endpoint 的基礎 entity 集合、每個 series 的 unrevealed count、proof/token occurrence、latest proof 與 projection relation。全部通過時輸出 `"status": "PASS"` 並以 exit code `0` 結束；任何差異會輸出 `FAIL` 與前 10 筆差異，exit code 為 `1`。
 
+部分 Studio gateway 在指定歷史 block number 時會回傳 `_meta.block.hash = null`。Parity gate 仍先保留 finality blocks；若兩端都提供 hash，會以 hash pin 並核對 hash；若任一端不提供，則改以相同 finalized block number pin，並在報告的 `warnings` 與 `comparisonBlock.pin` 明確標示降級模式，避免預設 gate 因 gateway 能力差異直接中止。
+
 2026-07-11 現網唯讀基準為 144 筆 fulfilled proof、13 個 series、356 個 token occurrences；沒有 missing sent、duplicate occurrence 或 latest timestamp tie。此基準只能用於切換前後比對，不代表新 deployment 已完成驗證。
 
 ## 建議監控

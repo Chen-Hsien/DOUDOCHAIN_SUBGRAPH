@@ -198,11 +198,16 @@ export function handleLastPrizeDraw(event: LastPrizeDrawEvent): void {
   entity.save();
 }
 
+function subPrizeEntityId(seriesID: BigInt, subPrizeID: BigInt): Bytes {
+  return Bytes.fromUTF8(
+    seriesID.toString().concat("-").concat(subPrizeID.toString())
+  );
+}
+
 export function handleNewSubPrize(event: NewSubPrizeEvent): void {
-  let prizeID = event.params.seriesID
-    .toString()
-    .concat(event.params.subPrizeID.toString());
-  let entity = new NewSubPrize(Bytes.fromUTF8(prizeID));
+  let entity = new NewSubPrize(
+    subPrizeEntityId(event.params.seriesID, event.params.subPrizeID)
+  );
   entity.seriesID = event.params.seriesID;
   entity.subPrizeID = event.params.subPrizeID;
   entity.prizeGroup = event.params.prizeGroup;
@@ -741,10 +746,9 @@ export function handleUpdatePrize(event: UpdatePrizeEvent): void {
   entity.save();
 
   // update prizeRemainingQuantity in NewPrize entity
-  let prizeID = event.params.seriesID
-    .toString()
-    .concat(event.params.subPrizeID.toString());
-  let updatePrize = NewSubPrize.load(Bytes.fromUTF8(prizeID));
+  let updatePrize = NewSubPrize.load(
+    subPrizeEntityId(event.params.seriesID, event.params.subPrizeID)
+  );
   if (updatePrize) {
     updatePrize.subPrizeRemainingQuantity =
       event.params.subPrizeRemainingQuantity;

@@ -22,6 +22,7 @@ const projectionDocument = fullDocument.slice(projectionStart);
 const oldEndpoint = endpointFromEnv("OLD_GRAPH_URL", "OLD_GRAPH_AUTH_TOKEN");
 const newEndpoint = endpointFromEnv("NEW_GRAPH_URL", "NEW_GRAPH_AUTH_TOKEN");
 const checks = [];
+const warnings = [];
 const operationCache = new Map();
 
 function endpointFromEnv(urlKey, tokenKey) {
@@ -137,7 +138,11 @@ async function graphRequest(
 
 function metaFromResponse(data, label) {
   const meta = data?._meta;
-  if (!meta?.block?.hash || meta.block.number === undefined) {
+  if (
+    !meta?.block ||
+    meta.block.number === undefined ||
+    meta.block.number === null
+  ) {
     throw new Error(`${label} did not return _meta.block`);
   }
   if (meta.hasIndexingErrors === true) {
@@ -145,7 +150,10 @@ function metaFromResponse(data, label) {
   }
   return {
     number: Number(meta.block.number),
-    hash: String(meta.block.hash).toLowerCase(),
+    hash:
+      typeof meta.block.hash === "string" && meta.block.hash.length > 0
+        ? meta.block.hash.toLowerCase()
+        : null,
   };
 }
 
@@ -372,19 +380,22 @@ let oldBlock;
 let newBlock;
 if (oldMetaIsComparisonBlock || newMetaIsComparisonBlock) {
   const anchorBlock = newMetaIsComparisonBlock ? newMeta : oldMeta;
+  const anchor = anchorBlock.hash
+    ? { hash: anchorBlock.hash }
+    : { number: comparisonBlockNumber };
   [oldBlock, newBlock] = await Promise.all([
     oldMetaIsComparisonBlock
       ? Promise.resolve(oldMeta)
       : fetchBlock(
           oldEndpoint,
-          { hash: anchorBlock.hash },
+          anchor,
           "old comparison block"
         ),
     newMetaIsComparisonBlock
       ? Promise.resolve(newMeta)
       : fetchBlock(
           newEndpoint,
-          { hash: anchorBlock.hash },
+          anchor,
           "new comparison block"
         ),
   ]);
@@ -406,14 +417,34 @@ addCheck("block.number_matches", oldBlock.number === newBlock.number, {
   old: oldBlock.number,
   new: newBlock.number,
 });
-addCheck("block.hash_matches", oldBlock.hash === newBlock.hash, {
+addCheck(
+  "block.number_matches_requested_finalized_block",
+  oldBlock.number === comparisonBlockNumber &&
+    newBlock.number === comparisonBlockNumber,
+  {
+    requested: comparisonBlockNumber,
+    old: oldBlock.number,
+    new: newBlock.number,
+  }
+);
+const hashesAvailable = oldBlock.hash !== null && newBlock.hash !== null;
+const hashesMatch = !hashesAvailable || oldBlock.hash === newBlock.hash;
+addCheck("block.hash_matches_when_available", hashesMatch, {
   old: oldBlock.hash,
   new: newBlock.hash,
+  available: hashesAvailable,
 });
-if (oldBlock.hash !== newBlock.hash) {
+if (hashesAvailable && oldBlock.hash !== newBlock.hash) {
   throw new Error("Old and new endpoints returned different block hashes");
 }
-const pinnedBlock = { hash: oldBlock.hash };
+if (!hashesAvailable) {
+  warnings.push(
+    "The endpoint omitted historical block hashes; parity queries were pinned by finalized block number."
+  );
+}
+const pinnedBlock = hashesAvailable
+  ? { hash: oldBlock.hash }
+  : { number: comparisonBlockNumber };
 
 const [oldBase, newBase, projections] = await Promise.all([
   fetchCombinedPages({
@@ -697,7 +728,8 @@ const report = {
   status: passed ? "PASS" : "FAIL",
   comparisonBlock: {
     number: comparisonBlockNumber,
-    hash: oldBlock.hash,
+    hash: hashesAvailable ? oldBlock.hash : null,
+    pin: hashesAvailable ? "hash" : "number",
     oldLatestIndexedBlock: oldMeta.number,
     newLatestIndexedBlock: newMeta.number,
   },
@@ -710,6 +742,7 @@ const report = {
     revealSummaries: projections.revealSummaries.length,
     revealTokens: projections.revealTokens.length,
   },
+  warnings,
   checks,
 };
 

@@ -33,6 +33,10 @@
       "address": "0x5A59D45437559C7CE0A012630a456321180C21e1",
       "startBlock": 273178800
     },
+    "DoudoCoreVRFRouter": {
+      "address": "0x48A1205c9b6BF1Da1a3D1bE651A9e237AC349Eb5",
+      "startBlock": 273178800
+    },
     "DoudoBundleModule": {
       "address": "0x68cBA2b3c72Be39be748B06c1e6dDab2855E91b6",
       "startBlock": 273178800
