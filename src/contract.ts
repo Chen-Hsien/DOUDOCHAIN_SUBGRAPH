@@ -1,6 +1,8 @@
 import {
   Approval as ApprovalEvent,
   ApprovalForAll as ApprovalForAllEvent,
+  LegacyMembershipMigrated as LegacyMembershipMigratedEvent,
+  LegacyVoucherMigrated as LegacyVoucherMigratedEvent,
   MembershipExpired as MembershipExpiredEvent,
   MembershipLevelCreated as MembershipLevelCreatedEvent,
   MembershipLevelUpdated as MembershipLevelUpdatedEvent,
@@ -60,6 +62,7 @@ import {
 
 const MEMBERSHIP_LEVEL_KEY = "membershipLevelId";
 const VOUCHER_KEY = "voucherId";
+const MEMBERSHIP_EXPIRATION_SECONDS = BigInt.fromI32(180 * 24 * 60 * 60);
 
 export function handleApproval(event: ApprovalEvent): void {
   let entity = new Approval(
@@ -375,6 +378,60 @@ export function handleMembershipUpgraded(event: MembershipUpgradedEvent): void {
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
   entity.save();
+}
+
+export function handleLegacyMembershipMigrated(
+  event: LegacyMembershipMigratedEvent
+): void {
+  let membershipId = Bytes.fromUTF8(event.params.tokenId.toString());
+  let levelId = Bytes.fromUTF8(event.params.membershipLevel.toString());
+  let membershipNFT = new MembershipNFT(membershipId);
+  let hasNoPriorActivity = event.params.lastActiveTimestamp.equals(BigInt.zero());
+  let expiryDate = hasNoPriorActivity
+    ? event.block.timestamp.plus(MEMBERSHIP_EXPIRATION_SECONDS)
+    : event.params.lastActiveTimestamp.plus(MEMBERSHIP_EXPIRATION_SECONDS);
+
+  membershipNFT.tokenId = event.params.tokenId;
+  membershipNFT.owner = event.params.owner;
+  membershipNFT.level = levelId;
+  membershipNFT.expiryDate = expiryDate;
+  membershipNFT.isActive = hasNoPriorActivity || expiryDate.ge(event.block.timestamp);
+  membershipNFT.lastActivityTime = event.params.lastActiveTimestamp;
+  membershipNFT.createdAt = event.block.timestamp;
+  membershipNFT.blockNumber = event.block.number;
+  membershipNFT.blockTimestamp = event.block.timestamp;
+  membershipNFT.transactionHash = event.transaction.hash;
+  membershipNFT.save();
+
+  let level = MembershipLevel.load(levelId);
+  if (level) {
+    level.totalMembers = level.totalMembers.plus(BigInt.fromI32(1));
+    level.save();
+  }
+}
+
+export function handleLegacyVoucherMigrated(
+  event: LegacyVoucherMigratedEvent
+): void {
+  let voucherId = Bytes.fromUTF8(event.params.tokenId.toString());
+  let voucherTypeId = Bytes.fromUTF8(event.params.voucherTypeId.toString());
+  let voucher = new Voucher(voucherId);
+
+  voucher.tokenId = event.params.tokenId;
+  voucher.owner = event.params.owner;
+  voucher.voucherType = voucherTypeId;
+  voucher.isRedeemed = false;
+  voucher.createdAt = event.block.timestamp;
+  voucher.blockNumber = event.block.number;
+  voucher.blockTimestamp = event.block.timestamp;
+  voucher.transactionHash = event.transaction.hash;
+  voucher.save();
+
+  let voucherType = VoucherType.load(voucherTypeId);
+  if (voucherType) {
+    voucherType.totalMinted = voucherType.totalMinted.plus(BigInt.fromI32(1));
+    voucherType.save();
+  }
 }
 
 export function handleRoleAdminChanged(event: RoleAdminChangedEvent): void {

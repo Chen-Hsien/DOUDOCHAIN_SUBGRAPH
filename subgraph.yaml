@@ -414,9 +414,9 @@ dataSources:
     name: Contract
     network: arbitrum-sepolia
     source:
-      address: "0x35d6650973B713193C9D0Ef96E4EbFB61B96B7B7"
+      address: "0x1F1150AC2d7a8208A2743a4E74e8401Ff9F1ED53"
       abi: Contract
-      startBlock: 275143005
+      startBlock: 290203262
     mapping:
       kind: ethereum/events
       apiVersion: 0.0.7
@@ -467,6 +467,10 @@ dataSources:
           handler: handleMembershipTransferred
         - event: MembershipUpgraded(address,uint256,uint256,string)
           handler: handleMembershipUpgraded
+        - event: LegacyMembershipMigrated(indexed uint256,indexed address,indexed uint256,uint256,uint256,uint256)
+          handler: handleLegacyMembershipMigrated
+        - event: LegacyVoucherMigrated(indexed uint256,indexed address,indexed uint256)
+          handler: handleLegacyVoucherMigrated
         - event: RoleAdminChanged(indexed bytes32,indexed bytes32,indexed bytes32)
           handler: handleRoleAdminChanged
         - event: RoleGranted(indexed bytes32,indexed address,indexed address)
