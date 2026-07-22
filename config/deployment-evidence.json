@@ -1,0 +1,69 @@
+{
+  "arbitrum-one": {
+    "ICHICHAIN": {
+      "address": "PENDING_ARBITRUM_ONE_ICHICHAIN",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_ICHICHAIN_TX"
+    },
+    "RevealOnChainData": {
+      "address": "PENDING_ARBITRUM_ONE_REVEAL_ON_CHAIN_DATA",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_REVEAL_ON_CHAIN_DATA_TX"
+    },
+    "DoudoSeriesOpsModule": {
+      "address": "PENDING_ARBITRUM_ONE_SERIES_OPS_MODULE",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_SERIES_OPS_MODULE_TX"
+    },
+    "MerchantSeriesRegistry": {
+      "address": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_REGISTRY",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_REGISTRY_TX"
+    },
+    "MerchantSeriesPublisher": {
+      "address": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_PUBLISHER",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_PUBLISHER_TX"
+    },
+    "DoudoCoreVRFRouter": {
+      "address": "PENDING_ARBITRUM_ONE_CORE_VRF_ROUTER",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_CORE_VRF_ROUTER_TX"
+    },
+    "DoudoVRFRouter": {
+      "address": "PENDING_ARBITRUM_ONE_VRF_ROUTER",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_VRF_ROUTER_TX"
+    },
+    "DoudoBundleModule": {
+      "address": "PENDING_ARBITRUM_ONE_BUNDLE_MODULE",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_BUNDLE_MODULE_TX"
+    },
+    "DoudoRefundModule": {
+      "address": "PENDING_ARBITRUM_ONE_REFUND_MODULE",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_REFUND_MODULE_TX"
+    },
+    "DoudoRedrawModule": {
+      "address": "PENDING_ARBITRUM_ONE_REDRAW_MODULE",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_REDRAW_MODULE_TX"
+    },
+    "DoudoCollectionRewardModule": {
+      "address": "PENDING_ARBITRUM_ONE_COLLECTION_REWARD_MODULE",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_COLLECTION_REWARD_MODULE_TX"
+    },
+    "CollectionBookUpgradeable": {
+      "address": "PENDING_ARBITRUM_ONE_COLLECTION_BOOK",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_COLLECTION_BOOK_TX"
+    },
+    "Contract": {
+      "address": "PENDING_ARBITRUM_ONE_MEMBERSHIP_CONTRACT",
+      "startBlock": 0,
+      "transactionHash": "PENDING_ARBITRUM_ONE_MEMBERSHIP_CONTRACT_TX"
+    }
+  }
+}

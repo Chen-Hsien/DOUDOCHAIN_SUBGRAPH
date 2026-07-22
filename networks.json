@@ -1,17 +1,4 @@
 {
-  "polygon-amoy": {
-    "ICHICHAIN": {
-      "address": "0x24513A99D1Dd6cFd8d9c27D3344877e0499180f0",
-      "startBlock": 17835264
-    },
-    "Contract": {
-      "address": "0xF5E1086Ce5AEc81FfaA88B1FfF73D9e8d4a089d0"
-    },
-    "MarketplaceV3": {
-      "address": "0xda99EBe85d00F777d5687FCaaA60DA1f982F4432",
-      "startBlock": 17835264
-    }
-  },
   "arbitrum-sepolia": {
     "ICHICHAIN": {
       "address": "0xf75395A8cd753f47135cfcaE00D2706252c3E0F5",
@@ -20,6 +7,10 @@
     "RevealOnChainData": {
       "address": "0xf75395A8cd753f47135cfcaE00D2706252c3E0F5",
       "startBlock": 273178800
+    },
+    "DoudoSeriesOpsModule": {
+      "address": "0x2FF7521dEF3903fc5c6f2877252cdf5019380070",
+      "startBlock": 283984396
     },
     "MerchantSeriesRegistry": {
       "address": "0x03dBEE1f231A29b06032aa24D2CFb96a1321C1A6",
@@ -60,6 +51,60 @@
     "Contract": {
       "address": "0x35d6650973B713193C9D0Ef96E4EbFB61B96B7B7",
       "startBlock": 275143005
+    }
+  },
+  "arbitrum-one": {
+    "ICHICHAIN": {
+      "address": "PENDING_ARBITRUM_ONE_ICHICHAIN",
+      "startBlock": 0
+    },
+    "RevealOnChainData": {
+      "address": "PENDING_ARBITRUM_ONE_REVEAL_ON_CHAIN_DATA",
+      "startBlock": 0
+    },
+    "DoudoSeriesOpsModule": {
+      "address": "PENDING_ARBITRUM_ONE_SERIES_OPS_MODULE",
+      "startBlock": 0
+    },
+    "MerchantSeriesRegistry": {
+      "address": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_REGISTRY",
+      "startBlock": 0
+    },
+    "MerchantSeriesPublisher": {
+      "address": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_PUBLISHER",
+      "startBlock": 0
+    },
+    "DoudoCoreVRFRouter": {
+      "address": "PENDING_ARBITRUM_ONE_CORE_VRF_ROUTER",
+      "startBlock": 0
+    },
+    "DoudoVRFRouter": {
+      "address": "PENDING_ARBITRUM_ONE_VRF_ROUTER",
+      "startBlock": 0
+    },
+    "DoudoBundleModule": {
+      "address": "PENDING_ARBITRUM_ONE_BUNDLE_MODULE",
+      "startBlock": 0
+    },
+    "DoudoRefundModule": {
+      "address": "PENDING_ARBITRUM_ONE_REFUND_MODULE",
+      "startBlock": 0
+    },
+    "DoudoRedrawModule": {
+      "address": "PENDING_ARBITRUM_ONE_REDRAW_MODULE",
+      "startBlock": 0
+    },
+    "DoudoCollectionRewardModule": {
+      "address": "PENDING_ARBITRUM_ONE_COLLECTION_REWARD_MODULE",
+      "startBlock": 0
+    },
+    "CollectionBookUpgradeable": {
+      "address": "PENDING_ARBITRUM_ONE_COLLECTION_BOOK",
+      "startBlock": 0
+    },
+    "Contract": {
+      "address": "PENDING_ARBITRUM_ONE_MEMBERSHIP_CONTRACT",
+      "startBlock": 0
     }
   }
 }

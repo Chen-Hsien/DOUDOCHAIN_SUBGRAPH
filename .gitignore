@@ -19,8 +19,13 @@ yarn-error.log*
 # Optional eslint cache
 .eslintcache
 
-# dotenv environment variables file
+# dotenv environment variables files
 .env
+.env.*
+!.env.example
+
+# Environment-specific manifests generated from subgraph.yaml
+.subgraph.*.generated.yaml
 
 # Testing
 coverage

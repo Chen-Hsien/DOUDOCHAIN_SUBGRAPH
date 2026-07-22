@@ -1,14 +1,19 @@
 {
-  "name": "doudochain_amoy",
+  "name": "doudochain-subgraph",
   "license": "UNLICENSED",
   "scripts": {
     "codegen": "graph codegen",
-    "build": "graph build",
-    "deploy": "graph deploy doudochain-arb-v-2",
-    "create-local": "graph create --node http://localhost:8020/ doudochain_amoy",
-    "remove-local": "graph remove --node http://localhost:8020/ doudochain_amoy",
-    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 doudochain_amoy",
+    "build": "npm run build:test",
+    "build:test": "node scripts/run-environment.mjs build test",
+    "build:prod": "node scripts/run-environment.mjs build prod",
+    "deploy": "node scripts/run-environment.mjs deploy",
+    "deploy:test": "node scripts/run-environment.mjs deploy test",
+    "deploy:prod": "node scripts/run-environment.mjs deploy prod",
+    "create-local": "graph create --node http://localhost:8020/ doudochain",
+    "remove-local": "graph remove --node http://localhost:8020/ doudochain",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 doudochain",
     "parity-gate": "node scripts/parity-gate/run.mjs",
+    "test:deployment": "node --test tests/deployment-safety.test.mjs",
     "test": "graph test"
   },
   "dependencies": {

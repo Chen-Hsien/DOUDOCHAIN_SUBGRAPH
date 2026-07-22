@@ -1,0 +1,77 @@
+name: Deploy Subgraph
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: Deployment target
+        required: true
+        type: choice
+        options:
+          - test
+          - prod
+      version:
+        description: Semver or Git SHA version label
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: subgraph-deploy-${{ inputs.target }}
+  cancel-in-progress: false
+
+jobs:
+  validate-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require main for production
+        if: inputs.target == 'prod' && github.ref != 'refs/heads/main'
+        run: |
+          echo "Production deployment must be dispatched from main."
+          exit 1
+      - name: Require develop for test
+        if: inputs.target == 'test' && github.ref != 'refs/heads/develop'
+        run: |
+          echo "Test deployment must be dispatched from develop."
+          exit 1
+
+  deploy-test:
+    if: inputs.target == 'test'
+    needs: validate-request
+    runs-on: ubuntu-latest
+    environment: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Deploy test subgraph
+        env:
+          THEGRAPH_TEST_DEPLOY_KEY: ${{ secrets.THEGRAPH_DEPLOY_KEY }}
+          THEGRAPH_TEST_VERSION_LABEL: ${{ inputs.version }}
+          ARBITRUM_SEPOLIA_RPC_URL: ${{ secrets.ARBITRUM_SEPOLIA_RPC_URL }}
+        run: npm run deploy:test
+
+  deploy-production:
+    if: inputs.target == 'prod'
+    needs: validate-request
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Deploy production subgraph
+        env:
+          THEGRAPH_PROD_DEPLOY_KEY: ${{ secrets.THEGRAPH_DEPLOY_KEY }}
+          THEGRAPH_PROD_VERSION_LABEL: ${{ inputs.version }}
+          THEGRAPH_PROD_CONFIRM: doudochain-v-2@arbitrum-one
+          ARBITRUM_ONE_RPC_URL: ${{ secrets.ARBITRUM_ONE_RPC_URL }}
+        run: npm run deploy:prod
