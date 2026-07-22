@@ -1,6 +1,7 @@
 import {
   CollectionBookClaimed as CollectionBookClaimedEvent,
   CollectionBookCreated as CollectionBookCreatedEvent,
+  CollectionBookExpirationUpdated as CollectionBookExpirationUpdatedEvent,
   CollectionBookRewardTargetUpdated as CollectionBookRewardTargetUpdatedEvent,
   CollectionBookSlotDefined as CollectionBookSlotDefinedEvent,
   CollectionBookSlotEmptied as CollectionBookSlotEmptiedEvent,
@@ -61,6 +62,7 @@ function loadOrCreateBook(bookIdValue: BigInt): CollectionBook {
     entity.rewardKind = 0;
     entity.rewardData = BigInt.fromI32(0);
     entity.active = false;
+    entity.expiresAt = BigInt.fromI32(0);
     entity.totalRequired = BigInt.fromI32(0);
     entity.blockNumber = BigInt.fromI32(0);
     entity.blockTimestamp = BigInt.fromI32(0);
@@ -152,6 +154,14 @@ export function handleCollectionBookStatusUpdated(
 ): void {
   let entity = loadOrCreateBook(event.params.bookId);
   entity.active = event.params.active;
+  entity.save();
+}
+
+export function handleCollectionBookExpirationUpdated(
+  event: CollectionBookExpirationUpdatedEvent
+): void {
+  let entity = loadOrCreateBook(event.params.bookId);
+  entity.expiresAt = event.params.expiresAt;
   entity.save();
 }
 

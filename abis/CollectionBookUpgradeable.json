@@ -208,6 +208,25 @@
       "anonymous": false,
       "inputs": [
         {
+          "indexed": true,
+          "internalType": "uint256",
+          "name": "bookId",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "expiresAt",
+          "type": "uint256"
+        }
+      ],
+      "name": "CollectionBookExpirationUpdated",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
           "indexed": false,
           "internalType": "address",
           "name": "doudochainV2RewardTarget",

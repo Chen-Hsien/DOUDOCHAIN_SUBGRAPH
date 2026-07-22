@@ -394,6 +394,8 @@ dataSources:
       eventHandlers:
         - event: CollectionBookCreated(indexed uint256,string,uint8,uint256,bool)
           handler: handleCollectionBookCreated
+        - event: CollectionBookExpirationUpdated(indexed uint256,uint256)
+          handler: handleCollectionBookExpirationUpdated
         - event: CollectionBookSlotDefined(indexed uint256,indexed uint256,indexed address,uint256,uint256,uint32)
           handler: handleCollectionBookSlotDefined
         - event: CollectionBookStatusUpdated(indexed uint256,bool)
