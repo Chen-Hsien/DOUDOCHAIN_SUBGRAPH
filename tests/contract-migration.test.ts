@@ -18,12 +18,16 @@ import {
 
 const OWNER = "0x0000000000000000000000000000000000000123"
 
+function entityId(value: string): Bytes {
+  return Bytes.fromUTF8(value)
+}
+
 function bytesId(value: string): string {
-  return Bytes.fromUTF8(value).toHexString()
+  return entityId(value).toHexString()
 }
 
 function saveMembershipLevel(levelIndex: i32): void {
-  let level = new MembershipLevel(bytesId(levelIndex.toString()))
+  let level = new MembershipLevel(entityId(levelIndex.toString()))
   level.levelIndex = BigInt.fromI32(levelIndex)
   level.name = "Silver"
   level.threshold = BigInt.fromI32(9000)
@@ -39,7 +43,7 @@ function saveMembershipLevel(levelIndex: i32): void {
 }
 
 function saveVoucherType(voucherTypeId: i32): void {
-  let voucherType = new VoucherType(bytesId(voucherTypeId.toString()))
+  let voucherType = new VoucherType(entityId(voucherTypeId.toString()))
   voucherType.voucherTypeId = BigInt.fromI32(voucherTypeId)
   voucherType.amount = BigInt.fromI32(100)
   voucherType.maxPerUser = BigInt.fromI32(3)
