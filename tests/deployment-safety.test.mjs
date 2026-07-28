@@ -96,12 +96,22 @@ test("deployments require their assigned branch and a clean tree", () => {
   );
 });
 
-test("Sepolia is complete while pending Arbitrum One stays blocked", () => {
+test("Sepolia and Arbitrum One both cover every manifest data source", () => {
   const testConfig = validateNetworkConfig("arbitrum-sepolia");
+  const prodConfig = validateNetworkConfig("arbitrum-one");
   assert.equal(testConfig.dataSourceNames.length, 13);
-  assert.throws(
-    () => validateNetworkConfig("arbitrum-one"),
-    /not deployable/,
+  assert.equal(prodConfig.dataSourceNames.length, 13);
+  assert.deepEqual(prodConfig.config.ICHICHAIN, {
+    address: "0x4749289F940F0C6B7cf68A19b0BDc611b80cdb0A",
+    startBlock: 488650672,
+  });
+  assert.deepEqual(prodConfig.config.Contract, {
+    address: "0xf1D77D5485cD80CCC32ada1100e40558EB58B5cA",
+    startBlock: 488650833,
+  });
+  assert.equal(
+    prodConfig.evidence.DoudoCoreVRFRouter.transactionHash,
+    "0x9e1ae599ee26d6f1b732ec12a7aaeeecdc67d6535b5823fa4fd8d896ec4193ed",
   );
 });
 

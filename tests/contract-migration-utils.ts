@@ -1,9 +1,28 @@
 import { newMockEvent } from "matchstick-as"
 import { Address, BigInt, ethereum } from "@graphprotocol/graph-ts"
 import {
+  AdminChanged,
   LegacyMembershipMigrated,
   LegacyVoucherMigrated
 } from "../generated/Contract/Contract"
+
+export function createAdminChangedEvent(
+  previousAdmin: Address,
+  newAdmin: Address
+): AdminChanged {
+  let event = changetype<AdminChanged>(newMockEvent())
+  event.parameters = new Array()
+  event.parameters.push(
+    new ethereum.EventParam(
+      "previousAdmin",
+      ethereum.Value.fromAddress(previousAdmin)
+    )
+  )
+  event.parameters.push(
+    new ethereum.EventParam("newAdmin", ethereum.Value.fromAddress(newAdmin))
+  )
+  return event
+}
 
 export function createLegacyMembershipMigratedEvent(
   tokenId: i32,

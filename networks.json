@@ -55,56 +55,56 @@
   },
   "arbitrum-one": {
     "ICHICHAIN": {
-      "address": "PENDING_ARBITRUM_ONE_ICHICHAIN",
-      "startBlock": 0
+      "address": "0x4749289F940F0C6B7cf68A19b0BDc611b80cdb0A",
+      "startBlock": 488650672
     },
     "RevealOnChainData": {
-      "address": "PENDING_ARBITRUM_ONE_REVEAL_ON_CHAIN_DATA",
-      "startBlock": 0
+      "address": "0x4749289F940F0C6B7cf68A19b0BDc611b80cdb0A",
+      "startBlock": 488650672
     },
     "DoudoSeriesOpsModule": {
-      "address": "PENDING_ARBITRUM_ONE_SERIES_OPS_MODULE",
-      "startBlock": 0
+      "address": "0x21a55C40a4Dd25Ec83dec24527cDdfb232aD7e47",
+      "startBlock": 488650695
     },
     "MerchantSeriesRegistry": {
-      "address": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_REGISTRY",
-      "startBlock": 0
+      "address": "0x178eF41099aC23730e63f7593A8d83c85ac496eE",
+      "startBlock": 488650852
     },
     "MerchantSeriesPublisher": {
-      "address": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_PUBLISHER",
-      "startBlock": 0
+      "address": "0xd4DF68df78e9e5389288B5c1E91eB3024060e363",
+      "startBlock": 488650870
     },
     "DoudoCoreVRFRouter": {
-      "address": "PENDING_ARBITRUM_ONE_CORE_VRF_ROUTER",
-      "startBlock": 0
+      "address": "0x13Ee37A43B012A772765089d8711b0Be42984010",
+      "startBlock": 488650631
     },
     "DoudoVRFRouter": {
-      "address": "PENDING_ARBITRUM_ONE_VRF_ROUTER",
-      "startBlock": 0
+      "address": "0x13Ee37A43B012A772765089d8711b0Be42984010",
+      "startBlock": 488650631
     },
     "DoudoBundleModule": {
-      "address": "PENDING_ARBITRUM_ONE_BUNDLE_MODULE",
-      "startBlock": 0
+      "address": "0x0aDe18AD89B9971229d5E6588a76d4bEeAaE4b8f",
+      "startBlock": 488650717
     },
     "DoudoRefundModule": {
-      "address": "PENDING_ARBITRUM_ONE_REFUND_MODULE",
-      "startBlock": 0
+      "address": "0xD1d215c050aE51CFA6Eae0b236dEcD129cEddD3F",
+      "startBlock": 488650740
     },
     "DoudoRedrawModule": {
-      "address": "PENDING_ARBITRUM_ONE_REDRAW_MODULE",
-      "startBlock": 0
+      "address": "0xeDC87Ef2124ab0ee4B6fc1522A9b0F458A9B61ed",
+      "startBlock": 488650762
     },
     "DoudoCollectionRewardModule": {
-      "address": "PENDING_ARBITRUM_ONE_COLLECTION_REWARD_MODULE",
-      "startBlock": 0
+      "address": "0x1f7D42b6e6064911C0E690cA44DC7e7d592a4549",
+      "startBlock": 488650785
     },
     "CollectionBookUpgradeable": {
-      "address": "PENDING_ARBITRUM_ONE_COLLECTION_BOOK",
-      "startBlock": 0
+      "address": "0x150e44C0E1d9C80de474d9232cd958eaf05497f6",
+      "startBlock": 488650806
     },
     "Contract": {
-      "address": "PENDING_ARBITRUM_ONE_MEMBERSHIP_CONTRACT",
-      "startBlock": 0
+      "address": "0xf1D77D5485cD80CCC32ada1100e40558EB58B5cA",
+      "startBlock": 488650833
     }
   }
 }

@@ -422,6 +422,7 @@ dataSources:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
+        - AdminChanged
         - Approval
         - ApprovalForAll
         - MembershipExpired
@@ -449,6 +450,8 @@ dataSources:
         - name: Contract
           file: ./abis/Contract.json
       eventHandlers:
+        - event: AdminChanged(address,address)
+          handler: handleAdminChanged
         - event: Approval(indexed address,indexed address,indexed uint256)
           handler: handleApproval
         - event: ApprovalForAll(indexed address,indexed address,bool)

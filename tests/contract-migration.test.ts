@@ -8,10 +8,12 @@ import {
 import { Address, BigInt, Bytes } from "@graphprotocol/graph-ts"
 import { MembershipLevel, VoucherType } from "../generated/schema"
 import {
+  handleAdminChanged,
   handleLegacyMembershipMigrated,
   handleLegacyVoucherMigrated
 } from "../src/contract"
 import {
+  createAdminChangedEvent,
   createLegacyMembershipMigratedEvent,
   createLegacyVoucherMigratedEvent
 } from "./contract-migration-utils"
@@ -60,6 +62,33 @@ function saveVoucherType(voucherTypeId: i32): void {
 describe("DOUDOCOINNFT migration handlers", () => {
   afterEach(() => {
     clearStore()
+  })
+
+  test("indexes the production default-admin ownership change", () => {
+    let previousAdmin = Address.fromString(
+      "0x0000000000000000000000000000000000000123"
+    )
+    let newAdmin = Address.fromString(
+      "0x0000000000000000000000000000000000000456"
+    )
+
+    handleAdminChanged(createAdminChangedEvent(previousAdmin, newAdmin))
+
+    let id = Bytes.fromHexString(
+      "0xa16081f360e3847006db660bae1c6d1b2e17ec2a"
+    ).concatI32(1)
+    assert.fieldEquals(
+      "AdminChanged",
+      id.toHexString(),
+      "previousAdmin",
+      previousAdmin.toHexString()
+    )
+    assert.fieldEquals(
+      "AdminChanged",
+      id.toHexString(),
+      "newAdmin",
+      newAdmin.toHexString()
+    )
   })
 
   test("materializes migrated membership state and preserves expiry semantics", () => {

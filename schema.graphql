@@ -1097,6 +1097,15 @@ type PlatformFeeTypeUpdated @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type AdminChanged @entity(immutable: true) {
+  id: Bytes!
+  previousAdmin: Bytes! # address
+  newAdmin: Bytes! # address
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type RoleAdminChanged @entity(immutable: true) {
   id: Bytes!
   role: Bytes! # bytes32

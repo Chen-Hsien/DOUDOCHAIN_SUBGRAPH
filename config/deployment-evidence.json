@@ -1,69 +1,69 @@
 {
   "arbitrum-one": {
     "ICHICHAIN": {
-      "address": "PENDING_ARBITRUM_ONE_ICHICHAIN",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_ICHICHAIN_TX"
+      "address": "0x4749289F940F0C6B7cf68A19b0BDc611b80cdb0A",
+      "startBlock": 488650672,
+      "transactionHash": "0xec7ad6bb1ba66aabdae6d4c42748d8447633c1f31391abaceb8a35eac7ab4a03"
     },
     "RevealOnChainData": {
-      "address": "PENDING_ARBITRUM_ONE_REVEAL_ON_CHAIN_DATA",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_REVEAL_ON_CHAIN_DATA_TX"
+      "address": "0x4749289F940F0C6B7cf68A19b0BDc611b80cdb0A",
+      "startBlock": 488650672,
+      "transactionHash": "0xec7ad6bb1ba66aabdae6d4c42748d8447633c1f31391abaceb8a35eac7ab4a03"
     },
     "DoudoSeriesOpsModule": {
-      "address": "PENDING_ARBITRUM_ONE_SERIES_OPS_MODULE",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_SERIES_OPS_MODULE_TX"
+      "address": "0x21a55C40a4Dd25Ec83dec24527cDdfb232aD7e47",
+      "startBlock": 488650695,
+      "transactionHash": "0x82a239efee1459dfff77c372d728794bf9ec3a589f7dda529977e0102c721156"
     },
     "MerchantSeriesRegistry": {
-      "address": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_REGISTRY",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_REGISTRY_TX"
+      "address": "0x178eF41099aC23730e63f7593A8d83c85ac496eE",
+      "startBlock": 488650852,
+      "transactionHash": "0x4673d5d96258546f182939a1b9152f626a43e0ae046de7738cf779a11ae2f56e"
     },
     "MerchantSeriesPublisher": {
-      "address": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_PUBLISHER",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_MERCHANT_SERIES_PUBLISHER_TX"
+      "address": "0xd4DF68df78e9e5389288B5c1E91eB3024060e363",
+      "startBlock": 488650870,
+      "transactionHash": "0x06d38e333a378379c7e69ae4d042f922476c4795edf3a0e42108ee6f8ba3c409"
     },
     "DoudoCoreVRFRouter": {
-      "address": "PENDING_ARBITRUM_ONE_CORE_VRF_ROUTER",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_CORE_VRF_ROUTER_TX"
+      "address": "0x13Ee37A43B012A772765089d8711b0Be42984010",
+      "startBlock": 488650631,
+      "transactionHash": "0x9e1ae599ee26d6f1b732ec12a7aaeeecdc67d6535b5823fa4fd8d896ec4193ed"
     },
     "DoudoVRFRouter": {
-      "address": "PENDING_ARBITRUM_ONE_VRF_ROUTER",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_VRF_ROUTER_TX"
+      "address": "0x13Ee37A43B012A772765089d8711b0Be42984010",
+      "startBlock": 488650631,
+      "transactionHash": "0x9e1ae599ee26d6f1b732ec12a7aaeeecdc67d6535b5823fa4fd8d896ec4193ed"
     },
     "DoudoBundleModule": {
-      "address": "PENDING_ARBITRUM_ONE_BUNDLE_MODULE",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_BUNDLE_MODULE_TX"
+      "address": "0x0aDe18AD89B9971229d5E6588a76d4bEeAaE4b8f",
+      "startBlock": 488650717,
+      "transactionHash": "0xfad9ee5be53261c35d1e8e247d79cd9db54910e48deb9e24c211b4bf3bdb10bb"
     },
     "DoudoRefundModule": {
-      "address": "PENDING_ARBITRUM_ONE_REFUND_MODULE",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_REFUND_MODULE_TX"
+      "address": "0xD1d215c050aE51CFA6Eae0b236dEcD129cEddD3F",
+      "startBlock": 488650740,
+      "transactionHash": "0x5d4b5d90b1fa097213265e3a4038304a2cedb3e97106c6a73065f9bf93a3065a"
     },
     "DoudoRedrawModule": {
-      "address": "PENDING_ARBITRUM_ONE_REDRAW_MODULE",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_REDRAW_MODULE_TX"
+      "address": "0xeDC87Ef2124ab0ee4B6fc1522A9b0F458A9B61ed",
+      "startBlock": 488650762,
+      "transactionHash": "0xb74b1be2b12e40cbdc8185dd51dc029e3e4afcdb2596a39a9dcf242a59cca863"
     },
     "DoudoCollectionRewardModule": {
-      "address": "PENDING_ARBITRUM_ONE_COLLECTION_REWARD_MODULE",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_COLLECTION_REWARD_MODULE_TX"
+      "address": "0x1f7D42b6e6064911C0E690cA44DC7e7d592a4549",
+      "startBlock": 488650785,
+      "transactionHash": "0x31556faa42a98f2c1b75cfd96b7c8e6d7a8a44e2e3b12a1f1bdddfa11e5e64ae"
     },
     "CollectionBookUpgradeable": {
-      "address": "PENDING_ARBITRUM_ONE_COLLECTION_BOOK",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_COLLECTION_BOOK_TX"
+      "address": "0x150e44C0E1d9C80de474d9232cd958eaf05497f6",
+      "startBlock": 488650806,
+      "transactionHash": "0xcd874ea97e3bd8613da70805d6900e47ea7676e15542960ed4aff6c45eb8d484"
     },
     "Contract": {
-      "address": "PENDING_ARBITRUM_ONE_MEMBERSHIP_CONTRACT",
-      "startBlock": 0,
-      "transactionHash": "PENDING_ARBITRUM_ONE_MEMBERSHIP_CONTRACT_TX"
+      "address": "0xf1D77D5485cD80CCC32ada1100e40558EB58B5cA",
+      "startBlock": 488650833,
+      "transactionHash": "0xa724528c6f17945e38fee0f7d88f99049199df200d30b71338bae248bcce44e7"
     }
   }
 }

@@ -1,4 +1,5 @@
 import {
+  AdminChanged as AdminChangedEvent,
   Approval as ApprovalEvent,
   ApprovalForAll as ApprovalForAllEvent,
   LegacyMembershipMigrated as LegacyMembershipMigratedEvent,
@@ -23,6 +24,7 @@ import {
   VouchersIssuedFromSubscription as VouchersIssuedFromSubscriptionEvent,
 } from "../generated/Contract/Contract";
 import {
+  AdminChanged,
   Approval,
   ApprovalForAll,
   MembershipExpired,
@@ -446,6 +448,18 @@ export function handleRoleAdminChanged(event: RoleAdminChangedEvent): void {
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
 
+  entity.save();
+}
+
+export function handleAdminChanged(event: AdminChangedEvent): void {
+  let entity = new AdminChanged(
+    event.transaction.hash.concatI32(event.logIndex.toI32())
+  );
+  entity.previousAdmin = event.params.previousAdmin;
+  entity.newAdmin = event.params.newAdmin;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
   entity.save();
 }
 

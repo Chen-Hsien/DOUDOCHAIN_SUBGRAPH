@@ -27,7 +27,7 @@ Slug 與 network 固定在 `scripts/run-environment.mjs`，不可由環境變數
 - `ARBITRUM_ONE_RPC_URL`
 - 目前分支為 `main`
 - Git worktree 完全乾淨
-- `networks.json` 與 `config/deployment-evidence.json` 的 13 個 data sources 全部完成
+- `networks.json` 與 `config/deployment-evidence.json` 的 13 個 data sources 必須與正式部署一致
 
 ## 指令
 
@@ -38,7 +38,9 @@ npm run deploy:test
 npm run deploy:prod
 ```
 
-`build:prod` 在 production address、startBlock 與 deployment transaction 尚未完成前會失敗。正式 deploy 還會用 Arbitrum One RPC 驗證 chain ID、receipt 成功狀態、receipt block 與 startBlock，以及合約地址目前是否有 bytecode。
+`build:prod` 會先驗證 production address、startBlock 與 deployment transaction 是否完整。正式 deploy 還會用 Arbitrum One RPC 驗證 chain ID、receipt 成功狀態、receipt block 與 startBlock，以及合約地址目前是否有 bytecode。
+
+正式部署中 `ICHICHAIN` 與 `RevealOnChainData` 共用 Core proxy；`DoudoCoreVRFRouter` 與既有相容 data source `DoudoVRFRouter` 共用同一個正式 Router。
 
 ## GitHub 設定
 
