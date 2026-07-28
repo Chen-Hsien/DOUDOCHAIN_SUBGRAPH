@@ -51,6 +51,12 @@ type NewSubPrize @entity(immutable: false) {
   belongSeries: NewSeries!
 }
 
+type SeriesPrizePoolInventory @entity(immutable: false) {
+  id: Bytes! # seriesID
+  seriesID: BigInt!
+  subPrizeIDs: [BigInt!]!
+}
+
 type LastPrizeDraw @entity (immutable: false) {
   id: Bytes!
   requestId: BigInt! # uint256

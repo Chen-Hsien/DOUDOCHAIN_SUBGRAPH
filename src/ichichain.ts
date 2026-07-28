@@ -60,6 +60,7 @@ import {
   initializeSeriesRuntimeState,
   updateCurrentMintLock,
 } from "./series-runtime";
+import { trackSeriesSubPrize } from "./reveal-prize-pool";
 
 const SERIES_ID_KEY = "seriesID";
 const SUB_PRIZE_ID_KEY = "subPrizeID";
@@ -227,6 +228,7 @@ export function handleNewSubPrize(event: NewSubPrizeEvent): void {
   createRevealTokenIpfsContent(seriesEntity, event.params.subPrizeID);
 
   entity.save();
+  trackSeriesSubPrize(event.params.seriesID, event.params.subPrizeID);
 }
 
 export function handleNewSeries(event: NewSeriesEvent): void {
