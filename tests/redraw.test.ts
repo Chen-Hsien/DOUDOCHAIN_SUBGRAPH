@@ -7,14 +7,18 @@ import {
 } from "matchstick-as/assembly/index"
 import { Address, BigInt, Bytes, ethereum } from "@graphprotocol/graph-ts"
 import { newMockEvent } from "matchstick-as"
+import { RevealDrawSent as RevealDrawSentEntity } from "../generated/schema"
 import {
+  NewSubPrize,
   RevealDrawFulfilled,
-  RevealDrawSent
+  RevealDrawSent,
+  UpdatePrize
 } from "../generated/ICHICHAIN/ICHICHAIN"
 import {
   handleRevealDrawFulfilled,
   handleRevealDrawSent
 } from "../src/onChainData"
+import { handleNewSubPrize, handleUpdatePrize } from "../src/ichichain"
 import { handleRedrawMainConfigUpdated, handleRedrawMinted } from "../src/redraw"
 import {
   createRedrawMainConfigUpdatedEvent,
@@ -75,6 +79,73 @@ function createCoreRevealDrawFulfilledEvent(
     )
   )
 
+  return event
+}
+
+function createCoreNewSubPrizeEvent(
+  seriesID: BigInt,
+  subPrizeID: BigInt,
+  prizeGroup: string,
+  subPrizeName: string,
+  subPrizeRemainingQuantity: BigInt
+): NewSubPrize {
+  let event = changetype<NewSubPrize>(newMockEvent())
+  event.parameters = new Array()
+  event.parameters.push(
+    new ethereum.EventParam(
+      "seriesID",
+      ethereum.Value.fromUnsignedBigInt(seriesID)
+    )
+  )
+  event.parameters.push(
+    new ethereum.EventParam(
+      "subPrizeID",
+      ethereum.Value.fromUnsignedBigInt(subPrizeID)
+    )
+  )
+  event.parameters.push(
+    new ethereum.EventParam("prizeGroup", ethereum.Value.fromString(prizeGroup))
+  )
+  event.parameters.push(
+    new ethereum.EventParam(
+      "subPrizeName",
+      ethereum.Value.fromString(subPrizeName)
+    )
+  )
+  event.parameters.push(
+    new ethereum.EventParam(
+      "subPrizeRemainingQuantity",
+      ethereum.Value.fromUnsignedBigInt(subPrizeRemainingQuantity)
+    )
+  )
+  return event
+}
+
+function createCoreUpdatePrizeEvent(
+  seriesID: BigInt,
+  subPrizeID: BigInt,
+  subPrizeRemainingQuantity: BigInt
+): UpdatePrize {
+  let event = changetype<UpdatePrize>(newMockEvent())
+  event.parameters = new Array()
+  event.parameters.push(
+    new ethereum.EventParam(
+      "seriesID",
+      ethereum.Value.fromUnsignedBigInt(seriesID)
+    )
+  )
+  event.parameters.push(
+    new ethereum.EventParam(
+      "subPrizeID",
+      ethereum.Value.fromUnsignedBigInt(subPrizeID)
+    )
+  )
+  event.parameters.push(
+    new ethereum.EventParam(
+      "subPrizeRemainingQuantity",
+      ethereum.Value.fromUnsignedBigInt(subPrizeRemainingQuantity)
+    )
+  )
   return event
 }
 
@@ -285,6 +356,81 @@ describe("Redraw config handlers", () => {
       secondSentTx.toHexString()
     )
     assert.entityCount("SeriesRevealToken", 4)
+  })
+
+  test("snapshots the complete post-draw prize pool in sub-prize order", () => {
+    let seriesID = BigInt.fromI32(29)
+    let requestID = BigInt.fromI32(71)
+
+    handleNewSubPrize(
+      createCoreNewSubPrizeEvent(
+        seriesID,
+        BigInt.fromI32(2),
+        "B",
+        "B Prize",
+        BigInt.fromI32(99)
+      )
+    )
+    handleNewSubPrize(
+      createCoreNewSubPrizeEvent(
+        seriesID,
+        BigInt.fromI32(1),
+        "A",
+        "A Prize",
+        BigInt.fromI32(1)
+      )
+    )
+    handleNewSubPrize(
+      createCoreNewSubPrizeEvent(
+        seriesID,
+        BigInt.fromI32(3),
+        "C",
+        "C Prize",
+        BigInt.fromI32(5)
+      )
+    )
+
+    handleRevealDrawSent(
+      createCoreRevealDrawSentEvent(requestID, [
+        BigInt.fromI32(1042),
+        BigInt.fromI32(1047)
+      ])
+    )
+    handleUpdatePrize(
+      createCoreUpdatePrizeEvent(
+        seriesID,
+        BigInt.fromI32(2),
+        BigInt.fromI32(90)
+      )
+    )
+    handleUpdatePrize(
+      createCoreUpdatePrizeEvent(
+        seriesID,
+        BigInt.fromI32(1),
+        BigInt.zero()
+      )
+    )
+    handleRevealDrawFulfilled(
+      createCoreRevealDrawFulfilledEvent(requestID, seriesID, [
+        BigInt.fromI32(123)
+      ])
+    )
+
+    assert.fieldEquals(
+      "RevealDrawSent",
+      Bytes.fromUTF8("71").toHexString(),
+      "subPrizesRemainingQuantities",
+      "[0, 90, 5]"
+    )
+    let proof = RevealDrawSentEntity.load(Bytes.fromUTF8("71"))
+    assert.assertTrue(proof != null)
+    if (proof != null) {
+      let snapshot = proof.subPrizesRemainingQuantities
+      assert.assertTrue(snapshot != null)
+      if (snapshot != null) {
+        assert.i32Equals(snapshot.length, 3)
+      }
+    }
   })
 
   test("does not create a ghost reveal summary without the sent event", () => {

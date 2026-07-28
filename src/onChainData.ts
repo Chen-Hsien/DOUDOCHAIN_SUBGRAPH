@@ -18,6 +18,7 @@ import {
   redrawRevealBatchId,
   saveRedrawRevealCandidate,
 } from "./redraw-reveal-link";
+import { snapshotSeriesPrizePool } from "./reveal-prize-pool";
 
 function seriesRevealSummaryId(seriesID: BigInt): Bytes {
   return Bytes.fromUTF8(seriesID.toString());
@@ -99,6 +100,10 @@ export function handleRevealDrawFulfilled(
     revealDrawSent.seriesID = event.params.seriesID;
     revealDrawSent.randomWords = event.params.randomWords;
     revealDrawSent.randomSeed = entity.randomSeed;
+    let postDrawRemaining = snapshotSeriesPrizePool(event.params.seriesID);
+    if (postDrawRemaining != null) {
+      revealDrawSent.subPrizesRemainingQuantities = postDrawRemaining;
+    }
     revealDrawSent.save();
     entity.revealTokenCount = revealDrawSent.revealTokenCount;
   } else {
