@@ -250,6 +250,9 @@ export function handleMembershipRenewed(event: MembershipRenewedEvent): void {
   let membershipNFT = MembershipNFT.load(
     Bytes.fromUTF8(event.params.tokenId.toString())
   );
+  let previousExpiryDate = membershipNFT
+    ? membershipNFT.expiryDate
+    : BigInt.zero();
   if (membershipNFT) {
     membershipNFT.expiryDate = event.params.newExpiryDate;
     membershipNFT.updatedAt = event.block.timestamp;
@@ -261,7 +264,10 @@ export function handleMembershipRenewed(event: MembershipRenewedEvent): void {
     event.transaction.hash.concatI32(event.logIndex.toI32())
   );
   entity.membershipNFT = membershipNFT ? membershipNFT.id : Bytes.empty();
+  entity.user = event.params.user;
+  entity.tokenId = event.params.tokenId;
   entity.newExpiryDate = event.params.newExpiryDate;
+  entity.previousExpiryDate = previousExpiryDate;
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
@@ -285,6 +291,7 @@ export function handleMembershipTransferred(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   );
   entity.membershipNFT = membershipNFT ? membershipNFT.id : Bytes.empty();
+  entity.tokenId = event.params.tokenId;
   entity.from = event.params.from;
   entity.to = event.params.to;
   entity.blockNumber = event.block.number;
