@@ -258,6 +258,10 @@ dataSources:
         - SeriesRebateTierConfig
         - TicketPurchaseMint
         - TicketPurchaseRebate
+        - SeriesOpeningDiscountConfig
+        - OpeningDiscountConfigured
+        - OpeningDiscountCleared
+        - OpeningDiscountApplication
       abis:
         - name: DoudoBundleModuleUpgradeable
           file: ./abis/DoudoBundleModuleUpgradeable.json
@@ -270,6 +274,12 @@ dataSources:
           handler: handleTicketPurchaseMinted
         - event: TicketPurchaseRebatePaid(indexed uint256,indexed address,uint256,uint256)
           handler: handleTicketPurchaseRebatePaid
+        - event: OpeningDiscountConfigured(indexed uint256,uint256,uint256)
+          handler: handleOpeningDiscountConfigured
+        - event: OpeningDiscountCleared(indexed uint256)
+          handler: handleOpeningDiscountCleared
+        - event: OpeningDiscountApplied(indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleOpeningDiscountApplied
       file: ./src/bundle.ts
 
   - kind: ethereum
