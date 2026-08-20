@@ -13,7 +13,7 @@
     "remove-local": "graph remove --node http://localhost:8020/ doudochain",
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 doudochain",
     "parity-gate": "node scripts/parity-gate/run.mjs",
-    "pretest": "node scripts/prepare-matchstick.mjs",
+    "pretest": "npm run codegen && node scripts/prepare-matchstick.mjs",
     "test:deployment": "node --test tests/deployment-safety.test.mjs",
     "test": "graph test"
   },
