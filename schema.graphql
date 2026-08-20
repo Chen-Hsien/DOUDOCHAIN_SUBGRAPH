@@ -433,6 +433,49 @@ type TicketPurchaseRebate @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type SeriesOpeningDiscountConfig @entity(immutable: false) {
+  id: Bytes!
+  seriesID: BigInt!
+  ticketLimit: BigInt!
+  priceInPoints: BigInt!
+  usedTickets: BigInt!
+  active: Boolean!
+  updatedAt: BigInt!
+  transactionHash: Bytes!
+}
+
+type OpeningDiscountConfigured @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  ticketLimit: BigInt!
+  priceInPoints: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OpeningDiscountCleared @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OpeningDiscountApplication @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  buyer: Bytes!
+  openingQuantity: BigInt!
+  regularQuantity: BigInt!
+  openingPriceInPoints: BigInt!
+  grossPriceInPoints: BigInt!
+  rebatePoints: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type RefundConfig @entity(immutable: false) {
   id: Bytes!
   seriesID: BigInt!
