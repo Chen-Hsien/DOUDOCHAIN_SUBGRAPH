@@ -167,6 +167,11 @@ export async function main(argv = process.argv.slice(2)) {
     .join(delimiter);
   const outputDir = resolve(root, `build/${targetName}`);
 
+  const codegenStatus = run(graphBin, ["codegen"], {
+    env: { ...process.env, PATH: path },
+  });
+  if (codegenStatus !== 0) process.exit(codegenStatus);
+
   if (action === "build") {
     const { generatedPath, sourceBefore } = prepareManifest(target);
     const status = run(
