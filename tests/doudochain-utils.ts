@@ -4,19 +4,13 @@ import {
   Approval,
   ApprovalForAll,
   ConsecutiveTransfer,
-  CoordinatorSet,
   LastPrizeDraw,
   LastPrizeWinner,
   NewSeries,
   NewSubPrize,
   NewTicketStatus,
-  OwnershipTransferRequested,
-  OwnershipTransferred,
-  RefundSeries,
-  ResetSubPrize,
   RevealDrawFulfilled,
   RevealDrawSent,
-  RoleAdminChanged,
   RoleGranted,
   RoleRevoked,
   Transfer,
@@ -25,7 +19,7 @@ import {
   UpdateSeriesLastPrizeOwner,
   UpdateSeriesRemainingTicketNumbers,
   UpdateTicketStatus
-} from "../generated/DOUDOCHAIN/DOUDOCHAIN"
+} from "../generated/ICHICHAIN/ICHICHAIN"
 
 export function createApprovalEvent(
   owner: Address,
@@ -104,23 +98,6 @@ export function createConsecutiveTransferEvent(
   )
 
   return consecutiveTransferEvent
-}
-
-export function createCoordinatorSetEvent(
-  vrfCoordinator: Address
-): CoordinatorSet {
-  let coordinatorSetEvent = changetype<CoordinatorSet>(newMockEvent())
-
-  coordinatorSetEvent.parameters = new Array()
-
-  coordinatorSetEvent.parameters.push(
-    new ethereum.EventParam(
-      "vrfCoordinator",
-      ethereum.Value.fromAddress(vrfCoordinator)
-    )
-  )
-
-  return coordinatorSetEvent
 }
 
 export function createLastPrizeDrawEvent(
@@ -395,82 +372,6 @@ export function createNewTicketStatusEvent(
   return newTicketStatusEvent
 }
 
-export function createOwnershipTransferRequestedEvent(
-  from: Address,
-  to: Address
-): OwnershipTransferRequested {
-  let ownershipTransferRequestedEvent = changetype<OwnershipTransferRequested>(
-    newMockEvent()
-  )
-
-  ownershipTransferRequestedEvent.parameters = new Array()
-
-  ownershipTransferRequestedEvent.parameters.push(
-    new ethereum.EventParam("from", ethereum.Value.fromAddress(from))
-  )
-  ownershipTransferRequestedEvent.parameters.push(
-    new ethereum.EventParam("to", ethereum.Value.fromAddress(to))
-  )
-
-  return ownershipTransferRequestedEvent
-}
-
-export function createOwnershipTransferredEvent(
-  from: Address,
-  to: Address
-): OwnershipTransferred {
-  let ownershipTransferredEvent = changetype<OwnershipTransferred>(
-    newMockEvent()
-  )
-
-  ownershipTransferredEvent.parameters = new Array()
-
-  ownershipTransferredEvent.parameters.push(
-    new ethereum.EventParam("from", ethereum.Value.fromAddress(from))
-  )
-  ownershipTransferredEvent.parameters.push(
-    new ethereum.EventParam("to", ethereum.Value.fromAddress(to))
-  )
-
-  return ownershipTransferredEvent
-}
-
-export function createRefundSeriesEvent(
-  seriesID: BigInt,
-  isRefund: boolean
-): RefundSeries {
-  let refundSeriesEvent = changetype<RefundSeries>(newMockEvent())
-
-  refundSeriesEvent.parameters = new Array()
-
-  refundSeriesEvent.parameters.push(
-    new ethereum.EventParam(
-      "seriesID",
-      ethereum.Value.fromUnsignedBigInt(seriesID)
-    )
-  )
-  refundSeriesEvent.parameters.push(
-    new ethereum.EventParam("isRefund", ethereum.Value.fromBoolean(isRefund))
-  )
-
-  return refundSeriesEvent
-}
-
-export function createResetSubPrizeEvent(seriesID: BigInt): ResetSubPrize {
-  let resetSubPrizeEvent = changetype<ResetSubPrize>(newMockEvent())
-
-  resetSubPrizeEvent.parameters = new Array()
-
-  resetSubPrizeEvent.parameters.push(
-    new ethereum.EventParam(
-      "seriesID",
-      ethereum.Value.fromUnsignedBigInt(seriesID)
-    )
-  )
-
-  return resetSubPrizeEvent
-}
-
 export function createRevealDrawFulfilledEvent(
   requestId: BigInt,
   seriesID: BigInt,
@@ -524,34 +425,6 @@ export function createRevealDrawSentEvent(
   )
 
   return revealDrawSentEvent
-}
-
-export function createRoleAdminChangedEvent(
-  role: Bytes,
-  previousAdminRole: Bytes,
-  newAdminRole: Bytes
-): RoleAdminChanged {
-  let roleAdminChangedEvent = changetype<RoleAdminChanged>(newMockEvent())
-
-  roleAdminChangedEvent.parameters = new Array()
-
-  roleAdminChangedEvent.parameters.push(
-    new ethereum.EventParam("role", ethereum.Value.fromFixedBytes(role))
-  )
-  roleAdminChangedEvent.parameters.push(
-    new ethereum.EventParam(
-      "previousAdminRole",
-      ethereum.Value.fromFixedBytes(previousAdminRole)
-    )
-  )
-  roleAdminChangedEvent.parameters.push(
-    new ethereum.EventParam(
-      "newAdminRole",
-      ethereum.Value.fromFixedBytes(newAdminRole)
-    )
-  )
-
-  return roleAdminChangedEvent
 }
 
 export function createRoleGrantedEvent(
