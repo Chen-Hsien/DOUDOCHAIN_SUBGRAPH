@@ -2067,6 +2067,11 @@
           "internalType": "string",
           "name": "seriesMetaDataURI",
           "type": "string"
+        },
+        {
+          "internalType": "uint256",
+          "name": "extendedExchangeExpireTime",
+          "type": "uint256"
         }
       ],
       "name": "setSeriesMetadata",
