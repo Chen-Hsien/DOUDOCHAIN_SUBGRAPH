@@ -7,6 +7,12 @@ import {
   OpeningDiscountConfigured as OpeningDiscountConfiguredEvent,
   OpeningDiscountCleared as OpeningDiscountClearedEvent,
   OpeningDiscountApplied as OpeningDiscountAppliedEvent,
+  FreeOrderChallengeConfigured as FreeOrderChallengeConfiguredEvent,
+  FreeOrderChallengeCleared as FreeOrderChallengeClearedEvent,
+  FreeOrderChallengePurchased as FreeOrderChallengePurchasedEvent,
+  FreeOrderChallengeResult as FreeOrderChallengeResultEvent,
+  FreeOrderChallengeRefunded as FreeOrderChallengeRefundedEvent,
+  FreeOrderChallengeRefundDeferred as FreeOrderChallengeRefundDeferredEvent,
 } from "../generated/DoudoBundleModule/DoudoBundleModuleUpgradeable";
 import {
   BundleRebateTierConfigured,
@@ -19,6 +25,12 @@ import {
   OpeningDiscountConfigured,
   OpeningDiscountCleared,
   OpeningDiscountApplication,
+  SeriesFreeOrderChallengeConfig,
+  FreeOrderChallengeConfigured,
+  FreeOrderChallengeCleared,
+  FreeOrderChallengeRound,
+  FreeOrderChallengeResult,
+  FreeOrderChallengeRefund,
 } from "../generated/schema";
 
 function eventId(eventTxHash: Bytes, logIndex: BigInt): Bytes {
@@ -31,6 +43,14 @@ function openingDiscountConfigId(seriesID: BigInt): Bytes {
 
 function rebateConfigId(seriesID: BigInt): Bytes {
   return Bytes.fromUTF8(seriesID.toString());
+}
+
+function freeOrderConfigId(seriesID: BigInt): Bytes {
+  return Bytes.fromUTF8(seriesID.toString());
+}
+
+function freeOrderRoundId(requestId: BigInt): string {
+  return requestId.toString();
 }
 
 function rebateTierId(seriesID: BigInt, tierIndex: BigInt): Bytes {
@@ -241,4 +261,192 @@ export function handleOpeningDiscountApplied(
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
   entity.save();
+}
+
+export function handleFreeOrderChallengeConfigured(
+  event: FreeOrderChallengeConfiguredEvent,
+): void {
+  let config = new SeriesFreeOrderChallengeConfig(
+    freeOrderConfigId(event.params.seriesID),
+  );
+  config.seriesID = event.params.seriesID;
+  config.version = event.params.version;
+  config.eligibleLastTicketCount = event.params.eligibleLastTicketCount;
+  config.triggerPrizeIDs = event.params.triggerPrizeIDs;
+  config.active = true;
+  config.updatedAt = event.block.timestamp;
+  config.transactionHash = event.transaction.hash;
+  config.save();
+
+  let entity = new FreeOrderChallengeConfigured(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.seriesID = event.params.seriesID;
+  entity.version = event.params.version;
+  entity.eligibleLastTicketCount = event.params.eligibleLastTicketCount;
+  entity.triggerPrizeIDs = event.params.triggerPrizeIDs;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+export function handleFreeOrderChallengeCleared(
+  event: FreeOrderChallengeClearedEvent,
+): void {
+  let config = SeriesFreeOrderChallengeConfig.load(
+    freeOrderConfigId(event.params.seriesID),
+  );
+  if (config == null) {
+    config = new SeriesFreeOrderChallengeConfig(
+      freeOrderConfigId(event.params.seriesID),
+    );
+    config.seriesID = event.params.seriesID;
+    config.eligibleLastTicketCount = BigInt.zero();
+    config.triggerPrizeIDs = [];
+  }
+  config.version = event.params.version;
+  config.active = false;
+  config.updatedAt = event.block.timestamp;
+  config.transactionHash = event.transaction.hash;
+  config.save();
+
+  let entity = new FreeOrderChallengeCleared(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.seriesID = event.params.seriesID;
+  entity.version = event.params.version;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+export function handleFreeOrderChallengePurchased(
+  event: FreeOrderChallengePurchasedEvent,
+): void {
+  let config = SeriesFreeOrderChallengeConfig.load(
+    freeOrderConfigId(event.params.seriesID),
+  );
+  let round = new FreeOrderChallengeRound(
+    freeOrderRoundId(event.params.requestId),
+  );
+  round.requestId = event.params.requestId;
+  round.seriesID = event.params.seriesID;
+  round.buyer = event.params.buyer;
+  round.configVersion = config == null ? BigInt.zero() : config.version;
+  round.ticketQuantity = event.params.ticketQuantity;
+  round.grossPriceInPoints = event.params.grossPriceInPoints;
+  round.rebatePoints = event.params.rebatePoints;
+  round.refundablePoints = event.params.refundablePoints;
+  round.firstTokenID = event.params.firstTokenID;
+  round.processed = false;
+  round.won = false;
+  round.claimed = false;
+  round.refundDeferred = false;
+  round.refundPoints = BigInt.zero();
+  round.winningTokenID = BigInt.zero();
+  round.winningPrizeID = BigInt.zero();
+  round.blockNumber = event.block.number;
+  round.blockTimestamp = event.block.timestamp;
+  round.updatedAt = event.block.timestamp;
+  round.transactionHash = event.transaction.hash;
+  round.save();
+}
+
+export function handleFreeOrderChallengeResult(
+  event: FreeOrderChallengeResultEvent,
+): void {
+  let round = FreeOrderChallengeRound.load(
+    freeOrderRoundId(event.params.requestId),
+  );
+  if (round != null) {
+    round.processed = true;
+    round.won = event.params.won;
+    round.refundPoints = event.params.refundPoints;
+    round.winningTokenID = event.params.winningTokenID;
+    round.winningPrizeID = event.params.winningPrizeID;
+    round.updatedAt = event.block.timestamp;
+    round.transactionHash = event.transaction.hash;
+    round.save();
+  }
+
+  let entity = new FreeOrderChallengeResult(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.requestId = event.params.requestId;
+  entity.seriesID = event.params.seriesID;
+  entity.buyer = event.params.buyer;
+  entity.won = event.params.won;
+  entity.refundPoints = event.params.refundPoints;
+  entity.winningTokenID = event.params.winningTokenID;
+  entity.winningPrizeID = event.params.winningPrizeID;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+function recordFreeOrderRefund(
+  requestId: BigInt,
+  seriesID: BigInt,
+  buyer: Bytes,
+  refundPoints: BigInt,
+  deferred: boolean,
+  transactionHash: Bytes,
+  logIndex: BigInt,
+  blockNumber: BigInt,
+  blockTimestamp: BigInt,
+): void {
+  let round = FreeOrderChallengeRound.load(freeOrderRoundId(requestId));
+  if (round != null) {
+    round.claimed = !deferred;
+    round.refundDeferred = deferred;
+    round.updatedAt = blockTimestamp;
+    round.transactionHash = transactionHash;
+    round.save();
+  }
+
+  let entity = new FreeOrderChallengeRefund(eventId(transactionHash, logIndex));
+  entity.requestId = requestId;
+  entity.seriesID = seriesID;
+  entity.buyer = buyer;
+  entity.refundPoints = refundPoints;
+  entity.deferred = deferred;
+  entity.blockNumber = blockNumber;
+  entity.blockTimestamp = blockTimestamp;
+  entity.transactionHash = transactionHash;
+  entity.save();
+}
+
+export function handleFreeOrderChallengeRefunded(
+  event: FreeOrderChallengeRefundedEvent,
+): void {
+  recordFreeOrderRefund(
+    event.params.requestId,
+    event.params.seriesID,
+    event.params.buyer,
+    event.params.refundPoints,
+    false,
+    event.transaction.hash,
+    event.logIndex,
+    event.block.number,
+    event.block.timestamp,
+  );
+}
+
+export function handleFreeOrderChallengeRefundDeferred(
+  event: FreeOrderChallengeRefundDeferredEvent,
+): void {
+  recordFreeOrderRefund(
+    event.params.requestId,
+    event.params.seriesID,
+    event.params.buyer,
+    event.params.refundPoints,
+    true,
+    event.transaction.hash,
+    event.logIndex,
+    event.block.number,
+    event.block.timestamp,
+  );
 }

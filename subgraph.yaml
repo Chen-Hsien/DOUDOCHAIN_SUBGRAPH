@@ -262,6 +262,12 @@ dataSources:
         - OpeningDiscountConfigured
         - OpeningDiscountCleared
         - OpeningDiscountApplication
+        - SeriesFreeOrderChallengeConfig
+        - FreeOrderChallengeConfigured
+        - FreeOrderChallengeCleared
+        - FreeOrderChallengeRound
+        - FreeOrderChallengeResult
+        - FreeOrderChallengeRefund
       abis:
         - name: DoudoBundleModuleUpgradeable
           file: ./abis/DoudoBundleModuleUpgradeable.json
@@ -280,6 +286,18 @@ dataSources:
           handler: handleOpeningDiscountCleared
         - event: OpeningDiscountApplied(indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256)
           handler: handleOpeningDiscountApplied
+        - event: FreeOrderChallengeConfigured(indexed uint256,indexed uint256,uint256,uint256[])
+          handler: handleFreeOrderChallengeConfigured
+        - event: FreeOrderChallengeCleared(indexed uint256,indexed uint256)
+          handler: handleFreeOrderChallengeCleared
+        - event: FreeOrderChallengePurchased(indexed uint256,indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256)
+          handler: handleFreeOrderChallengePurchased
+        - event: FreeOrderChallengeResult(indexed uint256,indexed uint256,indexed address,bool,uint256,uint256,uint256)
+          handler: handleFreeOrderChallengeResult
+        - event: FreeOrderChallengeRefunded(indexed uint256,indexed uint256,indexed address,uint256)
+          handler: handleFreeOrderChallengeRefunded
+        - event: FreeOrderChallengeRefundDeferred(indexed uint256,indexed uint256,indexed address,uint256)
+          handler: handleFreeOrderChallengeRefundDeferred
       file: ./src/bundle.ts
 
   - kind: ethereum

@@ -11,12 +11,22 @@ import {
   handleBundleRebateTiersCleared,
   handleOpeningDiscountConfigured,
   handleOpeningDiscountApplied,
+  handleFreeOrderChallengeConfigured,
+  handleFreeOrderChallengePurchased,
+  handleFreeOrderChallengeResult,
+  handleFreeOrderChallengeRefundDeferred,
+  handleFreeOrderChallengeRefunded,
 } from "../src/bundle";
 import {
   createBundleRebateTierConfiguredEvent,
   createBundleRebateTiersClearedEvent,
   createOpeningDiscountConfiguredEvent,
   createOpeningDiscountAppliedEvent,
+  createFreeOrderChallengeConfiguredEvent,
+  createFreeOrderChallengePurchasedEvent,
+  createFreeOrderChallengeResultEvent,
+  createFreeOrderChallengeRefundDeferredEvent,
+  createFreeOrderChallengeRefundedEvent,
 } from "./bundle-utils";
 
 function rebateTierId(seriesID: BigInt, tierIndex: BigInt): string {
@@ -131,5 +141,82 @@ describe("Bundle rebate handlers", () => {
       "true",
     );
     assert.entityCount("OpeningDiscountApplication", 1);
+  });
+
+  test("free-order challenge indexes config, result, deferred refund, and claim", () => {
+    let seriesID = BigInt.fromI32(1);
+    let requestId = BigInt.fromI32(55);
+    handleFreeOrderChallengeConfigured(
+      createFreeOrderChallengeConfiguredEvent(
+        seriesID,
+        BigInt.fromI32(3),
+        BigInt.fromI32(100),
+        [BigInt.fromI32(7), BigInt.fromI32(8)],
+      ),
+    );
+    handleFreeOrderChallengePurchased(
+      createFreeOrderChallengePurchasedEvent(requestId, seriesID),
+    );
+    handleFreeOrderChallengeResult(
+      createFreeOrderChallengeResultEvent(requestId, seriesID),
+    );
+    handleFreeOrderChallengeRefundDeferred(
+      createFreeOrderChallengeRefundDeferredEvent(requestId, seriesID),
+    );
+
+    let configId = Bytes.fromUTF8(seriesID.toString()).toHexString();
+    assert.fieldEquals(
+      "SeriesFreeOrderChallengeConfig",
+      configId,
+      "eligibleLastTicketCount",
+      "100",
+    );
+    assert.fieldEquals(
+      "FreeOrderChallengeRound",
+      requestId.toString(),
+      "configVersion",
+      "3",
+    );
+    assert.fieldEquals(
+      "FreeOrderChallengeRound",
+      requestId.toString(),
+      "processed",
+      "true",
+    );
+    assert.fieldEquals(
+      "FreeOrderChallengeRound",
+      requestId.toString(),
+      "won",
+      "true",
+    );
+    assert.fieldEquals(
+      "FreeOrderChallengeRound",
+      requestId.toString(),
+      "refundDeferred",
+      "true",
+    );
+    assert.fieldEquals(
+      "FreeOrderChallengeRound",
+      requestId.toString(),
+      "claimed",
+      "false",
+    );
+
+    handleFreeOrderChallengeRefunded(
+      createFreeOrderChallengeRefundedEvent(requestId, seriesID),
+    );
+    assert.fieldEquals(
+      "FreeOrderChallengeRound",
+      requestId.toString(),
+      "refundDeferred",
+      "false",
+    );
+    assert.fieldEquals(
+      "FreeOrderChallengeRound",
+      requestId.toString(),
+      "claimed",
+      "true",
+    );
+    assert.entityCount("FreeOrderChallengeRefund", 2);
   });
 });
