@@ -271,7 +271,8 @@ export function handleFreeOrderChallengeConfigured(
   );
   config.seriesID = event.params.seriesID;
   config.version = event.params.version;
-  config.eligibleLastTicketCount = event.params.eligibleLastTicketCount;
+  config.eligibleFirstTicketCount = event.params.eligibleFirstTicketCount;
+  config.eligibleLastTicketCount = event.params.eligibleFirstTicketCount;
   config.triggerPrizeIDs = event.params.triggerPrizeIDs;
   config.active = true;
   config.updatedAt = event.block.timestamp;
@@ -283,7 +284,8 @@ export function handleFreeOrderChallengeConfigured(
   );
   entity.seriesID = event.params.seriesID;
   entity.version = event.params.version;
-  entity.eligibleLastTicketCount = event.params.eligibleLastTicketCount;
+  entity.eligibleFirstTicketCount = event.params.eligibleFirstTicketCount;
+  entity.eligibleLastTicketCount = event.params.eligibleFirstTicketCount;
   entity.triggerPrizeIDs = event.params.triggerPrizeIDs;
   entity.blockNumber = event.block.number;
   entity.blockTimestamp = event.block.timestamp;
@@ -302,6 +304,7 @@ export function handleFreeOrderChallengeCleared(
       freeOrderConfigId(event.params.seriesID),
     );
     config.seriesID = event.params.seriesID;
+    config.eligibleFirstTicketCount = BigInt.zero();
     config.eligibleLastTicketCount = BigInt.zero();
     config.triggerPrizeIDs = [];
   }
