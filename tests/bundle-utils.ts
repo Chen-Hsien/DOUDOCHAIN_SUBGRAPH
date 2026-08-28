@@ -1,11 +1,20 @@
 import { newMockEvent } from "matchstick-as";
-import { ethereum, BigInt, Address } from "@graphprotocol/graph-ts";
+import { ethereum, BigInt, Address, Bytes } from "@graphprotocol/graph-ts";
 import {
   BundleRebateTierConfigured,
   BundleRebateTiersCleared,
   OpeningDiscountConfigured,
   OpeningDiscountApplied,
+  FreeOrderChallengeConfigured,
+  FreeOrderChallengePurchased,
+  FreeOrderChallengeResult,
+  FreeOrderChallengeRefunded,
+  FreeOrderChallengeRefundDeferred,
 } from "../generated/DoudoBundleModule/DoudoBundleModuleUpgradeable";
+
+const FREE_ORDER_BUYER = Address.fromString(
+  "0x0000000000000000000000000000000000000001",
+);
 
 export function createBundleRebateTiersClearedEvent(
   seriesID: BigInt,
@@ -140,4 +149,198 @@ export function createBundleRebateTierConfiguredEvent(
   );
 
   return event;
+}
+
+export function createFreeOrderChallengeConfiguredEvent(
+  seriesID: BigInt,
+  version: BigInt,
+  eligibleLastTicketCount: BigInt,
+  triggerPrizeIDs: BigInt[],
+): FreeOrderChallengeConfigured {
+  let event = changetype<FreeOrderChallengeConfigured>(newMockEvent());
+  event.parameters = new Array();
+  event.parameters.push(
+    new ethereum.EventParam(
+      "seriesID",
+      ethereum.Value.fromUnsignedBigInt(seriesID),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "version",
+      ethereum.Value.fromUnsignedBigInt(version),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "eligibleLastTicketCount",
+      ethereum.Value.fromUnsignedBigInt(eligibleLastTicketCount),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "triggerPrizeIDs",
+      ethereum.Value.fromUnsignedBigIntArray(triggerPrizeIDs),
+    ),
+  );
+  return event;
+}
+
+export function createFreeOrderChallengePurchasedEvent(
+  requestId: BigInt,
+  seriesID: BigInt,
+): FreeOrderChallengePurchased {
+  let event = changetype<FreeOrderChallengePurchased>(newMockEvent());
+  event.parameters = new Array();
+  event.parameters.push(
+    new ethereum.EventParam(
+      "requestId",
+      ethereum.Value.fromUnsignedBigInt(requestId),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "seriesID",
+      ethereum.Value.fromUnsignedBigInt(seriesID),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "buyer",
+      ethereum.Value.fromAddress(FREE_ORDER_BUYER),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "ticketQuantity",
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(5)),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "grossPriceInPoints",
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(500)),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "rebatePoints",
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(50)),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "refundablePoints",
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(450)),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "firstTokenID",
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(920)),
+    ),
+  );
+  return event;
+}
+
+export function createFreeOrderChallengeResultEvent(
+  requestId: BigInt,
+  seriesID: BigInt,
+): FreeOrderChallengeResult {
+  let event = changetype<FreeOrderChallengeResult>(newMockEvent());
+  event.parameters = new Array();
+  event.parameters.push(
+    new ethereum.EventParam(
+      "requestId",
+      ethereum.Value.fromUnsignedBigInt(requestId),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "seriesID",
+      ethereum.Value.fromUnsignedBigInt(seriesID),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "buyer",
+      ethereum.Value.fromAddress(FREE_ORDER_BUYER),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam("won", ethereum.Value.fromBoolean(true)),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "refundPoints",
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(450)),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "winningTokenID",
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(923)),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "winningPrizeID",
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(7)),
+    ),
+  );
+  return event;
+}
+
+export function createFreeOrderChallengeRefundDeferredEvent(
+  requestId: BigInt,
+  seriesID: BigInt,
+): FreeOrderChallengeRefundDeferred {
+  let event = changetype<FreeOrderChallengeRefundDeferred>(newMockEvent());
+  addFreeOrderRefundParameters(event, requestId, seriesID);
+  return event;
+}
+
+export function createFreeOrderChallengeRefundedEvent(
+  requestId: BigInt,
+  seriesID: BigInt,
+): FreeOrderChallengeRefunded {
+  let event = changetype<FreeOrderChallengeRefunded>(newMockEvent());
+  addFreeOrderRefundParameters(event, requestId, seriesID);
+  event.transaction.hash = Bytes.fromHexString(
+    "0x1111111111111111111111111111111111111111111111111111111111111111",
+  );
+  event.logIndex = BigInt.fromI32(1);
+  return event;
+}
+
+function addFreeOrderRefundParameters(
+  event: ethereum.Event,
+  requestId: BigInt,
+  seriesID: BigInt,
+): void {
+  event.parameters = new Array();
+  event.parameters.push(
+    new ethereum.EventParam(
+      "requestId",
+      ethereum.Value.fromUnsignedBigInt(requestId),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "seriesID",
+      ethereum.Value.fromUnsignedBigInt(seriesID),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "buyer",
+      ethereum.Value.fromAddress(FREE_ORDER_BUYER),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "refundPoints",
+      ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(450)),
+    ),
+  );
 }
