@@ -168,6 +168,12 @@ describe("Bundle rebate handlers", () => {
     assert.fieldEquals(
       "SeriesFreeOrderChallengeConfig",
       configId,
+      "eligibleFirstTicketCount",
+      "100",
+    );
+    assert.fieldEquals(
+      "SeriesFreeOrderChallengeConfig",
+      configId,
       "eligibleLastTicketCount",
       "100",
     );

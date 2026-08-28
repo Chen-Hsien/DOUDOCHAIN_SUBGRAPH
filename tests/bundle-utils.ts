@@ -154,7 +154,7 @@ export function createBundleRebateTierConfiguredEvent(
 export function createFreeOrderChallengeConfiguredEvent(
   seriesID: BigInt,
   version: BigInt,
-  eligibleLastTicketCount: BigInt,
+  eligibleFirstTicketCount: BigInt,
   triggerPrizeIDs: BigInt[],
 ): FreeOrderChallengeConfigured {
   let event = changetype<FreeOrderChallengeConfigured>(newMockEvent());
@@ -173,8 +173,8 @@ export function createFreeOrderChallengeConfiguredEvent(
   );
   event.parameters.push(
     new ethereum.EventParam(
-      "eligibleLastTicketCount",
-      ethereum.Value.fromUnsignedBigInt(eligibleLastTicketCount),
+      "eligibleFirstTicketCount",
+      ethereum.Value.fromUnsignedBigInt(eligibleFirstTicketCount),
     ),
   );
   event.parameters.push(

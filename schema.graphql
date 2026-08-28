@@ -480,6 +480,7 @@ type SeriesFreeOrderChallengeConfig @entity(immutable: false) {
   id: Bytes!
   seriesID: BigInt!
   version: BigInt!
+  eligibleFirstTicketCount: BigInt!
   eligibleLastTicketCount: BigInt!
   triggerPrizeIDs: [BigInt!]!
   active: Boolean!
@@ -491,6 +492,7 @@ type FreeOrderChallengeConfigured @entity(immutable: true) {
   id: Bytes!
   seriesID: BigInt!
   version: BigInt!
+  eligibleFirstTicketCount: BigInt!
   eligibleLastTicketCount: BigInt!
   triggerPrizeIDs: [BigInt!]!
   blockNumber: BigInt!
