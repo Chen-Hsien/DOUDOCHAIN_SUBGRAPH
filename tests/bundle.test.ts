@@ -6,6 +6,7 @@ import {
   afterEach,
 } from "matchstick-as/assembly/index";
 import { BigInt, Bytes } from "@graphprotocol/graph-ts";
+import { handleNewSubPrize, handleUpdatePrize } from "../src/ichichain";
 import {
   handleBundleRebateTierConfigured,
   handleBundleRebateTiersCleared,
@@ -28,6 +29,10 @@ import {
   createFreeOrderChallengeRefundDeferredEvent,
   createFreeOrderChallengeRefundedEvent,
 } from "./bundle-utils";
+import {
+  createNewSubPrizeEvent,
+  createUpdatePrizeEvent,
+} from "./doudochain-utils";
 
 function rebateTierId(seriesID: BigInt, tierIndex: BigInt): string {
   return Bytes.fromUTF8(
@@ -224,5 +229,66 @@ describe("Bundle rebate handlers", () => {
       "true",
     );
     assert.entityCount("FreeOrderChallengeRefund", 2);
+  });
+
+  test("free-order challenge remains active until every configured prize is exhausted", () => {
+    let seriesID = BigInt.fromI32(7);
+    let firstPrizeID = BigInt.fromI32(1);
+    let secondPrizeID = BigInt.fromI32(2);
+    handleNewSubPrize(
+      createNewSubPrizeEvent(
+        seriesID,
+        firstPrizeID,
+        "A",
+        "A1",
+        BigInt.fromI32(1),
+      ),
+    );
+    handleNewSubPrize(
+      createNewSubPrizeEvent(
+        seriesID,
+        secondPrizeID,
+        "B",
+        "B1",
+        BigInt.fromI32(1),
+      ),
+    );
+    handleFreeOrderChallengeConfigured(
+      createFreeOrderChallengeConfiguredEvent(
+        seriesID,
+        BigInt.fromI32(1),
+        BigInt.fromI32(60),
+        [firstPrizeID, secondPrizeID],
+      ),
+    );
+
+    let configId = Bytes.fromUTF8(seriesID.toString()).toHexString();
+    handleUpdatePrize(
+      createUpdatePrizeEvent(
+        seriesID,
+        firstPrizeID,
+        BigInt.zero(),
+      ),
+    );
+    assert.fieldEquals(
+      "SeriesFreeOrderChallengeConfig",
+      configId,
+      "active",
+      "true",
+    );
+
+    handleUpdatePrize(
+      createUpdatePrizeEvent(
+        seriesID,
+        secondPrizeID,
+        BigInt.zero(),
+      ),
+    );
+    assert.fieldEquals(
+      "SeriesFreeOrderChallengeConfig",
+      configId,
+      "active",
+      "false",
+    );
   });
 });
