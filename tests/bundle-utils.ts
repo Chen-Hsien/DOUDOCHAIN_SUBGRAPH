@@ -6,6 +6,7 @@ import {
   OpeningDiscountConfigured,
   OpeningDiscountApplied,
   FreeOrderChallengeConfigured,
+  FreeOrderChallengeEnded,
   FreeOrderChallengePurchased,
   FreeOrderChallengeResult,
   FreeOrderChallengeRefunded,
@@ -181,6 +182,27 @@ export function createFreeOrderChallengeConfiguredEvent(
     new ethereum.EventParam(
       "triggerPrizeIDs",
       ethereum.Value.fromUnsignedBigIntArray(triggerPrizeIDs),
+    ),
+  );
+  return event;
+}
+
+export function createFreeOrderChallengeEndedEvent(
+  seriesID: BigInt,
+  version: BigInt,
+): FreeOrderChallengeEnded {
+  let event = changetype<FreeOrderChallengeEnded>(newMockEvent());
+  event.parameters = new Array();
+  event.parameters.push(
+    new ethereum.EventParam(
+      "seriesID",
+      ethereum.Value.fromUnsignedBigInt(seriesID),
+    ),
+  );
+  event.parameters.push(
+    new ethereum.EventParam(
+      "version",
+      ethereum.Value.fromUnsignedBigInt(version),
     ),
   );
   return event;

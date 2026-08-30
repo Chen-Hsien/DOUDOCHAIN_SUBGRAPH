@@ -290,6 +290,8 @@ dataSources:
           handler: handleFreeOrderChallengeConfigured
         - event: FreeOrderChallengeCleared(indexed uint256,indexed uint256)
           handler: handleFreeOrderChallengeCleared
+        - event: FreeOrderChallengeEnded(indexed uint256,indexed uint256)
+          handler: handleFreeOrderChallengeEnded
         - event: FreeOrderChallengePurchased(indexed uint256,indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256)
           handler: handleFreeOrderChallengePurchased
         - event: FreeOrderChallengeResult(indexed uint256,indexed uint256,indexed address,bool,uint256,uint256,uint256)

@@ -13,6 +13,7 @@ import {
   handleOpeningDiscountConfigured,
   handleOpeningDiscountApplied,
   handleFreeOrderChallengeConfigured,
+  handleFreeOrderChallengeEnded,
   handleFreeOrderChallengePurchased,
   handleFreeOrderChallengeResult,
   handleFreeOrderChallengeRefundDeferred,
@@ -24,6 +25,7 @@ import {
   createOpeningDiscountConfiguredEvent,
   createOpeningDiscountAppliedEvent,
   createFreeOrderChallengeConfiguredEvent,
+  createFreeOrderChallengeEndedEvent,
   createFreeOrderChallengePurchasedEvent,
   createFreeOrderChallengeResultEvent,
   createFreeOrderChallengeRefundDeferredEvent,
@@ -230,7 +232,7 @@ describe("Bundle rebate handlers", () => {
     );
     assert.entityCount("FreeOrderChallengeRefund", 2);
   });
-  test("free-order challenge remains active until every configured prize is exhausted", () => {
+  test("free-order challenge ends only from the contract success-settlement event", () => {
     let seriesID = BigInt.fromI32(7);
     let firstPrizeID = BigInt.fromI32(1);
     let secondPrizeID = BigInt.fromI32(2);
@@ -282,6 +284,16 @@ describe("Bundle rebate handlers", () => {
         secondPrizeID,
         BigInt.zero(),
       ),
+    );
+    assert.fieldEquals(
+      "SeriesFreeOrderChallengeConfig",
+      configId,
+      "active",
+      "true",
+    );
+
+    handleFreeOrderChallengeEnded(
+      createFreeOrderChallengeEndedEvent(seriesID, BigInt.fromI32(1)),
     );
     assert.fieldEquals(
       "SeriesFreeOrderChallengeConfig",

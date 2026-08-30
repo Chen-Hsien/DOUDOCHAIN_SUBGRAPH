@@ -9,6 +9,7 @@ import {
   OpeningDiscountApplied as OpeningDiscountAppliedEvent,
   FreeOrderChallengeConfigured as FreeOrderChallengeConfiguredEvent,
   FreeOrderChallengeCleared as FreeOrderChallengeClearedEvent,
+  FreeOrderChallengeEnded as FreeOrderChallengeEndedEvent,
   FreeOrderChallengePurchased as FreeOrderChallengePurchasedEvent,
   FreeOrderChallengeResult as FreeOrderChallengeResultEvent,
   FreeOrderChallengeRefunded as FreeOrderChallengeRefundedEvent,
@@ -323,6 +324,20 @@ export function handleFreeOrderChallengeCleared(
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
   entity.save();
+}
+
+export function handleFreeOrderChallengeEnded(
+  event: FreeOrderChallengeEndedEvent,
+): void {
+  let config = SeriesFreeOrderChallengeConfig.load(
+    freeOrderConfigId(event.params.seriesID),
+  );
+  if (config == null || !config.version.equals(event.params.version)) return;
+
+  config.active = false;
+  config.updatedAt = event.block.timestamp;
+  config.transactionHash = event.transaction.hash;
+  config.save();
 }
 
 export function handleFreeOrderChallengePurchased(

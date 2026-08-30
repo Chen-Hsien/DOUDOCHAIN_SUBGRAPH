@@ -42,7 +42,6 @@ import {
   IchibanKujiSubPrize,
   UnrevealTokenMetadata,
   RevealTokenMetadata,
-  SeriesFreeOrderChallengeConfig,
 } from "../generated/schema";
 
 import {
@@ -204,40 +203,6 @@ function subPrizeEntityId(seriesID: BigInt, subPrizeID: BigInt): Bytes {
   return Bytes.fromUTF8(
     seriesID.toString().concat("-").concat(subPrizeID.toString())
   );
-}
-
-function freeOrderConfigId(seriesID: BigInt): Bytes {
-  return Bytes.fromUTF8(seriesID.toString());
-}
-
-function endFreeOrderChallengeWhenTriggersAreExhausted(
-  seriesID: BigInt,
-  blockTimestamp: BigInt,
-  transactionHash: Bytes,
-): void {
-  let config = SeriesFreeOrderChallengeConfig.load(
-    freeOrderConfigId(seriesID),
-  );
-  if (config == null || !config.active) return;
-
-  let allTriggerPrizesKnown = true;
-  for (let i = 0; i < config.triggerPrizeIDs.length; i++) {
-    let prize = NewSubPrize.load(
-      subPrizeEntityId(seriesID, config.triggerPrizeIDs[i]),
-    );
-    if (prize == null) {
-      allTriggerPrizesKnown = false;
-    } else if (prize.subPrizeRemainingQuantity.gt(BigInt.zero())) {
-      return;
-    }
-  }
-
-  if (allTriggerPrizesKnown) {
-    config.active = false;
-    config.updatedAt = blockTimestamp;
-    config.transactionHash = transactionHash;
-    config.save();
-  }
 }
 
 export function handleNewSubPrize(event: NewSubPrizeEvent): void {
@@ -791,12 +756,6 @@ export function handleUpdatePrize(event: UpdatePrizeEvent): void {
       event.params.subPrizeRemainingQuantity;
     updatePrize.save();
   }
-
-  endFreeOrderChallengeWhenTriggersAreExhausted(
-    event.params.seriesID,
-    event.block.timestamp,
-    event.transaction.hash,
-  );
 }
 
 export function handleUpdateSeriesInformation(
