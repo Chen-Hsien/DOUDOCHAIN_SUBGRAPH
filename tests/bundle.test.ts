@@ -230,7 +230,6 @@ describe("Bundle rebate handlers", () => {
     );
     assert.entityCount("FreeOrderChallengeRefund", 2);
   });
-
   test("free-order challenge remains active until every configured prize is exhausted", () => {
     let seriesID = BigInt.fromI32(7);
     let firstPrizeID = BigInt.fromI32(1);
