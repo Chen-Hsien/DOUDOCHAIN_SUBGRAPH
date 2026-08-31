@@ -1,5 +1,8 @@
 import { BigInt, Bytes, store } from "@graphprotocol/graph-ts";
 import {
+  DatabasePointsAuthorizationConfigured as DatabasePointsAuthorizationConfiguredEvent,
+  DatabasePointsPurchaseMinted as DatabasePointsPurchaseMintedEvent,
+  DatabasePointsRebateEntitled as DatabasePointsRebateEntitledEvent,
   BundleRebateTierConfigured as BundleRebateTierConfiguredEvent,
   BundleRebateTiersCleared as BundleRebateTiersClearedEvent,
   TicketPurchaseMinted as TicketPurchaseMintedEvent,
@@ -16,6 +19,10 @@ import {
   FreeOrderChallengeRefundDeferred as FreeOrderChallengeRefundDeferredEvent,
 } from "../generated/DoudoBundleModule/DoudoBundleModuleUpgradeable";
 import {
+  DatabasePointsAuthorizationConfigUpdate,
+  DatabasePointsPurchaseMint,
+  DatabasePointsRebateEntitlement,
+  MembershipV2IndexerSource,
   BundleRebateTierConfigured,
   BundleRebateTiersCleared,
   SeriesRebateTier,
@@ -33,9 +40,77 @@ import {
   FreeOrderChallengeResult,
   FreeOrderChallengeRefund,
 } from "../generated/schema";
+import { DoudoMembershipV2 } from "../generated/templates";
 
 function eventId(eventTxHash: Bytes, logIndex: BigInt): Bytes {
   return eventTxHash.concatI32(logIndex.toI32());
+}
+
+export function handleDatabasePointsAuthorizationConfigured(
+  event: DatabasePointsAuthorizationConfiguredEvent,
+): void {
+  let entity = new DatabasePointsAuthorizationConfigUpdate(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.signer = event.params.signer;
+  entity.membership = event.params.membership;
+  entity.enabled = event.params.enabled;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+
+  if (event.params.enabled) {
+    let source = MembershipV2IndexerSource.load(event.params.membership);
+    if (source == null) {
+      source = new MembershipV2IndexerSource(event.params.membership);
+      source.contractAddress = event.params.membership;
+      source.createdAtBlock = event.block.number;
+      source.transactionHash = event.transaction.hash;
+      source.save();
+      DoudoMembershipV2.create(event.params.membership);
+    }
+  }
+}
+
+export function handleDatabasePointsPurchaseMinted(
+  event: DatabasePointsPurchaseMintedEvent,
+): void {
+  let entity = new DatabasePointsPurchaseMint(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.authorizationId = event.params.authorizationId;
+  entity.seriesID = event.params.seriesID;
+  entity.buyer = event.params.buyer;
+  entity.ticketQuantity = event.params.ticketQuantity;
+  entity.grossPoints = event.params.grossPoints;
+  entity.rebatePoints = event.params.rebatePoints;
+  entity.netPointsConsumed = event.params.netPointsConsumed;
+  entity.membershipRewardPoints = event.params.membershipRewardPoints;
+  entity.revealImmediately = event.params.revealImmediately;
+  entity.freeOrderChallenge = event.params.freeOrderChallenge;
+  entity.firstTokenID = event.params.firstTokenID;
+  entity.challengeRequestId = event.params.challengeRequestId;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+export function handleDatabasePointsRebateEntitled(
+  event: DatabasePointsRebateEntitledEvent,
+): void {
+  let entity = new DatabasePointsRebateEntitlement(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.authorizationId = event.params.authorizationId;
+  entity.seriesID = event.params.seriesID;
+  entity.buyer = event.params.buyer;
+  entity.rebatePoints = event.params.rebatePoints;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
 }
 
 function openingDiscountConfigId(seriesID: BigInt): Bytes {
