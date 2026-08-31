@@ -433,6 +433,155 @@ type TicketPurchaseRebate @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+type DatabasePointsAuthorizationConfigUpdate @entity(immutable: true) {
+  id: Bytes!
+  signer: Bytes!
+  membership: Bytes!
+  enabled: Boolean!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type DatabasePointsPurchaseMint @entity(immutable: true) {
+  id: Bytes!
+  authorizationId: Bytes!
+  seriesID: BigInt!
+  buyer: Bytes!
+  ticketQuantity: BigInt!
+  grossPoints: BigInt!
+  rebatePoints: BigInt!
+  netPointsConsumed: BigInt!
+  membershipRewardPoints: BigInt!
+  revealImmediately: Boolean!
+  freeOrderChallenge: Boolean!
+  firstTokenID: BigInt!
+  challengeRequestId: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type DatabasePointsRebateEntitlement @entity(immutable: true) {
+  id: Bytes!
+  authorizationId: Bytes!
+  seriesID: BigInt!
+  buyer: Bytes!
+  rebatePoints: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type LegacyCollectionCancellation @entity(immutable: true) {
+  id: Bytes!
+  snapshotBlock: BigInt!
+  snapshotRoot: Bytes!
+  cancelledAt: BigInt!
+  cancelledTokenURI: String!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipV2Member @entity(immutable: false) {
+  id: Bytes!
+  wallet: Bytes!
+  tokenId: BigInt!
+  level: Int!
+  currentQualifyingSpend: BigInt!
+  lifetimeSpend: BigInt!
+  lastActivityAt: BigInt!
+  expiresAt: BigInt!
+  migratedTo: Bytes
+  updatedAt: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipV2IndexerSource @entity(immutable: true) {
+  id: Bytes!
+  contractAddress: Bytes!
+  createdAtBlock: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipV2Consumption @entity(immutable: true) {
+  id: Bytes!
+  authorizationId: Bytes!
+  wallet: Bytes!
+  tokenId: BigInt!
+  pointsConsumed: BigInt!
+  rewardPoints: BigInt!
+  previousLevel: Int!
+  newLevel: Int!
+  currentQualifyingSpend: BigInt!
+  lifetimeSpend: BigInt!
+  lastActivityAt: BigInt!
+  expiresAt: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipV2Reversal @entity(immutable: true) {
+  id: Bytes!
+  reversalId: Bytes!
+  wallet: Bytes!
+  tokenId: BigInt!
+  pointsReversed: BigInt!
+  previousLevel: Int!
+  newLevel: Int!
+  currentQualifyingSpend: BigInt!
+  lifetimeSpend: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipV2Expiration @entity(immutable: true) {
+  id: Bytes!
+  wallet: Bytes!
+  tokenId: BigInt!
+  previousLevel: Int!
+  lifetimeSpend: BigInt!
+  expiredAt: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipV2Restoration @entity(immutable: true) {
+  id: Bytes!
+  caseId: Bytes!
+  wallet: Bytes!
+  tokenId: BigInt!
+  level: Int!
+  currentQualifyingSpend: BigInt!
+  lifetimeSpend: BigInt!
+  lastActivityAt: BigInt!
+  expiresAt: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type MembershipV2Migration @entity(immutable: true) {
+  id: Bytes!
+  caseId: Bytes!
+  from: Bytes!
+  to: Bytes!
+  oldTokenId: BigInt!
+  newTokenId: BigInt!
+  level: Int!
+  currentQualifyingSpend: BigInt!
+  lifetimeSpend: BigInt!
+  lastActivityAt: BigInt!
+  expiresAt: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type SeriesOpeningDiscountConfig @entity(immutable: false) {
   id: Bytes!
   seriesID: BigInt!

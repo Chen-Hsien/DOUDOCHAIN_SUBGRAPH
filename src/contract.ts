@@ -3,6 +3,7 @@ import {
   Approval as ApprovalEvent,
   ApprovalForAll as ApprovalForAllEvent,
   LegacyMembershipMigrated as LegacyMembershipMigratedEvent,
+  LegacyCollectionCancelled as LegacyCollectionCancelledEvent,
   LegacyVoucherMigrated as LegacyVoucherMigratedEvent,
   MembershipExpired as MembershipExpiredEvent,
   MembershipLevelCreated as MembershipLevelCreatedEvent,
@@ -49,10 +50,12 @@ import {
   Voucher,
   MembershipLevel,
   MembershipNFT,
+  LegacyCollectionCancellation,
   // MembershipMetadata,
   // VoucherMetadata,
 } from "../generated/schema";
 import {
+  Address,
   BigInt,
   Bytes,
   dataSource,
@@ -65,6 +68,22 @@ import {
 const MEMBERSHIP_LEVEL_KEY = "membershipLevelId";
 const VOUCHER_KEY = "voucherId";
 const MEMBERSHIP_EXPIRATION_SECONDS = BigInt.fromI32(180 * 24 * 60 * 60);
+
+export function handleLegacyCollectionCancelled(
+  event: LegacyCollectionCancelledEvent,
+): void {
+  let entity = new LegacyCollectionCancellation(
+    event.transaction.hash.concatI32(event.logIndex.toI32()),
+  );
+  entity.snapshotBlock = event.params.snapshotBlock;
+  entity.snapshotRoot = event.params.snapshotRoot;
+  entity.cancelledAt = event.params.cancelledAt;
+  entity.cancelledTokenURI = event.params.cancelledTokenURI;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
 
 export function handleApproval(event: ApprovalEvent): void {
   let entity = new Approval(
@@ -501,6 +520,26 @@ export function handleRoleRevoked(event: RoleRevokedEvent): void {
 }
 
 export function handleTransfer(event: TransferEvent): void {
+  let tokenId = Bytes.fromUTF8(event.params.tokenId.toString());
+  let burned = event.params.to.equals(Address.zero());
+  let voucher = Voucher.load(tokenId);
+  if (voucher) {
+    voucher.owner = event.params.to;
+    if (burned) {
+      voucher.isRedeemed = true;
+      voucher.redeemedAt = event.block.timestamp;
+    }
+    voucher.save();
+  }
+
+  let membership = MembershipNFT.load(tokenId);
+  if (membership) {
+    membership.owner = event.params.to;
+    if (burned) membership.isActive = false;
+    membership.updatedAt = event.block.timestamp;
+    membership.save();
+  }
+
   let entity = new Transfer(
     event.transaction.hash.concatI32(event.logIndex.toI32())
   );

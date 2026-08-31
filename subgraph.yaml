@@ -252,6 +252,9 @@ dataSources:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
+        - DatabasePointsAuthorizationConfigUpdate
+        - DatabasePointsPurchaseMint
+        - DatabasePointsRebateEntitlement
         - BundleRebateTierConfigured
         - BundleRebateTiersCleared
         - SeriesRebateTier
@@ -272,6 +275,12 @@ dataSources:
         - name: DoudoBundleModuleUpgradeable
           file: ./abis/DoudoBundleModuleUpgradeable.json
       eventHandlers:
+        - event: DatabasePointsAuthorizationConfigured(indexed address,indexed address,bool)
+          handler: handleDatabasePointsAuthorizationConfigured
+        - event: DatabasePointsPurchaseMinted(indexed bytes32,indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256,bool,bool,uint256,uint256)
+          handler: handleDatabasePointsPurchaseMinted
+        - event: DatabasePointsRebateEntitled(indexed bytes32,indexed uint256,indexed address,uint256)
+          handler: handleDatabasePointsRebateEntitled
         - event: BundleRebateTiersCleared(indexed uint256)
           handler: handleBundleRebateTiersCleared
         - event: BundleRebateTierConfigured(indexed uint256,indexed uint256,uint256,uint256)
@@ -290,6 +299,8 @@ dataSources:
           handler: handleFreeOrderChallengeConfigured
         - event: FreeOrderChallengeCleared(indexed uint256,indexed uint256)
           handler: handleFreeOrderChallengeCleared
+        - event: FreeOrderChallengeEnded(indexed uint256,indexed uint256)
+          handler: handleFreeOrderChallengeEnded
         - event: FreeOrderChallengePurchased(indexed uint256,indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256)
           handler: handleFreeOrderChallengePurchased
         - event: FreeOrderChallengeResult(indexed uint256,indexed uint256,indexed address,bool,uint256,uint256,uint256)
@@ -450,6 +461,7 @@ dataSources:
       apiVersion: 0.0.7
       language: wasm/assemblyscript
       entities:
+        - LegacyCollectionCancellation
         - AdminChanged
         - Approval
         - ApprovalForAll
@@ -478,6 +490,8 @@ dataSources:
         - name: Contract
           file: ./abis/Contract.json
       eventHandlers:
+        - event: LegacyCollectionCancelled(indexed uint256,indexed bytes32,uint64,string)
+          handler: handleLegacyCollectionCancelled
         - event: AdminChanged(address,address)
           handler: handleAdminChanged
         - event: Approval(indexed address,indexed address,indexed uint256)
@@ -525,6 +539,37 @@ dataSources:
       file: ./src/contract.ts
 
 templates:
+  - kind: ethereum/contract
+    name: DoudoMembershipV2
+    network: arbitrum-sepolia
+    source:
+      abi: DoudoMembershipV2Upgradeable
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - MembershipV2Member
+        - MembershipV2Consumption
+        - MembershipV2Reversal
+        - MembershipV2Expiration
+        - MembershipV2Restoration
+        - MembershipV2Migration
+      abis:
+        - name: DoudoMembershipV2Upgradeable
+          file: ./abis/DoudoMembershipV2Upgradeable.json
+      eventHandlers:
+        - event: MembershipConsumptionRecorded(indexed bytes32,indexed address,indexed uint256,uint256,uint256,uint8,uint8,uint256,uint256,uint64,uint64)
+          handler: handleMembershipConsumptionRecorded
+        - event: MembershipConsumptionReversed(indexed bytes32,indexed address,indexed uint256,uint256,uint8,uint8,uint256,uint256)
+          handler: handleMembershipConsumptionReversed
+        - event: MembershipExpired(indexed address,indexed uint256,uint8,uint256,uint64)
+          handler: handleMembershipExpired
+        - event: MembershipRestored(indexed bytes32,indexed address,indexed uint256,uint8,uint256,uint256,uint64,uint64)
+          handler: handleMembershipRestored
+        - event: MembershipMigrated(indexed bytes32,indexed address,indexed address,uint256,uint256,uint8,uint256,uint256,uint64,uint64)
+          handler: handleMembershipMigrated
+      file: ./src/membership-v2.ts
   - kind: file/ipfs
     name: IpfsContent
     mapping:
