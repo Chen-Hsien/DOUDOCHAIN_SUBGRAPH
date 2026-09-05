@@ -4,6 +4,7 @@ import {
   BundleRebateTierConfigured,
   BundleRebateTiersCleared,
   OpeningDiscountConfigured,
+  OpeningDiscountCleared,
   OpeningDiscountApplied,
   FreeOrderChallengeConfigured,
   FreeOrderChallengeEnded,
@@ -365,4 +366,10 @@ function addFreeOrderRefundParameters(
       ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(450)),
     ),
   );
+}
+
+export function createOpeningDiscountClearedEvent(seriesID: BigInt): OpeningDiscountCleared {
+  let event = changetype<OpeningDiscountCleared>(newMockEvent());
+  event.parameters = [new ethereum.EventParam("seriesID", ethereum.Value.fromUnsignedBigInt(seriesID))];
+  return event;
 }

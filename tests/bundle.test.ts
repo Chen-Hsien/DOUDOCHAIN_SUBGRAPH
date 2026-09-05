@@ -11,6 +11,7 @@ import {
   handleBundleRebateTierConfigured,
   handleBundleRebateTiersCleared,
   handleOpeningDiscountConfigured,
+  handleOpeningDiscountCleared,
   handleOpeningDiscountApplied,
   handleFreeOrderChallengeConfigured,
   handleFreeOrderChallengeEnded,
@@ -23,6 +24,7 @@ import {
   createBundleRebateTierConfiguredEvent,
   createBundleRebateTiersClearedEvent,
   createOpeningDiscountConfiguredEvent,
+  createOpeningDiscountClearedEvent,
   createOpeningDiscountAppliedEvent,
   createFreeOrderChallengeConfiguredEvent,
   createFreeOrderChallengeEndedEvent,
@@ -109,6 +111,42 @@ describe("Bundle rebate handlers", () => {
       "rebatePoints",
       "350",
     );
+  });
+
+  test("opening discount rounds preserve history and discard closed quota", () => {
+    let seriesID = BigInt.fromI32(12);
+    let id = Bytes.fromUTF8("12").toHexString();
+    let first = createOpeningDiscountConfiguredEvent(seriesID, BigInt.fromI32(10), BigInt.fromI32(350));
+    first.logIndex = BigInt.fromI32(1);
+    handleOpeningDiscountConfigured(first);
+    let used = createOpeningDiscountAppliedEvent(seriesID, BigInt.fromI32(3), BigInt.zero());
+    used.logIndex = BigInt.fromI32(2);
+    handleOpeningDiscountApplied(used);
+    let close = createOpeningDiscountClearedEvent(seriesID);
+    close.logIndex = BigInt.fromI32(3);
+    handleOpeningDiscountCleared(close);
+    assert.fieldEquals("SeriesOpeningDiscountConfig", id, "active", "false");
+    assert.fieldEquals("SeriesOpeningDiscountConfig", id, "usedTickets", "3");
+    assert.fieldEquals("SeriesOpeningDiscountConfig", id, "ticketLimit", "10");
+    assert.fieldEquals("SeriesOpeningDiscountConfig", id, "priceInPoints", "350");
+    let next = createOpeningDiscountConfiguredEvent(seriesID, BigInt.fromI32(5), BigInt.fromI32(350));
+    next.logIndex = BigInt.fromI32(4);
+    handleOpeningDiscountConfigured(next);
+    assert.fieldEquals("SeriesOpeningDiscountConfig", id, "active", "true");
+    assert.fieldEquals("SeriesOpeningDiscountConfig", id, "usedTickets", "0");
+    assert.fieldEquals("SeriesOpeningDiscountConfig", id, "ticketLimit", "5");
+    let exhaust = createOpeningDiscountAppliedEvent(seriesID, BigInt.fromI32(5), BigInt.fromI32(2));
+    exhaust.logIndex = BigInt.fromI32(5);
+    handleOpeningDiscountApplied(exhaust);
+    assert.fieldEquals("SeriesOpeningDiscountConfig", id, "usedTickets", "5");
+    let third = createOpeningDiscountConfiguredEvent(seriesID, BigInt.fromI32(5), BigInt.fromI32(350));
+    third.logIndex = BigInt.fromI32(6);
+    handleOpeningDiscountConfigured(third);
+    assert.fieldEquals("SeriesOpeningDiscountConfig", id, "usedTickets", "0");
+    assert.entityCount("OpeningDiscountConfigured", 3);
+    assert.entityCount("OpeningDiscountCleared", 1);
+    assert.entityCount("OpeningDiscountApplication", 2);
+    assert.fieldEquals("OpeningDiscountApplication", used.transaction.hash.concatI32(2).toHexString(), "openingQuantity", "3");
   });
 
   test("opening discount usage advances only by opening-priced tickets", () => {
