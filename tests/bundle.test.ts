@@ -11,6 +11,7 @@ import {
   handleBundleRebateTierConfigured,
   handleBundleRebateTiersCleared,
   handleOpeningDiscountConfigured,
+  handleOpeningDiscountRoundAdvanced,
   handleOpeningDiscountCleared,
   handleOpeningDiscountApplied,
   handleFreeOrderChallengeConfigured,
@@ -24,6 +25,7 @@ import {
   createBundleRebateTierConfiguredEvent,
   createBundleRebateTiersClearedEvent,
   createOpeningDiscountConfiguredEvent,
+  createOpeningDiscountRoundAdvancedEvent,
   createOpeningDiscountClearedEvent,
   createOpeningDiscountAppliedEvent,
   createFreeOrderChallengeConfiguredEvent,
@@ -119,6 +121,15 @@ describe("Bundle rebate handlers", () => {
     let first = createOpeningDiscountConfiguredEvent(seriesID, BigInt.fromI32(10), BigInt.fromI32(350));
     first.logIndex = BigInt.fromI32(1);
     handleOpeningDiscountConfigured(first);
+    handleOpeningDiscountRoundAdvanced(
+      createOpeningDiscountRoundAdvancedEvent(
+        seriesID,
+        BigInt.fromI32(1),
+        BigInt.fromI32(10),
+        BigInt.fromI32(350),
+      ),
+    );
+    assert.fieldEquals("SeriesOpeningDiscountConfig", id, "roundId", "1");
     let used = createOpeningDiscountAppliedEvent(seriesID, BigInt.fromI32(3), BigInt.zero());
     used.logIndex = BigInt.fromI32(2);
     handleOpeningDiscountApplied(used);

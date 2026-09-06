@@ -4,6 +4,7 @@ import {
   BundleRebateTierConfigured,
   BundleRebateTiersCleared,
   OpeningDiscountConfigured,
+  OpeningDiscountRoundAdvanced,
   OpeningDiscountCleared,
   OpeningDiscountApplied,
   FreeOrderChallengeConfigured,
@@ -59,6 +60,21 @@ export function createOpeningDiscountConfiguredEvent(
       ethereum.Value.fromUnsignedBigInt(priceInPoints),
     ),
   );
+  return event;
+}
+
+export function createOpeningDiscountRoundAdvancedEvent(
+  seriesID: BigInt,
+  roundId: BigInt,
+  ticketLimit: BigInt,
+  priceInPoints: BigInt,
+): OpeningDiscountRoundAdvanced {
+  let event = changetype<OpeningDiscountRoundAdvanced>(newMockEvent());
+  event.parameters = new Array();
+  event.parameters.push(new ethereum.EventParam("seriesID", ethereum.Value.fromUnsignedBigInt(seriesID)));
+  event.parameters.push(new ethereum.EventParam("roundId", ethereum.Value.fromUnsignedBigInt(roundId)));
+  event.parameters.push(new ethereum.EventParam("ticketLimit", ethereum.Value.fromUnsignedBigInt(ticketLimit)));
+  event.parameters.push(new ethereum.EventParam("priceInPoints", ethereum.Value.fromUnsignedBigInt(priceInPoints)));
   return event;
 }
 

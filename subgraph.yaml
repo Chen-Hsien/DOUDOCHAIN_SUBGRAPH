@@ -263,6 +263,7 @@ dataSources:
         - TicketPurchaseRebate
         - SeriesOpeningDiscountConfig
         - OpeningDiscountConfigured
+        - OpeningDiscountRoundAdvanced
         - OpeningDiscountCleared
         - OpeningDiscountApplication
         - SeriesFreeOrderChallengeConfig
@@ -291,6 +292,8 @@ dataSources:
           handler: handleTicketPurchaseRebatePaid
         - event: OpeningDiscountConfigured(indexed uint256,uint256,uint256)
           handler: handleOpeningDiscountConfigured
+        - event: OpeningDiscountRoundAdvanced(indexed uint256,indexed uint256,uint256,uint256)
+          handler: handleOpeningDiscountRoundAdvanced
         - event: OpeningDiscountCleared(indexed uint256)
           handler: handleOpeningDiscountCleared
         - event: OpeningDiscountApplied(indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256)

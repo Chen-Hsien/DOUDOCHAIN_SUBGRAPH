@@ -588,6 +588,7 @@ type SeriesOpeningDiscountConfig @entity(immutable: false) {
   ticketLimit: BigInt!
   priceInPoints: BigInt!
   usedTickets: BigInt!
+  roundId: BigInt!
   active: Boolean!
   updatedAt: BigInt!
   transactionHash: Bytes!
@@ -596,6 +597,17 @@ type SeriesOpeningDiscountConfig @entity(immutable: false) {
 type OpeningDiscountConfigured @entity(immutable: true) {
   id: Bytes!
   seriesID: BigInt!
+  ticketLimit: BigInt!
+  priceInPoints: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type OpeningDiscountRoundAdvanced @entity(immutable: true) {
+  id: Bytes!
+  seriesID: BigInt!
+  roundId: BigInt!
   ticketLimit: BigInt!
   priceInPoints: BigInt!
   blockNumber: BigInt!

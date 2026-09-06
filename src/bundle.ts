@@ -8,6 +8,7 @@ import {
   TicketPurchaseMinted as TicketPurchaseMintedEvent,
   TicketPurchaseRebatePaid as TicketPurchaseRebatePaidEvent,
   OpeningDiscountConfigured as OpeningDiscountConfiguredEvent,
+  OpeningDiscountRoundAdvanced as OpeningDiscountRoundAdvancedEvent,
   OpeningDiscountCleared as OpeningDiscountClearedEvent,
   OpeningDiscountApplied as OpeningDiscountAppliedEvent,
   FreeOrderChallengeConfigured as FreeOrderChallengeConfiguredEvent,
@@ -31,6 +32,7 @@ import {
   TicketPurchaseRebate,
   SeriesOpeningDiscountConfig,
   OpeningDiscountConfigured,
+  OpeningDiscountRoundAdvanced,
   OpeningDiscountCleared,
   OpeningDiscountApplication,
   SeriesFreeOrderChallengeConfig,
@@ -270,6 +272,7 @@ export function handleOpeningDiscountConfigured(
   config.ticketLimit = event.params.ticketLimit;
   config.priceInPoints = event.params.priceInPoints;
   config.usedTickets = BigInt.zero();
+  config.roundId = BigInt.zero();
   config.active = true;
   config.updatedAt = event.block.timestamp;
   config.transactionHash = event.transaction.hash;
@@ -279,6 +282,32 @@ export function handleOpeningDiscountConfigured(
     eventId(event.transaction.hash, event.logIndex),
   );
   entity.seriesID = event.params.seriesID;
+  entity.ticketLimit = event.params.ticketLimit;
+  entity.priceInPoints = event.params.priceInPoints;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+export function handleOpeningDiscountRoundAdvanced(
+  event: OpeningDiscountRoundAdvancedEvent,
+): void {
+  let config = SeriesOpeningDiscountConfig.load(
+    openingDiscountConfigId(event.params.seriesID),
+  );
+  if (config != null) {
+    config.roundId = event.params.roundId;
+    config.updatedAt = event.block.timestamp;
+    config.transactionHash = event.transaction.hash;
+    config.save();
+  }
+
+  let entity = new OpeningDiscountRoundAdvanced(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.seriesID = event.params.seriesID;
+  entity.roundId = event.params.roundId;
   entity.ticketLimit = event.params.ticketLimit;
   entity.priceInPoints = event.params.priceInPoints;
   entity.blockNumber = event.block.number;
