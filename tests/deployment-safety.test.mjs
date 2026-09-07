@@ -150,7 +150,7 @@ test("Arbitrum One RPC gate additionally verifies deployment receipts", async ()
       request.method === "eth_chainId"
         ? "0xa4b1"
         : request.method === "eth_getTransactionReceipt"
-          ? { status: "0x1", blockNumber: "0x64" }
+          ? { status: "0x1", blockNumber: "0x64", contractAddress: `0x${"1".repeat(40)}` }
           : "0x6000";
     return { ok: true, json: async () => ({ result }) };
   };
@@ -174,8 +174,26 @@ test("Arbitrum One RPC gate additionally verifies deployment receipts", async ()
       "eth_chainId",
       "eth_getTransactionReceipt",
       "eth_getCode",
+      "eth_getCode",
     ]);
   } finally {
     globalThis.fetch = originalFetch;
   }
+});
+
+test("production rejects a receipt for a different contract", async () => {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (_url, options) => {
+    const { method } = JSON.parse(options.body);
+    return { ok: true, json: async () => ({ result: method === "eth_chainId" ? "0xa4b1" : {
+      status: "0x1", blockNumber: "0x64", contractAddress: `0x${"3".repeat(40)}`,
+    } }) };
+  };
+  try {
+    await assert.rejects(verifyNetworkState("https://rpc.invalid", "arbitrum-one", {
+      dataSourceNames: ["ICHICHAIN"],
+      config: { ICHICHAIN: { address: `0x${"1".repeat(40)}`, startBlock: 100 } },
+      evidence: { ICHICHAIN: { transactionHash: `0x${"2".repeat(64)}` } },
+    }, { verifyReceipts: true }), /receipt address does not match/);
+  } finally { globalThis.fetch = originalFetch; }
 });

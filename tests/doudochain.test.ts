@@ -294,13 +294,14 @@ describe("ICHICHAIN handlers", () => {
     )
 
     let metadataHash = "QmNvKoUciLngtreMGz1xfAdgQE1erehahG87juvUS5k6i1"
+    let snapshottedExchangeDeadline = BigInt.fromI32(1209600)
     handleUpdateSeriesInformation(
       changetype<UpdateSeriesInformation>(
         createUpdateSeriesInformationEvent(
         seriesId,
         false,
         BigInt.zero(),
-        BigInt.zero(),
+        snapshottedExchangeDeadline,
         "ipfs://QmExchange/",
         "ipfs://QmUnreveal",
         "ipfs://QmReveal/",
@@ -311,6 +312,13 @@ describe("ICHICHAIN handlers", () => {
 
     let id = Bytes.fromUTF8("12")
     let expectedIchibanSeries = id.concat(Bytes.fromUTF8(metadataHash))
+
+    assert.fieldEquals(
+      "NewSeries",
+      id.toHexString(),
+      "exchangeExpireTime",
+      snapshottedExchangeDeadline.toString()
+    )
 
     assert.fieldEquals(
       "NewSeries",

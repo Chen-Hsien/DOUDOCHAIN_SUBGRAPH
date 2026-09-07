@@ -15,7 +15,7 @@
     "parity-gate": "node scripts/parity-gate/run.mjs",
     "pretest": "npm run codegen && node scripts/prepare-matchstick.mjs",
     "test:deployment": "node --test tests/deployment-safety.test.mjs",
-    "test": "graph test"
+    "test": "graph test --version 0.6.0"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.90.1",

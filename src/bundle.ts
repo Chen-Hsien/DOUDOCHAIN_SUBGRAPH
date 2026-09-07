@@ -1,14 +1,29 @@
 import { BigInt, Bytes, store } from "@graphprotocol/graph-ts";
 import {
+  DatabasePointsAuthorizationConfigured as DatabasePointsAuthorizationConfiguredEvent,
+  DatabasePointsPurchaseMinted as DatabasePointsPurchaseMintedEvent,
+  DatabasePointsRebateEntitled as DatabasePointsRebateEntitledEvent,
   BundleRebateTierConfigured as BundleRebateTierConfiguredEvent,
   BundleRebateTiersCleared as BundleRebateTiersClearedEvent,
   TicketPurchaseMinted as TicketPurchaseMintedEvent,
   TicketPurchaseRebatePaid as TicketPurchaseRebatePaidEvent,
   OpeningDiscountConfigured as OpeningDiscountConfiguredEvent,
+  OpeningDiscountRoundAdvanced as OpeningDiscountRoundAdvancedEvent,
   OpeningDiscountCleared as OpeningDiscountClearedEvent,
   OpeningDiscountApplied as OpeningDiscountAppliedEvent,
+  FreeOrderChallengeConfigured as FreeOrderChallengeConfiguredEvent,
+  FreeOrderChallengeCleared as FreeOrderChallengeClearedEvent,
+  FreeOrderChallengeEnded as FreeOrderChallengeEndedEvent,
+  FreeOrderChallengePurchased as FreeOrderChallengePurchasedEvent,
+  FreeOrderChallengeResult as FreeOrderChallengeResultEvent,
+  FreeOrderChallengeRefunded as FreeOrderChallengeRefundedEvent,
+  FreeOrderChallengeRefundDeferred as FreeOrderChallengeRefundDeferredEvent,
 } from "../generated/DoudoBundleModule/DoudoBundleModuleUpgradeable";
 import {
+  DatabasePointsAuthorizationConfigUpdate,
+  DatabasePointsPurchaseMint,
+  DatabasePointsRebateEntitlement,
+  MembershipV2IndexerSource,
   BundleRebateTierConfigured,
   BundleRebateTiersCleared,
   SeriesRebateTier,
@@ -17,12 +32,87 @@ import {
   TicketPurchaseRebate,
   SeriesOpeningDiscountConfig,
   OpeningDiscountConfigured,
+  OpeningDiscountRoundAdvanced,
   OpeningDiscountCleared,
   OpeningDiscountApplication,
+  SeriesFreeOrderChallengeConfig,
+  FreeOrderChallengeConfigured,
+  FreeOrderChallengeCleared,
+  FreeOrderChallengeRound,
+  FreeOrderChallengeResult,
+  FreeOrderChallengeRefund,
 } from "../generated/schema";
+import { DoudoMembershipV2 } from "../generated/templates";
 
 function eventId(eventTxHash: Bytes, logIndex: BigInt): Bytes {
   return eventTxHash.concatI32(logIndex.toI32());
+}
+
+export function handleDatabasePointsAuthorizationConfigured(
+  event: DatabasePointsAuthorizationConfiguredEvent,
+): void {
+  let entity = new DatabasePointsAuthorizationConfigUpdate(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.signer = event.params.signer;
+  entity.membership = event.params.membership;
+  entity.enabled = event.params.enabled;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+
+  if (event.params.enabled) {
+    let source = MembershipV2IndexerSource.load(event.params.membership);
+    if (source == null) {
+      source = new MembershipV2IndexerSource(event.params.membership);
+      source.contractAddress = event.params.membership;
+      source.createdAtBlock = event.block.number;
+      source.transactionHash = event.transaction.hash;
+      source.save();
+      DoudoMembershipV2.create(event.params.membership);
+    }
+  }
+}
+
+export function handleDatabasePointsPurchaseMinted(
+  event: DatabasePointsPurchaseMintedEvent,
+): void {
+  let entity = new DatabasePointsPurchaseMint(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.authorizationId = event.params.authorizationId;
+  entity.seriesID = event.params.seriesID;
+  entity.buyer = event.params.buyer;
+  entity.ticketQuantity = event.params.ticketQuantity;
+  entity.grossPoints = event.params.grossPoints;
+  entity.rebatePoints = event.params.rebatePoints;
+  entity.netPointsConsumed = event.params.netPointsConsumed;
+  entity.membershipRewardPoints = event.params.membershipRewardPoints;
+  entity.revealImmediately = event.params.revealImmediately;
+  entity.freeOrderChallenge = event.params.freeOrderChallenge;
+  entity.firstTokenID = event.params.firstTokenID;
+  entity.challengeRequestId = event.params.challengeRequestId;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+export function handleDatabasePointsRebateEntitled(
+  event: DatabasePointsRebateEntitledEvent,
+): void {
+  let entity = new DatabasePointsRebateEntitlement(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.authorizationId = event.params.authorizationId;
+  entity.seriesID = event.params.seriesID;
+  entity.buyer = event.params.buyer;
+  entity.rebatePoints = event.params.rebatePoints;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
 }
 
 function openingDiscountConfigId(seriesID: BigInt): Bytes {
@@ -31,6 +121,14 @@ function openingDiscountConfigId(seriesID: BigInt): Bytes {
 
 function rebateConfigId(seriesID: BigInt): Bytes {
   return Bytes.fromUTF8(seriesID.toString());
+}
+
+function freeOrderConfigId(seriesID: BigInt): Bytes {
+  return Bytes.fromUTF8(seriesID.toString());
+}
+
+function freeOrderRoundId(requestId: BigInt): string {
+  return requestId.toString();
 }
 
 function rebateTierId(seriesID: BigInt, tierIndex: BigInt): Bytes {
@@ -174,6 +272,7 @@ export function handleOpeningDiscountConfigured(
   config.ticketLimit = event.params.ticketLimit;
   config.priceInPoints = event.params.priceInPoints;
   config.usedTickets = BigInt.zero();
+  config.roundId = BigInt.zero();
   config.active = true;
   config.updatedAt = event.block.timestamp;
   config.transactionHash = event.transaction.hash;
@@ -183,6 +282,32 @@ export function handleOpeningDiscountConfigured(
     eventId(event.transaction.hash, event.logIndex),
   );
   entity.seriesID = event.params.seriesID;
+  entity.ticketLimit = event.params.ticketLimit;
+  entity.priceInPoints = event.params.priceInPoints;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+export function handleOpeningDiscountRoundAdvanced(
+  event: OpeningDiscountRoundAdvancedEvent,
+): void {
+  let config = SeriesOpeningDiscountConfig.load(
+    openingDiscountConfigId(event.params.seriesID),
+  );
+  if (config != null) {
+    config.roundId = event.params.roundId;
+    config.updatedAt = event.block.timestamp;
+    config.transactionHash = event.transaction.hash;
+    config.save();
+  }
+
+  let entity = new OpeningDiscountRoundAdvanced(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.seriesID = event.params.seriesID;
+  entity.roundId = event.params.roundId;
   entity.ticketLimit = event.params.ticketLimit;
   entity.priceInPoints = event.params.priceInPoints;
   entity.blockNumber = event.block.number;
@@ -241,4 +366,209 @@ export function handleOpeningDiscountApplied(
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
   entity.save();
+}
+
+export function handleFreeOrderChallengeConfigured(
+  event: FreeOrderChallengeConfiguredEvent,
+): void {
+  let config = new SeriesFreeOrderChallengeConfig(
+    freeOrderConfigId(event.params.seriesID),
+  );
+  config.seriesID = event.params.seriesID;
+  config.version = event.params.version;
+  config.eligibleFirstTicketCount = event.params.eligibleFirstTicketCount;
+  config.eligibleLastTicketCount = event.params.eligibleFirstTicketCount;
+  config.triggerPrizeIDs = event.params.triggerPrizeIDs;
+  config.active = true;
+  config.updatedAt = event.block.timestamp;
+  config.transactionHash = event.transaction.hash;
+  config.save();
+
+  let entity = new FreeOrderChallengeConfigured(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.seriesID = event.params.seriesID;
+  entity.version = event.params.version;
+  entity.eligibleFirstTicketCount = event.params.eligibleFirstTicketCount;
+  entity.eligibleLastTicketCount = event.params.eligibleFirstTicketCount;
+  entity.triggerPrizeIDs = event.params.triggerPrizeIDs;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+export function handleFreeOrderChallengeCleared(
+  event: FreeOrderChallengeClearedEvent,
+): void {
+  let config = SeriesFreeOrderChallengeConfig.load(
+    freeOrderConfigId(event.params.seriesID),
+  );
+  if (config == null) {
+    config = new SeriesFreeOrderChallengeConfig(
+      freeOrderConfigId(event.params.seriesID),
+    );
+    config.seriesID = event.params.seriesID;
+    config.eligibleFirstTicketCount = BigInt.zero();
+    config.eligibleLastTicketCount = BigInt.zero();
+    config.triggerPrizeIDs = [];
+  }
+  config.version = event.params.version;
+  config.active = false;
+  config.updatedAt = event.block.timestamp;
+  config.transactionHash = event.transaction.hash;
+  config.save();
+
+  let entity = new FreeOrderChallengeCleared(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.seriesID = event.params.seriesID;
+  entity.version = event.params.version;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+export function handleFreeOrderChallengeEnded(
+  event: FreeOrderChallengeEndedEvent,
+): void {
+  let config = SeriesFreeOrderChallengeConfig.load(
+    freeOrderConfigId(event.params.seriesID),
+  );
+  if (config == null || !config.version.equals(event.params.version)) return;
+
+  config.active = false;
+  config.updatedAt = event.block.timestamp;
+  config.transactionHash = event.transaction.hash;
+  config.save();
+}
+
+export function handleFreeOrderChallengePurchased(
+  event: FreeOrderChallengePurchasedEvent,
+): void {
+  let config = SeriesFreeOrderChallengeConfig.load(
+    freeOrderConfigId(event.params.seriesID),
+  );
+  let round = new FreeOrderChallengeRound(
+    freeOrderRoundId(event.params.requestId),
+  );
+  round.requestId = event.params.requestId;
+  round.seriesID = event.params.seriesID;
+  round.buyer = event.params.buyer;
+  round.configVersion = config == null ? BigInt.zero() : config.version;
+  round.ticketQuantity = event.params.ticketQuantity;
+  round.grossPriceInPoints = event.params.grossPriceInPoints;
+  round.rebatePoints = event.params.rebatePoints;
+  round.refundablePoints = event.params.refundablePoints;
+  round.firstTokenID = event.params.firstTokenID;
+  round.processed = false;
+  round.won = false;
+  round.claimed = false;
+  round.refundDeferred = false;
+  round.refundPoints = BigInt.zero();
+  round.winningTokenID = BigInt.zero();
+  round.winningPrizeID = BigInt.zero();
+  round.blockNumber = event.block.number;
+  round.blockTimestamp = event.block.timestamp;
+  round.updatedAt = event.block.timestamp;
+  round.transactionHash = event.transaction.hash;
+  round.save();
+}
+
+export function handleFreeOrderChallengeResult(
+  event: FreeOrderChallengeResultEvent,
+): void {
+  let round = FreeOrderChallengeRound.load(
+    freeOrderRoundId(event.params.requestId),
+  );
+  if (round != null) {
+    round.processed = true;
+    round.won = event.params.won;
+    round.refundPoints = event.params.refundPoints;
+    round.winningTokenID = event.params.winningTokenID;
+    round.winningPrizeID = event.params.winningPrizeID;
+    round.updatedAt = event.block.timestamp;
+    round.transactionHash = event.transaction.hash;
+    round.save();
+  }
+
+  let entity = new FreeOrderChallengeResult(
+    eventId(event.transaction.hash, event.logIndex),
+  );
+  entity.requestId = event.params.requestId;
+  entity.seriesID = event.params.seriesID;
+  entity.buyer = event.params.buyer;
+  entity.won = event.params.won;
+  entity.refundPoints = event.params.refundPoints;
+  entity.winningTokenID = event.params.winningTokenID;
+  entity.winningPrizeID = event.params.winningPrizeID;
+  entity.blockNumber = event.block.number;
+  entity.blockTimestamp = event.block.timestamp;
+  entity.transactionHash = event.transaction.hash;
+  entity.save();
+}
+
+function recordFreeOrderRefund(
+  requestId: BigInt,
+  seriesID: BigInt,
+  buyer: Bytes,
+  refundPoints: BigInt,
+  deferred: boolean,
+  transactionHash: Bytes,
+  logIndex: BigInt,
+  blockNumber: BigInt,
+  blockTimestamp: BigInt,
+): void {
+  let round = FreeOrderChallengeRound.load(freeOrderRoundId(requestId));
+  if (round != null) {
+    round.claimed = !deferred;
+    round.refundDeferred = deferred;
+    round.updatedAt = blockTimestamp;
+    round.transactionHash = transactionHash;
+    round.save();
+  }
+
+  let entity = new FreeOrderChallengeRefund(eventId(transactionHash, logIndex));
+  entity.requestId = requestId;
+  entity.seriesID = seriesID;
+  entity.buyer = buyer;
+  entity.refundPoints = refundPoints;
+  entity.deferred = deferred;
+  entity.blockNumber = blockNumber;
+  entity.blockTimestamp = blockTimestamp;
+  entity.transactionHash = transactionHash;
+  entity.save();
+}
+
+export function handleFreeOrderChallengeRefunded(
+  event: FreeOrderChallengeRefundedEvent,
+): void {
+  recordFreeOrderRefund(
+    event.params.requestId,
+    event.params.seriesID,
+    event.params.buyer,
+    event.params.refundPoints,
+    false,
+    event.transaction.hash,
+    event.logIndex,
+    event.block.number,
+    event.block.timestamp,
+  );
+}
+
+export function handleFreeOrderChallengeRefundDeferred(
+  event: FreeOrderChallengeRefundDeferredEvent,
+): void {
+  recordFreeOrderRefund(
+    event.params.requestId,
+    event.params.seriesID,
+    event.params.buyer,
+    event.params.refundPoints,
+    true,
+    event.transaction.hash,
+    event.logIndex,
+    event.block.number,
+    event.block.timestamp,
+  );
 }
