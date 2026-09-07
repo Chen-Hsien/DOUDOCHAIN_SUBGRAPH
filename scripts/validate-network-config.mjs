@@ -162,6 +162,13 @@ export async function verifyNetworkState(
       if (Number.parseInt(receipt.blockNumber, 16) !== source.startBlock) {
         throw new Error(`${name}: receipt block does not match startBlock.`);
       }
+      if (receipt.contractAddress?.toLowerCase() !== source.address.toLowerCase()) {
+        throw new Error(`${name}: deployment receipt address does not match configuration.`);
+      }
+      const historicalCode = await rpcCall("eth_getCode", [source.address, receipt.blockNumber]);
+      if (!historicalCode || historicalCode === "0x") {
+        throw new Error(`${name}: no contract code exists at the deployment block.`);
+      }
     }
     const code = await rpcCall("eth_getCode", [source.address, "latest"]);
     if (!code || code === "0x") {
