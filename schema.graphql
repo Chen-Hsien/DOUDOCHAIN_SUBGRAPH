@@ -1763,8 +1763,17 @@ type OfferAccepted @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
-type RevealTokenMetadata @entity(immutable: false) {
-  id: Bytes! # seriesId + subPrizeID
+# Chain-side registration prevents duplicate file sources across repeated events.
+type RevealTokenMetadataSource @entity(immutable: true) {
+  id: Bytes! # seriesId + subPrizeID + full IPFS path
+  series: NewSeries!
+  subPrizeID: BigInt!
+  ipfsPath: String!
+}
+
+type RevealTokenMetadata @entity(immutable: true) {
+  id: Bytes! # seriesId + subPrizeID + full IPFS path
+  ipfsPath: String!
   series: NewSeries!
   subPrizeID: BigInt!
   name: String!
