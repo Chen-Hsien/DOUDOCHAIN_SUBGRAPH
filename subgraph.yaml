@@ -35,10 +35,15 @@ dataSources:
         - UpdateSeriesRemainingTicketNumbers
         - UpdateTicketStatus
         - VrfRouterUpdated
+        - PrizeBuybackModuleRegistration
       abis:
+        - name: DoudoPrizeBuybackModuleUpgradeable
+          file: ./abis/DoudoPrizeBuybackModuleUpgradeable.json
         - name: ICHICHAIN
           file: ./abis/DOUDOCHAINV2CoreUpgradeable.json
       eventHandlers:
+        - event: RoleGranted(indexed bytes32,indexed address,indexed address)
+          handler: handleBuybackModuleRoleGranted
         - event: Approval(indexed address,indexed address,indexed uint256)
           handler: handleApproval
         - event: ApprovalForAll(indexed address,indexed address,bool)
@@ -544,6 +549,24 @@ dataSources:
       file: ./src/contract.ts
 
 templates:
+  - kind: ethereum/contract
+    name: PrizeBuybackModule
+    network: arbitrum-sepolia
+    source:
+      abi: DoudoPrizeBuybackModuleUpgradeable
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - PrizeBuybackBurn
+      abis:
+        - name: DoudoPrizeBuybackModuleUpgradeable
+          file: ./abis/DoudoPrizeBuybackModuleUpgradeable.json
+      eventHandlers:
+        - event: PrizeBuybackBurned(indexed bytes32,indexed address,indexed address,uint256[],uint256[],uint256,bytes32)
+          handler: handlePrizeBuybackBurned
+      file: ./src/prize-buyback.ts
   - kind: ethereum/contract
     name: DoudoMembershipV2
     network: arbitrum-sepolia
