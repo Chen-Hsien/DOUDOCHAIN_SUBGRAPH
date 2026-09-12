@@ -638,6 +638,10 @@ type OpeningDiscountApplication @entity(immutable: true) {
 }
 
 type SeriesFreeOrderChallengeConfig @entity(immutable: false) {
+  challengeTicketCount: BigInt
+  startRemainingTicketCount: BigInt
+  endSoldTicketCount: BigInt
+  calculationMode: String
   id: Bytes!
   seriesID: BigInt!
   version: BigInt!

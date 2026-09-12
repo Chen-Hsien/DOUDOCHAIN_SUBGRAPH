@@ -298,6 +298,8 @@ dataSources:
           handler: handleOpeningDiscountCleared
         - event: OpeningDiscountApplied(indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256)
           handler: handleOpeningDiscountApplied
+        - event: FreeOrderChallengeWindowConfigured(indexed uint256,indexed uint256,uint256,uint256,uint256)
+          handler: handleFreeOrderChallengeWindowConfigured
         - event: FreeOrderChallengeConfigured(indexed uint256,indexed uint256,uint256,uint256[])
           handler: handleFreeOrderChallengeConfigured
         - event: FreeOrderChallengeCleared(indexed uint256,indexed uint256)

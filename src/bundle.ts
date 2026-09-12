@@ -12,6 +12,7 @@ import {
   OpeningDiscountCleared as OpeningDiscountClearedEvent,
   OpeningDiscountApplied as OpeningDiscountAppliedEvent,
   FreeOrderChallengeConfigured as FreeOrderChallengeConfiguredEvent,
+  FreeOrderChallengeWindowConfigured as FreeOrderChallengeWindowConfiguredEvent,
   FreeOrderChallengeCleared as FreeOrderChallengeClearedEvent,
   FreeOrderChallengeEnded as FreeOrderChallengeEndedEvent,
   FreeOrderChallengePurchased as FreeOrderChallengePurchasedEvent,
@@ -376,6 +377,10 @@ export function handleFreeOrderChallengeConfigured(
   );
   config.seriesID = event.params.seriesID;
   config.version = event.params.version;
+  config.calculationMode = "LEGACY_FIRST_N";
+  config.unset("challengeTicketCount");
+  config.unset("startRemainingTicketCount");
+  config.endSoldTicketCount = event.params.eligibleFirstTicketCount;
   config.eligibleFirstTicketCount = event.params.eligibleFirstTicketCount;
   config.eligibleLastTicketCount = event.params.eligibleFirstTicketCount;
   config.triggerPrizeIDs = event.params.triggerPrizeIDs;
@@ -396,6 +401,18 @@ export function handleFreeOrderChallengeConfigured(
   entity.blockTimestamp = event.block.timestamp;
   entity.transactionHash = event.transaction.hash;
   entity.save();
+}
+
+export function handleFreeOrderChallengeWindowConfigured(
+  event: FreeOrderChallengeWindowConfiguredEvent,
+): void {
+  let config = SeriesFreeOrderChallengeConfig.load(freeOrderConfigId(event.params.seriesID));
+  if (config == null || !config.version.equals(event.params.version)) return;
+  config.calculationMode = "FROM_CONFIGURATION";
+  config.challengeTicketCount = event.params.challengeTicketCount;
+  config.startRemainingTicketCount = event.params.startRemainingTicketCount;
+  config.endSoldTicketCount = event.params.endSoldTicketCount;
+  config.save();
 }
 
 export function handleFreeOrderChallengeCleared(

@@ -15,6 +15,7 @@ import {
   handleOpeningDiscountCleared,
   handleOpeningDiscountApplied,
   handleFreeOrderChallengeConfigured,
+  handleFreeOrderChallengeWindowConfigured,
   handleFreeOrderChallengeEnded,
   handleFreeOrderChallengePurchased,
   handleFreeOrderChallengeResult,
@@ -29,6 +30,7 @@ import {
   createOpeningDiscountClearedEvent,
   createOpeningDiscountAppliedEvent,
   createFreeOrderChallengeConfiguredEvent,
+  createFreeOrderChallengeWindowConfiguredEvent,
   createFreeOrderChallengeEndedEvent,
   createFreeOrderChallengePurchasedEvent,
   createFreeOrderChallengeResultEvent,
@@ -197,6 +199,24 @@ describe("Bundle rebate handlers", () => {
       "true",
     );
     assert.entityCount("OpeningDiscountApplication", 1);
+  });
+
+  test("relative window enriches only its own config version, preserving the legacy cutoff", () => {
+    let seriesID = BigInt.fromI32(1);
+    let version = BigInt.fromI32(3);
+    let id = Bytes.fromUTF8("1").toHexString();
+    handleFreeOrderChallengeConfigured(createFreeOrderChallengeConfiguredEvent(
+      seriesID, version, BigInt.fromI32(60), [BigInt.fromI32(7)],
+    ));
+    assert.fieldEquals("SeriesFreeOrderChallengeConfig", id, "calculationMode", "LEGACY_FIRST_N");
+    handleFreeOrderChallengeWindowConfigured(createFreeOrderChallengeWindowConfiguredEvent(seriesID, BigInt.fromI32(2)));
+    assert.fieldEquals("SeriesFreeOrderChallengeConfig", id, "calculationMode", "LEGACY_FIRST_N");
+    handleFreeOrderChallengeWindowConfigured(createFreeOrderChallengeWindowConfiguredEvent(seriesID, version));
+    assert.fieldEquals("SeriesFreeOrderChallengeConfig", id, "calculationMode", "FROM_CONFIGURATION");
+    assert.fieldEquals("SeriesFreeOrderChallengeConfig", id, "challengeTicketCount", "20");
+    assert.fieldEquals("SeriesFreeOrderChallengeConfig", id, "startRemainingTicketCount", "60");
+    assert.fieldEquals("SeriesFreeOrderChallengeConfig", id, "endSoldTicketCount", "60");
+    assert.fieldEquals("SeriesFreeOrderChallengeConfig", id, "eligibleFirstTicketCount", "60");
   });
 
   test("free-order challenge indexes config, result, deferred refund, and claim", () => {
