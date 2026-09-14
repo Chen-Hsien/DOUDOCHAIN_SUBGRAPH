@@ -1,0 +1,9 @@
+{
+  "network": "arbitrum-one",
+  "address": "0x876668Ae85a7656434641F0CE51e55cf1b4F04aE",
+  "core": "0x4749289F940F0C6B7cf68A19b0BDc611b80cdb0A",
+  "deploymentBlock": 505136483,
+  "deploymentTransaction": "0x168468e02ca8c66a99b59bbc67d8e596a54ac5a1a8225400d490af4765b92ce5",
+  "registrationBlock": 505136506,
+  "registrationTransaction": "0xaf7c494450f7358b657ea7911792fa9285fcc8d48bca657b810d04fb6773dcd3"
+}

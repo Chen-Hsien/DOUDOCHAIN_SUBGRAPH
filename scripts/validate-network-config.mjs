@@ -1,6 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { validateBuybackDeployment, verifyBuybackDeployment } from "./verify-buyback-deployment.mjs";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const addressPattern = /^0x[0-9a-fA-F]{40}$/;
@@ -98,7 +99,12 @@ export function validateNetworkConfig(network) {
     throw error;
   }
 
-  return { config, dataSourceNames, evidence };
+  let buyback;
+  if (network === "arbitrum-one") {
+    buyback = readJson(resolve(root, "config/buyback-deployment.json"));
+    validateBuybackDeployment(buyback, config.ICHICHAIN);
+  }
+  return { config, dataSourceNames, evidence, buyback };
 }
 
 const expectedChainIds = {
@@ -144,6 +150,9 @@ export async function verifyNetworkState(
     );
   }
 
+  if (verifyReceipts && validation.buyback) {
+    await verifyBuybackDeployment(rpcCall, validation.buyback);
+  }
   const receiptCache = new Map();
   for (const name of validation.dataSourceNames) {
     const source = validation.config[name];
