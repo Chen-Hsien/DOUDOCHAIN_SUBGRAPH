@@ -26,6 +26,7 @@ dataSources:
         - NewSeries
         - NewSubPrize
         - NewTicketStatus
+        - RevealTokenMetadataSource
         - SeriesRuntimeState
         - SeriesUnlockedFor
         - Transfer

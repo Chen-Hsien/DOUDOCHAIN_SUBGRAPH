@@ -42,6 +42,7 @@ import {
   IchibanKujiSubPrize,
   UnrevealTokenMetadata,
   RevealTokenMetadata,
+  RevealTokenMetadataSource,
 } from "../generated/schema";
 
 import {
@@ -111,29 +112,63 @@ function extractIpfsPath(uri: string): string {
   return "";
 }
 
+// File data sources are isolated: different IPFS paths must never share an ID.
+export function revealTokenMetadataId(
+  seriesID: Bytes,
+  subPrizeID: BigInt,
+  ipfsPath: string
+): Bytes {
+  return Bytes.fromUTF8(
+    seriesID.toHexString() + ":" + subPrizeID.toString() + ":" + ipfsPath
+  );
+}
+
 function createRevealTokenIpfsContent(
   seriesEntity: NewSeries | null,
   subPrizeID: BigInt
-): void {
-  if (seriesEntity == null) return;
+): Bytes | null {
+  if (seriesEntity == null || subPrizeID.le(BigInt.zero())) return null;
 
   let baseRevealHash = extractIpfsPath(seriesEntity.revealTokenURI);
-  if (baseRevealHash.length == 0) return;
+  if (baseRevealHash.length == 0) return null;
+
+  let fullRevealHash = baseRevealHash + "/" + subPrizeID.toString();
+  let id = revealTokenMetadataId(seriesEntity.id, subPrizeID, fullRevealHash);
+  // Only chain handlers read this registry, never the file-owned entity.
+  if (RevealTokenMetadataSource.load(id) != null) return id;
+
+  let source = new RevealTokenMetadataSource(id);
+  source.series = seriesEntity.id;
+  source.subPrizeID = subPrizeID;
+  source.ipfsPath = fullRevealHash;
+  source.save();
 
   let revealContext = new DataSourceContext();
   revealContext.setBytes(SERIES_ID_KEY, seriesEntity.id);
   revealContext.setBigInt(SUB_PRIZE_ID_KEY, subPrizeID);
-
-  let fullRevealHash = baseRevealHash + "/" + subPrizeID.toString();
   DataSourceTemplate.createWithContext(
     "RevealTokenIpfsContent",
     [fullRevealHash],
     revealContext
   );
+  return id;
+}
 
-  log.debug("Creating RevealTokenIpfsContent with hash: {}", [
-    fullRevealHash,
-  ]);
+function refreshRevealMetadata(series: NewSeries): void {
+  // Load chain entities only. File contents may arrive in either version order.
+  let prizes = series.NewPrizes.load();
+  for (let i = 0; i < prizes.length; i++) {
+    createRevealTokenIpfsContent(series, prizes[i].subPrizeID);
+  }
+  let tickets = series.NewTicketStatuses.load();
+  for (let i = 0; i < tickets.length; i++) {
+    let ticket = tickets[i];
+    ticket.revealMetadata = createRevealTokenIpfsContent(
+      series, ticket.tokenRevealedPrize
+    );
+    ticket.testID = ticket.revealMetadata;
+    ticket.save();
+  }
 }
 
 export function handleApproval(event: ApprovalEvent): void {
@@ -562,11 +597,9 @@ export function handleRevealTokenContent(revealContext: Bytes): void {
   let seriesID = ctx.getBytes(SERIES_ID_KEY);
   let subPrizeID = ctx.getBigInt(SUB_PRIZE_ID_KEY);
 
-  // 創建一個包含 seriesID 和 subPrizeID 的唯一 ID
-  let uniqueId = seriesID
-    .concat(Bytes.fromUTF8("_subPrize_"))
-    .concat(Bytes.fromUTF8(subPrizeID.toString()));
+  let uniqueId = revealTokenMetadataId(seriesID, subPrizeID, hash);
   let revealTokenMetadata = new RevealTokenMetadata(uniqueId);
+  revealTokenMetadata.ipfsPath = hash;
 
   const value = json.fromBytes(revealContext).toObject();
 
@@ -672,14 +705,9 @@ export function handleNewTicketStatus(event: NewTicketStatusEvent): void {
     entity.belongIchibanSeries = uniqueId;
   }
 
-  // Link revealMetadata if tokenRevealedPrize > 0
-  if (event.params.tokenRevealedPrize.gt(BigInt.fromI32(0))) {
-    let metadataId = Bytes.fromUTF8(ID)
-      .concat(Bytes.fromUTF8("_subPrize_"))
-      .concat(Bytes.fromUTF8(event.params.tokenRevealedPrize.toString()));
-    entity.revealMetadata = metadataId;
-    createRevealTokenIpfsContent(newSeries, event.params.tokenRevealedPrize);
-  }
+  entity.revealMetadata = createRevealTokenIpfsContent(
+    newSeries, event.params.tokenRevealedPrize
+  );
 
   // check if tokenRevealedPrize is 999, then set belongIchibanSubPrize
   if (
@@ -784,6 +812,7 @@ export function handleUpdateSeriesInformation(
   let creatNewIPFS = false;
   let updateSeries = NewSeries.load(Bytes.fromUTF8(seriesID));
   if (updateSeries) {
+    let previousRevealPath = extractIpfsPath(updateSeries.revealTokenURI);
     updateSeries.isGoodsArrived = event.params.isGoodsArrived;
     updateSeries.estimateDeliverTime = event.params.estimateDeliverTime;
     updateSeries.exchangeExpireTime = event.params.exchangeExpireTime;
@@ -815,6 +844,9 @@ export function handleUpdateSeriesInformation(
     }
 
     updateSeries.save();
+    if (previousRevealPath != extractIpfsPath(updateSeries.revealTokenURI)) {
+      refreshRevealMetadata(updateSeries);
+    }
   }
 }
 
@@ -907,22 +939,12 @@ export function handleUpdateTicketStatus(event: UpdateTicketStatusEvent): void {
       updateTicketStatus.belongIchibanSubPrize = uniqueId.concat(
         Bytes.fromUTF8(event.params.tokenRevealedPrize.toString())
       );
-
-      let seriesIDBytes = Bytes.fromUTF8(ID);
-      // 新增：建立與 RevealTokenMetadata 的關聯
-      // 創建 RevealTokenMetadata 的 ID
-      let metadataId = seriesIDBytes
-        .concat(Bytes.fromUTF8("_subPrize_"))
-        .concat(Bytes.fromUTF8(event.params.tokenRevealedPrize.toString()));
-      updateTicketStatus.testID = metadataId;
-      let revealMetadata = RevealTokenMetadata.load(metadataId);
-
-      // Always link metadata if prize is valid, resolving handling race condition
-      if (event.params.tokenRevealedPrize.gt(BigInt.fromI32(0))) {
-        updateTicketStatus.revealMetadata = metadataId;
-        createRevealTokenIpfsContent(newSeries, event.params.tokenRevealedPrize);
-      }
     }
+    let metadataId = createRevealTokenIpfsContent(
+      newSeries, event.params.tokenRevealedPrize
+    );
+    updateTicketStatus.revealMetadata = metadataId;
+    updateTicketStatus.testID = metadataId;
     updateTicketStatus.save();
     if (wasRevealed != event.params.tokenRevealed) {
       adjustUnrevealedCount(
