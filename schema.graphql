@@ -638,6 +638,10 @@ type OpeningDiscountApplication @entity(immutable: true) {
 }
 
 type SeriesFreeOrderChallengeConfig @entity(immutable: false) {
+  challengeTicketCount: BigInt
+  startRemainingTicketCount: BigInt
+  endSoldTicketCount: BigInt
+  calculationMode: String
   id: Bytes!
   seriesID: BigInt!
   version: BigInt!
@@ -1791,4 +1795,26 @@ type UnrevealTokenMetadata @entity(immutable: false) {
   name: String!
   image: String!
   # estimateDeliverTime: BigInt
+}
+
+# 鏈上銷毀事實；Points 是否已入帳須向 Backend 查詢。
+type PrizeBuybackBurn @entity(immutable: true) {
+  id: Bytes!
+  batchId: Bytes!
+  module: Bytes!
+  core: Bytes!
+  buyer: Bytes!
+  tokenIds: [BigInt!]!
+  pointsRaw: [BigInt!]!
+  totalPointsRaw: BigInt!
+  quoteHash: Bytes!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type PrizeBuybackModuleRegistration @entity(immutable: true) {
+  id: Bytes!
+  core: Bytes!
+  blockNumber: BigInt!
 }

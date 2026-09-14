@@ -2076,7 +2076,7 @@
       },
       {
         "internalType": "uint256",
-        "name": "eligibleFirstTicketCount",
+        "name": "challengeTicketCount",
         "type": "uint256"
       },
       {
@@ -2262,5 +2262,42 @@
     "outputs": [],
     "stateMutability": "payable",
     "type": "function"
+  },
+  {
+    "type": "event",
+    "name": "FreeOrderChallengeWindowConfigured",
+    "anonymous": false,
+    "inputs": [
+      {
+        "name": "seriesID",
+        "type": "uint256",
+        "internalType": "uint256",
+        "indexed": true
+      },
+      {
+        "name": "version",
+        "type": "uint256",
+        "internalType": "uint256",
+        "indexed": true
+      },
+      {
+        "name": "challengeTicketCount",
+        "type": "uint256",
+        "internalType": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "startRemainingTicketCount",
+        "type": "uint256",
+        "internalType": "uint256",
+        "indexed": false
+      },
+      {
+        "name": "endSoldTicketCount",
+        "type": "uint256",
+        "internalType": "uint256",
+        "indexed": false
+      }
+    ]
   }
 ]

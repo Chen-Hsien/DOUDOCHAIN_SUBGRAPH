@@ -42,6 +42,16 @@ npm run deploy:prod
 
 正式部署中 `ICHICHAIN` 與 `RevealOnChainData` 共用 Core proxy；`DoudoCoreVRFRouter` 與既有相容 data source `DoudoVRFRouter` 共用同一個正式 Router。
 
+## 2026-09-15 Buyback 正式部署
+
+- 新 Buyback proxy：`0x876668Ae85a7656434641F0CE51e55cf1b4F04aE`，部署區塊 `505136483`。
+- Core proxy：`0x4749289F940F0C6B7cf68A19b0BDc611b80cdb0A`，`MODULE_ROLE` 授權區塊 `505136506`。
+- 完整交易紀錄位於 `config/buyback-deployment.json`；合約來源為 main `1fbd7f2`，backend 地址更新為 `35254e1`。
+- Buyback 使用 `PrizeBuybackModule` 動態 template。Core 的 `RoleGranted` handler 驗證 `core()` 與 `MAX_BATCH_SIZE()` 後，建立 `PrizeBuybackModuleRegistration` 並開始索引 `PrizeBuybackBurned`。不要額外加入相同地址的靜態 data source，以免重複處理。
+- Core、Bundle、Redraw 的 proxy 均未變更；本次 implementation 升級不替換 `networks.json` 的 proxy 地址，也不改動既有 startBlock。Core 從 `488650672` 重播，涵蓋此次授權事件。
+- 正式部署前會核對 Buyback 部署 receipt、Core 授權 log，以及授權區塊上的 `core()` / `MAX_BATCH_SIZE()`，避免部署成功但未註冊 template。
+- 部署後查詢 `_meta` 的錯誤與索引高度，並確認 `prizeBuybackModuleRegistration(id: "0x876668ae85a7656434641f0ce51e55cf1b4f04ae")` 的 core 與 blockNumber。索引尚未到 `505136506` 前不能宣稱 Buyback 已就緒。
+
 ## GitHub 設定
 
 建立兩個 GitHub Environments：

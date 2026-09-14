@@ -1034,3 +1034,5 @@ export function handleSeriesUnlockedFor(event: SeriesUnlockedForEvent): void {
   entity.transactionHash = event.transaction.hash;
   entity.save();
 }
+
+export { handleBuybackModuleRoleGranted } from "./buyback-module-registration";

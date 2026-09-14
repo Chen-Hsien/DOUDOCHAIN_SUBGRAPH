@@ -8,6 +8,7 @@ import {
   OpeningDiscountCleared,
   OpeningDiscountApplied,
   FreeOrderChallengeConfigured,
+  FreeOrderChallengeWindowConfigured,
   FreeOrderChallengeEnded,
   FreeOrderChallengePurchased,
   FreeOrderChallengeResult,
@@ -166,6 +167,21 @@ export function createBundleRebateTierConfiguredEvent(
     ),
   );
 
+  return event;
+}
+
+export function createFreeOrderChallengeWindowConfiguredEvent(
+  seriesID: BigInt,
+  version: BigInt,
+): FreeOrderChallengeWindowConfigured {
+  let event = changetype<FreeOrderChallengeWindowConfigured>(newMockEvent());
+  event.parameters = [
+    new ethereum.EventParam("seriesID", ethereum.Value.fromUnsignedBigInt(seriesID)),
+    new ethereum.EventParam("version", ethereum.Value.fromUnsignedBigInt(version)),
+    new ethereum.EventParam("challengeTicketCount", ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(20))),
+    new ethereum.EventParam("startRemainingTicketCount", ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(60))),
+    new ethereum.EventParam("endSoldTicketCount", ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(60))),
+  ];
   return event;
 }
 
