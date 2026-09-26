@@ -99,7 +99,7 @@ test("deployments require their assigned branch and a clean tree", () => {
 test("Sepolia and Arbitrum One both cover every manifest data source", () => {
   const testConfig = validateNetworkConfig("arbitrum-sepolia");
   const prodConfig = validateNetworkConfig("arbitrum-one");
-  assert.equal(testConfig.dataSourceNames.length, 13);
+  assert.equal(testConfig.dataSourceNames.length, 14);
   assert.equal(prodConfig.dataSourceNames.length, 13);
   assert.deepEqual(prodConfig.config.ICHICHAIN, {
     address: "0x4749289F940F0C6B7cf68A19b0BDc611b80cdb0A",

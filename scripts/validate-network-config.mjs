@@ -3,6 +3,9 @@ import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateBuybackDeployment, verifyBuybackDeployment } from "./verify-buyback-deployment.mjs";
 
+import { validateFixedProbabilityDeployment } from "./verify-fixed-probability-deployment.mjs";
+import { targetManifest } from "./target-manifest.mjs";
+
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const addressPattern = /^0x[0-9a-fA-F]{40}$/;
 const transactionPattern = /^0x[0-9a-fA-F]{64}$/;
@@ -11,16 +14,15 @@ function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
-function getDataSourceNames() {
-  const manifest = readFileSync(resolve(root, "subgraph.yaml"), "utf8");
+function getDataSourceNames(manifest) {
   const dataSourcesBlock = manifest.split(/^templates:/m)[0];
   return [
     ...dataSourcesBlock.matchAll(/^    name:\s*([^\s#]+)\s*$/gm),
   ].map((match) => match[1]);
 }
 
-export function validateNetworkConfig(network) {
-  const dataSourceNames = getDataSourceNames();
+export function validateNetworkConfig(network, manifest = targetManifest(network)) {
+  const dataSourceNames = getDataSourceNames(manifest);
   const duplicates = dataSourceNames.filter(
     (name, index) => dataSourceNames.indexOf(name) !== index,
   );
@@ -61,7 +63,7 @@ export function validateNetworkConfig(network) {
   }
 
   let evidence = null;
-  if (network === "arbitrum-one") {
+  if (network === "arbitrum-one" || dataSourceNames.includes("FixedProbabilityLottery")) {
     const allEvidence = readJson(
       resolve(root, "config/deployment-evidence.json"),
     );
@@ -70,6 +72,7 @@ export function validateNetworkConfig(network) {
       invalid.push(`missing deployment evidence for ${network}`);
     } else if (config) {
       for (const name of dataSourceNames) {
+        if (network !== "arbitrum-one" && name !== "FixedProbabilityLottery") continue;
         const record = evidence[name];
         const source = config[name];
         if (!record) {
@@ -98,6 +101,8 @@ export function validateNetworkConfig(network) {
     error.issues = invalid;
     throw error;
   }
+
+  validateFixedProbabilityDeployment(network, config, evidence, manifest);
 
   let buyback;
   if (network === "arbitrum-one") {
@@ -156,8 +161,9 @@ export async function verifyNetworkState(
   const receiptCache = new Map();
   for (const name of validation.dataSourceNames) {
     const source = validation.config[name];
-    if (verifyReceipts) {
-      const record = validation.evidence[name];
+    if (verifyReceipts || name === "FixedProbabilityLottery") {
+      const record = validation.evidence?.[name];
+      if (!record) throw new Error(`${name}: missing deployment receipt evidence.`);
       let receipt = receiptCache.get(record.transactionHash);
       if (!receipt) {
         receipt = await rpcCall("eth_getTransactionReceipt", [
