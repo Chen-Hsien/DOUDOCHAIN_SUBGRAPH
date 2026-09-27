@@ -2,7 +2,7 @@
   "name": "doudochain-subgraph",
   "license": "UNLICENSED",
   "scripts": {
-    "codegen": "graph codegen",
+    "codegen": "node scripts/run-environment.mjs codegen test",
     "build": "npm run build:test",
     "build:test": "node scripts/run-environment.mjs build test",
     "build:prod": "node scripts/run-environment.mjs build prod",
@@ -14,8 +14,11 @@
     "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 doudochain",
     "parity-gate": "node scripts/parity-gate/run.mjs",
     "pretest": "npm run codegen && node scripts/prepare-matchstick.mjs",
-    "test:deployment": "node --test tests/deployment-safety.test.mjs tests/buyback-deployment.test.mjs",
-    "test": "graph test --version 0.6.0"
+    "test:deployment": "node --test tests/deployment-safety.test.mjs tests/buyback-deployment.test.mjs tests/fixed-probability-deployment.test.mjs",
+    "test": "graph test --version 0.6.0",
+    "codegen:prod": "node scripts/run-environment.mjs codegen prod",
+    "parity:fixed-probability": "node scripts/fixed-probability/run-parity.mjs",
+    "test:fixed-probability-parity": "node --test tests/fixed-probability-parity.test.mjs"
   },
   "dependencies": {
     "@graphprotocol/graph-cli": "0.90.1",
@@ -23,6 +26,8 @@
     "graph": "^0.2.0"
   },
   "devDependencies": {
+    "@ethersproject/abi": "5.0.7",
+    "@ethersproject/keccak256": "5.7.0",
     "matchstick-as": "0.5.0"
   }
 }

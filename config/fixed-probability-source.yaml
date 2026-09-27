@@ -1,0 +1,69 @@
+  - kind: ethereum
+    name: FixedProbabilityLottery
+    network: arbitrum-sepolia
+    context:
+      chainId:
+        type: BigInt
+        data: "421614"
+      startBlock:
+        type: BigInt
+        data: "312597121"
+      protocolVersion:
+        type: String
+        data: "2"
+    source:
+      address: "0x51f8FfF05D504D9E4F8e95276E12099fEB357Fef"
+      abi: FixedProbabilityLottery
+      startBlock: 312597121
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - FixedProbabilityDeployment
+        - FixedProbabilitySeries
+        - FixedProbabilityPrize
+        - FixedProbabilityOrder
+        - FixedProbabilityRequest
+        - FixedProbabilityDraw
+        - FixedProbabilityNFT
+        - FixedProbabilityEligibilityScope
+        - FixedProbabilityEligibilityUsage
+        - FixedProbabilityEligibilityConsumption
+        - FixedProbabilityPendingEligibility
+        - FixedProbabilityEvent
+      abis:
+        - name: FixedProbabilityLottery
+          file: ./abis/FixedProbabilityLottery.json
+      eventHandlers:
+        - event: Approval(indexed address,indexed address,indexed uint256)
+          handler: handleApproval
+        - event: ApprovalForAll(indexed address,indexed address,bool)
+          handler: handleApprovalForAll
+        - event: CallbackIgnored(indexed uint256,uint8)
+          handler: handleCallbackIgnored
+        - event: DrawSettled(indexed uint256,indexed uint256,uint16,uint16,uint256)
+          handler: handleDrawSettled
+        - event: EIP712DomainChanged()
+          handler: handleEIP712DomainChanged
+        - event: EligibilityConsumed(indexed bytes32,indexed bytes32,indexed uint256,uint16,uint256)
+          handler: handleEligibilityConsumed
+        - event: EligibilityScopeRegistered(indexed bytes32,bytes32,uint256)
+          handler: handleEligibilityScopeRegistered
+        - event: OrderAccountingFinalized(indexed uint256,indexed address,indexed bytes32,uint256,uint256,uint256,uint8,uint8,uint64)
+          handler: handleOrderAccountingFinalized
+        - event: OrderRequested(indexed uint256,indexed uint256,indexed address,uint256,bytes32,bytes32,uint16,uint256,uint256,uint256,uint256,bool,bytes32,uint8,uint256)
+          handler: handleOrderRequested
+        - event: OrderSettled(indexed uint256,bool,uint16,uint256)
+          handler: handleOrderSettled
+        - event: PrizeClaimed(indexed uint256,indexed uint256,indexed address,address,uint256,uint256,uint256)
+          handler: handlePrizeClaimed
+        - event: RandomnessStored(indexed uint256,indexed uint256,uint256[])
+          handler: handleRandomnessStored
+        - event: SeriesCreated(indexed uint256,indexed bytes32,bytes)
+          handler: handleSeriesCreated
+        - event: SeriesStatusChanged(indexed uint256,uint8,uint8)
+          handler: handleSeriesStatusChanged
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+      file: ./src/fixed-probability.ts

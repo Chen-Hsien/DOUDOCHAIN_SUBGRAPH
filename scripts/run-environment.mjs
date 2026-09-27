@@ -1,4 +1,4 @@
-import { copyFileSync, existsSync, readFileSync } from "node:fs";
+import { writeFileSync, existsSync, readFileSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { delimiter, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -6,6 +6,8 @@ import {
   validateNetworkConfig,
   verifyNetworkState,
 } from "./validate-network-config.mjs";
+
+import { targetManifest } from "./target-manifest.mjs";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 export const TARGETS = Object.freeze({
@@ -121,7 +123,7 @@ function prepareManifest(target) {
     root,
     `.subgraph.${target.network}.generated.yaml`,
   );
-  copyFileSync(sourcePath, generatedPath);
+  writeFileSync(generatedPath, targetManifest(target.network));
   return { generatedPath, sourceBefore: readFileSync(sourcePath, "utf8") };
 }
 
@@ -137,7 +139,7 @@ export async function main(argv = process.argv.slice(2)) {
 
   const [action, targetName] = argv;
   const target = TARGETS[targetName];
-  if (!target || !["build", "deploy"].includes(action)) {
+  if (!target || !["codegen", "build", "deploy"].includes(action)) {
     console.error(
       "Usage: npm run build:test | build:prod | deploy:test | deploy:prod",
     );
@@ -153,9 +155,10 @@ export async function main(argv = process.argv.slice(2)) {
     }
   }
 
+  const { generatedPath, sourceBefore } = prepareManifest(target);
   let validation;
   try {
-    validation = validateNetworkConfig(target.network);
+    validation = validateNetworkConfig(target.network, readFileSync(generatedPath, "utf8"));
   } catch (error) {
     console.error(error.message);
     process.exit(1);
@@ -167,13 +170,16 @@ export async function main(argv = process.argv.slice(2)) {
     .join(delimiter);
   const outputDir = resolve(root, `build/${targetName}`);
 
-  const codegenStatus = run(graphBin, ["codegen"], {
+  const codegenStatus = run(graphBin, ["codegen", generatedPath], {
     env: { ...process.env, PATH: path },
   });
   if (codegenStatus !== 0) process.exit(codegenStatus);
+  if (action === "codegen") {
+    assertSourceManifestUnchanged(sourceBefore);
+    return;
+  }
 
   if (action === "build") {
-    const { generatedPath, sourceBefore } = prepareManifest(target);
     const status = run(
       graphBin,
       [
@@ -217,7 +223,6 @@ export async function main(argv = process.argv.slice(2)) {
     process.exit(1);
   }
 
-  const { generatedPath, sourceBefore } = prepareManifest(target);
   const status = run(
     graphBin,
     [
