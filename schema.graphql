@@ -1942,6 +1942,7 @@ type FixedProbabilityNFT @entity {
   mintEvent: FixedProbabilityEvent!
   claimEvent: FixedProbabilityEvent
   lastTransferEvent: FixedProbabilityEvent!
+  exchanged: Boolean!
 }
 
 type FixedProbabilityEligibilityScope @entity(immutable: true) {

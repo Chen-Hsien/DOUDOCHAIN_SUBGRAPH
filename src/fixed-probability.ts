@@ -1,9 +1,9 @@
 import { Address, BigInt, ethereum, store } from '@graphprotocol/graph-ts';
 import {
-  Approval, ApprovalForAll, CallbackIgnored, DrawSettled, EIP712DomainChanged,
+  Approval, ApprovalForAll, DrawSettled,
   EligibilityConsumed, EligibilityScopeRegistered, OrderAccountingFinalized,
-  OrderRequested, OrderSettled, PrizeClaimed, RandomnessStored, SeriesCreated,
-  SeriesStatusChanged, Transfer,
+  OrderRequested, OrderSettled, RandomnessStored, SeriesCreated,
+  SeriesStatusChanged, Transfer, UpdateTicketStatus,
 } from '../generated/FixedProbabilityLottery/FixedProbabilityLottery';
 import {
   FixedProbabilitySeries, FixedProbabilityPrize, FixedProbabilityOrder,
@@ -16,6 +16,11 @@ import { contains, decodeConfig, prizeForRoll } from './fixed-probability-config
 
 function orderAt(e: ethereum.Event, id: BigInt): FixedProbabilityOrder {
   const order = FixedProbabilityOrder.load(entityId(e, 'order', id));
+  assert(order != null, 'FixedProbability: missing order');
+  return order!;
+}
+function orderByEntityId(id: string): FixedProbabilityOrder {
+  const order = FixedProbabilityOrder.load(id);
   assert(order != null, 'FixedProbability: missing order');
   return order!;
 }
@@ -154,11 +159,17 @@ export function handleRandomnessStored(e: RandomnessStored): void {
 export function handleDrawSettled(e: DrawSettled): void {
   if (!audit(e, 'DrawSettled')) return;
   const p = e.params, o = orderAt(e, p.orderId), d = drawAt(e, p.drawId);
-  assert(o.state == 'RANDOM_READY' && !d.settled && d.order == o.id, 'FixedProbability: invalid draw settlement');
+  assert(o.state == 'RANDOM_READY', 'FixedProbability: order is not ready');
+  assert(!d.settled && d.claimed, 'FixedProbability: invalid draw settlement');
+  assert(d.nft != null, 'FixedProbability: draw NFT is missing');
+  assert(d.order == o.id, 'FixedProbability: draw order mismatch');
   assert(p.drawIndex >= 0 && p.drawIndex < o.quantity && d.drawIndex == p.drawIndex && p.drawId.equals(o.firstDrawId.plus(BigInt.fromI32(p.drawIndex))), 'FixedProbability: draw index');
   const roll = o.randomWords[p.drawIndex].mod(BigInt.fromI32(10000)).toI32();
-  assert(p.roll == roll && p.prizeId.equals(prizeForRoll(seriesAt(o.series), roll)), 'FixedProbability: incorrect result');
-  d.settled = true; d.roll = p.roll; d.prizeId = p.prizeId; d.settledEvent = eventId(e); d.save();
+  const expectedPrize = prizeForRoll(seriesAt(o.series), roll);
+  const observedRoll = p.roll.toI32();
+  assert(observedRoll == roll, 'FixedProbability: incorrect roll');
+  assert(p.prizeId.equals(expectedPrize), 'FixedProbability: incorrect prize');
+  d.settled = true; d.roll = observedRoll; d.prizeId = p.prizeId; d.settledEvent = eventId(e); d.save();
 }
 export function handleOrderSettled(e: OrderSettled): void {
   if (!audit(e, 'OrderSettled')) return;
@@ -192,32 +203,35 @@ export function handleOrderAccountingFinalized(e: OrderAccountingFinalized): voi
 export function handleTransfer(e: Transfer): void {
   if (!audit(e, 'Transfer')) return;
   const p = e.params, d = drawAt(e, p.tokenId), id = entityId(e, 'nft', p.tokenId);
-  assert(d.settled && !p.to.equals(Address.zero()), 'FixedProbability: unmintable/burned NFT');
+  assert(!p.to.equals(Address.zero()), 'FixedProbability: burned NFT');
   let nft = FixedProbabilityNFT.load(id);
   if (p.from.equals(Address.zero())) {
-    assert(nft == null && !d.claimed, 'FixedProbability: duplicate mint');
+    assert(nft == null && !d.claimed && !d.settled, 'FixedProbability: duplicate/late mint');
     nft = new FixedProbabilityNFT(id); nft.deployment = deploymentId(e); nft.tokenId = p.tokenId;
-    nft.draw = d.id; nft.mintRecipient = p.to; nft.mintEvent = eventId(e);
-    d.nft = id; d.save();
+    nft.draw = d.id; nft.mintRecipient = p.to; nft.claimRecipient = p.to;
+    nft.mintEvent = eventId(e); nft.claimEvent = eventId(e); nft.exchanged = false;
+    d.claimed = true; d.initialRecipient = p.to; d.nft = id; d.claimEvent = eventId(e); d.save();
+    const order = orderByEntityId(d.order);
+    order.claimedCount += 1; assert(order.claimedCount <= order.quantity, 'FixedProbability: mint count');
+    order.updatedEvent = eventId(e); order.save();
   } else {
     assert(nft != null && nft!.currentOwner.equals(p.from), 'FixedProbability: transfer owner mismatch');
   }
   nft!.currentOwner = p.to; nft!.lastTransferEvent = eventId(e); nft!.save();
 }
-export function handlePrizeClaimed(e: PrizeClaimed): void {
-  if (!audit(e, 'PrizeClaimed')) return;
-  const p = e.params, d = drawAt(e, p.drawId), o = orderAt(e, p.orderId), s = seriesAt(o.series);
-  assert(d.settled && !d.claimed && d.order == o.id && o.state == 'SETTLED', 'FixedProbability: invalid claim');
-  assert(p.buyer.equals(o.buyer) && p.tokenId.equals(p.drawId) && p.prizeId.equals(d.prizeId!) && p.seriesId.equals(s.seriesId), 'FixedProbability: claim binding');
-  const nft = FixedProbabilityNFT.load(entityId(e, 'nft', p.tokenId));
-  assert(nft != null && nft!.mintRecipient.equals(p.recipient), 'FixedProbability: claim without matching mint');
-  d.claimed = true; d.initialRecipient = p.recipient; d.claimEvent = eventId(e); d.save();
-  nft!.claimRecipient = p.recipient; nft!.claimEvent = eventId(e); nft!.save();
-  // A recipient can transfer during onERC721Received, before this event. Do not set currentOwner.
-  o.claimedCount += 1; assert(o.claimedCount <= o.quantity, 'FixedProbability: claim count');
-  o.updatedEvent = eventId(e); o.save();
+export function handleUpdateTicketStatus(e: UpdateTicketStatus): void {
+  if (!audit(e, 'UpdateTicketStatus')) return;
+  const p = e.params, d = drawAt(e, p.tokenID);
+  const order = orderByEntityId(d.order);
+  assert(p.seriesID.equals(seriesAt(order.series).seriesId), 'FixedProbability: ticket series mismatch');
+  if (p.tokenRevealed) {
+    assert(d.settled, 'FixedProbability: ticket reveal before settlement');
+    assert(p.tokenRevealedPrize.equals(d.prizeId!), 'FixedProbability: reveal mismatch');
+  }
+  const nft = FixedProbabilityNFT.load(entityId(e, 'nft', p.tokenID));
+  assert(nft != null, 'FixedProbability: missing NFT');
+  if (p.tokenExchange) nft!.exchanged = true;
+  nft!.save();
 }
-export function handleCallbackIgnored(e: CallbackIgnored): void { audit(e, 'CallbackIgnored'); }
 export function handleApproval(e: Approval): void { audit(e, 'Approval'); }
 export function handleApprovalForAll(e: ApprovalForAll): void { audit(e, 'ApprovalForAll'); }
-export function handleEIP712DomainChanged(e: EIP712DomainChanged): void { audit(e, 'EIP712DomainChanged'); }

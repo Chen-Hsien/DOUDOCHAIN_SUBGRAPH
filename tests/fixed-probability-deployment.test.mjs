@@ -26,10 +26,10 @@ test('changed address, start block, receipt, ABI, handler or context fails the d
   const e = structuredClone(v.evidence); e[source].transactionHash = '0x' + '2'.repeat(64);
   assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, e, manifest), /transaction mismatch/);
   assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest, '[]'), /ABI hash/);
-  assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest.replace('event: CallbackIgnored', 'event: WrongCallbackIgnored')), /handlers/);
+  assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest.replace('event: RandomnessStored', 'event: WrongRandomnessStored')), /handlers/);
   assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest.replace('data: "421614"', 'data: "42161"')), /context/);
   assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest.replace('protocolVersion:', 'unexpectedVersion:')), /context/);
-  assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest.replace('data: \"2\"', 'data: \"1\"')), /context/);
+  assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest.replace('data: \"3\"', 'data: \"1\"')), /context/);
   assert.throws(() => validateFixedProbabilityDeployment('arbitrum-one', v.config, v.evidence, manifest), /only deployed/);
 });
 test('Sepolia new source always checks deployment receipt, even without production receipt mode', async () => {
