@@ -1852,12 +1852,39 @@ type FixedProbabilitySeries @entity {
   maxEligibleDraws: BigInt!
   contentHash: Bytes!
   contentURI: String!
+  metadata: FixedProbabilitySeriesMetadata
   status: String!
   acceptedDraws: BigInt!
   createdEvent: FixedProbabilityEvent!
   updatedEvent: FixedProbabilityEvent!
   prizes: [FixedProbabilityPrize!]! @derivedFrom(field: "series")
   orders: [FixedProbabilityOrder!]! @derivedFrom(field: "series")
+}
+
+# Public presentation data is resolved once by an IPFS file data source, as for IchibanSeries.
+type FixedProbabilitySeriesMetadata @entity(immutable: true) {
+  id: ID!
+  contentUtf8: String!
+  contentHash: Bytes!
+  valid: Boolean!
+  name: String
+  description: String
+  image: String
+  redemptionTerms: String
+  freeOrderTerms: String
+  prizes: [FixedProbabilityPrizeMetadata!]! @derivedFrom(field: "seriesMetadata")
+}
+
+type FixedProbabilityPrizeMetadata @entity(immutable: true) {
+  id: ID!
+  seriesMetadata: FixedProbabilitySeriesMetadata!
+  prizeId: String!
+  prizeIndex: Int!
+  name: String!
+  description: String!
+  image: String!
+  nftImage: String!
+  animationUrl: String
 }
 
 type FixedProbabilityPrize @entity(immutable: true) {

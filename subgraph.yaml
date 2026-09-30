@@ -600,6 +600,20 @@ templates:
           handler: handleMembershipMigrated
       file: ./src/membership-v2.ts
   - kind: file/ipfs
+    name: FixedProbabilitySeriesIpfsContent
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - FixedProbabilitySeriesMetadata
+        - FixedProbabilityPrizeMetadata
+      abis:
+        - name: Contract
+          file: ./abis/DOUDOCHAINV2CoreUpgradeable.json
+      handler: handleFixedProbabilitySeriesContent
+      file: ./src/fixed-probability-metadata.ts
+  - kind: file/ipfs
     name: IpfsContent
     mapping:
       kind: ethereum/events

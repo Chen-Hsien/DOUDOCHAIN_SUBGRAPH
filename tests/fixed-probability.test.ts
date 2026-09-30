@@ -60,6 +60,8 @@ test('real Sepolia V3 publication indexes its tuple-encoded config and initializ
   assert.fieldEquals('FixedProbabilitySeries', id, 'pricePoints', points(100).toString());
   assert.fieldEquals('FixedProbabilitySeries', id, 'configData', '0x' + LIVE_CONFIG.slice(66));
   assert.entityCount('FixedProbabilityPrize', 3);
+  const series = FixedProbabilitySeries.load(id)!;
+  assert.fieldEquals('FixedProbabilitySeries', id, 'metadata', series.contentURI.slice(7));
 });
 
 test('empty arrays and unicode content URI decode without losing offsets', () => {

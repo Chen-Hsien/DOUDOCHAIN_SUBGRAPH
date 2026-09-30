@@ -1,4 +1,4 @@
-import { Address, BigInt, ethereum, store } from '@graphprotocol/graph-ts';
+import { Address, BigInt, DataSourceTemplate, ethereum, store } from '@graphprotocol/graph-ts';
 import {
   Approval, ApprovalForAll, DrawSettled,
   EligibilityConsumed, EligibilityScopeRegistered, OrderAccountingFinalized,
@@ -45,6 +45,13 @@ export function handleSeriesCreated(e: SeriesCreated): void {
   const s = new FixedProbabilitySeries(id);
   s.deployment = deploymentId(e); s.seriesId = p.seriesId; s.configHash = p.configHash;
   decodeConfig(s, p.configData);
+  // As for ordinary series, resolve immutable public metadata in an IPFS file source.
+  // File entities never write chain entities; consumers check contentHash against this series.
+  if (s.contentURI.startsWith('ipfs://')) {
+    const path = s.contentURI.slice(7);
+    s.metadata = path;
+    DataSourceTemplate.create('FixedProbabilitySeriesIpfsContent', [path]);
+  }
   if (s.gateMode == 2 || s.gateMode == 3) {
     const scope = FixedProbabilityEligibilityScope.load(scopeId(e, s.eligibilityScope));
     assert(scope != null, 'FixedProbability: missing scope');
