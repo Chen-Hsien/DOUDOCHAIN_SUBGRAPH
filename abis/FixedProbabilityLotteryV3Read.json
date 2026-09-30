@@ -1,0 +1,428 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "eligibilityScopeMaximum",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "eligibilityScopePolicy",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "eligibleDrawsUsed",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "drawId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getDraw",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "drawId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "orderId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint16",
+            "name": "drawIndex",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint256",
+            "name": "roll",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "prizeId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "recipient",
+            "type": "address"
+          },
+          {
+            "internalType": "bool",
+            "name": "exchanged",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct FixedProbabilityLotteryV3.Draw",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "orderId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getOrder",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint256",
+            "name": "orderId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "address",
+            "name": "buyer",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "seriesId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "configHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "authorizationId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint16",
+            "name": "quantity",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint256",
+            "name": "firstDrawId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "grossPoints",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "rebatePoints",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "netPoints",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "freeOrderChallenge",
+            "type": "bool"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "eligibilityKey",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint8",
+            "name": "levelAtRequest",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "acceptedDrawsBefore",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "requestId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "enum FixedProbabilityLotteryV3.OrderState",
+            "name": "state",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256[]",
+            "name": "randomWords",
+            "type": "uint256[]"
+          },
+          {
+            "internalType": "bool",
+            "name": "freeOrderWon",
+            "type": "bool"
+          },
+          {
+            "internalType": "uint16",
+            "name": "firstTriggerIndex",
+            "type": "uint16"
+          },
+          {
+            "internalType": "uint256",
+            "name": "refundPoints",
+            "type": "uint256"
+          },
+          {
+            "internalType": "bool",
+            "name": "accountingFinalized",
+            "type": "bool"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "membershipConsumptionId",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "uint256",
+            "name": "finalPointsConsumed",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint256",
+            "name": "membershipRewardPoints",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "previousLevel",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint8",
+            "name": "newLevel",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint64",
+            "name": "expiresAt",
+            "type": "uint64"
+          }
+        ],
+        "internalType": "struct FixedProbabilityLotteryV3.Order",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "seriesId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getSeries",
+    "outputs": [
+      {
+        "components": [
+          {
+            "components": [
+              {
+                "internalType": "uint256",
+                "name": "pricePoints",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256",
+                "name": "drawCap",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint16",
+                "name": "maxBatchSize",
+                "type": "uint16"
+              },
+              {
+                "internalType": "uint256[]",
+                "name": "prizeIds",
+                "type": "uint256[]"
+              },
+              {
+                "internalType": "uint16[]",
+                "name": "weights",
+                "type": "uint16[]"
+              },
+              {
+                "internalType": "uint16[]",
+                "name": "discountQuantities",
+                "type": "uint16[]"
+              },
+              {
+                "internalType": "uint256[]",
+                "name": "discountPoints",
+                "type": "uint256[]"
+              },
+              {
+                "internalType": "uint8",
+                "name": "freeOrderMode",
+                "type": "uint8"
+              },
+              {
+                "internalType": "uint256",
+                "name": "freeOrderFirstDraws",
+                "type": "uint256"
+              },
+              {
+                "internalType": "uint256[]",
+                "name": "freeOrderPrizeIds",
+                "type": "uint256[]"
+              },
+              {
+                "internalType": "uint8",
+                "name": "gateMode",
+                "type": "uint8"
+              },
+              {
+                "internalType": "uint8",
+                "name": "minMemberLevel",
+                "type": "uint8"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "eligibilityPolicyId",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "eligibilityScope",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "uint256",
+                "name": "maxEligibleDraws",
+                "type": "uint256"
+              },
+              {
+                "internalType": "bytes32",
+                "name": "contentHash",
+                "type": "bytes32"
+              },
+              {
+                "internalType": "string",
+                "name": "contentURI",
+                "type": "string"
+              }
+            ],
+            "internalType": "struct FixedProbabilityLotteryV3.SeriesConfig",
+            "name": "config",
+            "type": "tuple"
+          },
+          {
+            "internalType": "bytes32",
+            "name": "configHash",
+            "type": "bytes32"
+          },
+          {
+            "internalType": "enum FixedProbabilityLotteryV3.SeriesStatus",
+            "name": "status",
+            "type": "uint8"
+          },
+          {
+            "internalType": "uint256",
+            "name": "acceptedDraws",
+            "type": "uint256"
+          }
+        ],
+        "internalType": "struct FixedProbabilityLotteryV3.Series",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "ownerOf",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

@@ -4,8 +4,9 @@ import { keccak256 } from '@ethersproject/keccak256';
 
 export const deployment = JSON.parse(readFileSync(new URL('../../config/fixed-probability-deployment.json', import.meta.url)));
 const abi = JSON.parse(readFileSync(new URL('../../abis/FixedProbabilityLottery.json', import.meta.url)));
-export const iface = new Interface(abi.filter(x => x.type === 'function' || x.type === 'event'));
-const configComponents = abi.find(x => x.name === 'getSeries').outputs[0].components[0].components;
+const readAbi = JSON.parse(readFileSync(new URL('../../abis/FixedProbabilityLotteryV3Read.json', import.meta.url)));
+export const iface = new Interface([...abi, ...readAbi]);
+const configComponents = readAbi.find(x => x.name === 'getSeries').outputs[0].components[0].components;
 export const configFields = configComponents.map(x => x.name);
 const configTypes = configComponents.map(x => x.type);
 const tag = text => keccak256(Buffer.from(text, 'utf8'));
@@ -33,7 +34,7 @@ export function configHash(chainId, address, seriesId, c) {
   const prize = hash(['uint256[]', 'uint16[]'], [c.prizeIds, c.weights]);
   const promotion = hash(['uint16[]', 'uint256[]', 'uint8', 'uint256', 'uint256[]'], [c.discountQuantities, c.discountPoints, c.freeOrderMode, c.freeOrderFirstDraws, c.freeOrderPrizeIds]);
   const gate = hash(['uint8', 'uint8', 'bytes32', 'bytes32', 'uint256'], [c.gateMode, c.minMemberLevel, c.eligibilityPolicyId, c.eligibilityScope, c.maxEligibleDraws]);
-  return hash(['bytes32', 'uint256', 'address', 'uint256', 'uint256', 'uint256', 'uint16', 'bytes32', 'bytes32', 'bytes32', 'bytes32', 'string'], [tag('FIXED_PROBABILITY_SERIES_V2'), chainId, address, seriesId, c.pricePoints, c.drawCap, c.maxBatchSize, prize, promotion, gate, c.contentHash, c.contentURI]);
+  return hash(['bytes32', 'uint256', 'address', 'uint256', 'uint256', 'uint256', 'uint16', 'bytes32', 'bytes32', 'bytes32', 'bytes32', 'string'], [tag('FIXED_PROBABILITY_SERIES_V3'), chainId, address, seriesId, c.pricePoints, c.drawCap, c.maxBatchSize, prize, promotion, gate, c.contentHash, c.contentURI]);
 }
 export function compareSeries(row, chain) {
   const c = chain.config;
@@ -55,14 +56,18 @@ export function compareOrder(row, chain) {
   same(row.series.seriesId, chain.seriesId, 'ORDER_SERIES_MISMATCH');
   for (const key of ['orderId', 'buyer', 'authorizationId', 'configHash', 'requestId', 'quantity', 'firstDrawId', 'grossPoints', 'rebatePoints', 'netPoints', 'freeOrderChallenge', 'eligibilityKey', 'levelAtRequest', 'acceptedDrawsBefore', 'randomWords', 'accountingFinalized']) same(row[key], chain[key], `ORDER_${key}_MISMATCH`);
   same(row.state, ['NONE', 'PENDING', 'RANDOM_READY', 'SETTLED'][Number(chain.state)], 'ORDER_STATE_MISMATCH');
-  for (const key of ['freeOrderWon', 'firstTriggerIndex', 'refundPoints', 'finalPointsConsumed']) same(row[key], Number(chain.state) === 3 ? chain[key] : null, `ORDER_${key}_MISMATCH`);
+  for (const key of ['freeOrderWon', 'firstTriggerIndex', 'refundPoints']) same(row[key], Number(chain.state) === 3 ? chain[key] : null, `ORDER_${key}_MISMATCH`);
+  // The settled event projects expected consumption before the accounting transaction.
+  same(row.finalPointsConsumed, Number(chain.state) === 3 ? BigInt(chain.netPoints) - BigInt(chain.refundPoints) : null, 'ORDER_finalPointsConsumed_MISMATCH');
+  if (chain.accountingFinalized) same(row.finalPointsConsumed, chain.finalPointsConsumed, 'FINAL_CONSUMPTION_MISMATCH');
   for (const key of ['membershipConsumptionId', 'previousLevel', 'newLevel', 'expiresAt']) same(row[key], chain.accountingFinalized ? chain[key] : null, `ORDER_${key}_MISMATCH`);
   same(row.observedMembershipRewardPoints, chain.accountingFinalized ? chain.membershipRewardPoints : null, 'OBSERVED_REWARD_MISMATCH');
   if (row.draws.length !== Number(chain.quantity)) throw Error('DRAW_COUNT_MISMATCH');
-  same(row.claimedCount, row.draws.filter(d => d.claimed).length, 'CLAIMED_COUNT_MISMATCH');
+  same(row.claimedCount, chain.quantity, 'CLAIMED_COUNT_MISMATCH');
+  if (row.draws.some(d => d.claimed !== true || !d.nft)) throw Error('IMMEDIATE_NFT_MISSING');
 }
 
-const orderFields = `id orderId buyer authorizationId configHash requestId quantity firstDrawId grossPoints rebatePoints netPoints freeOrderChallenge eligibilityKey levelAtRequest acceptedDrawsBefore state randomWords freeOrderWon firstTriggerIndex refundPoints finalPointsConsumed accountingFinalized membershipConsumptionId observedMembershipRewardPoints previousLevel newLevel expiresAt claimedCount series { seriesId } draws(first:10,orderBy:drawIndex,orderDirection:asc) { id drawId drawIndex settled roll prizeId claimed initialRecipient nft { tokenId currentOwner mintRecipient claimRecipient } }`;
+const orderFields = `id orderId buyer authorizationId configHash requestId quantity firstDrawId grossPoints rebatePoints netPoints freeOrderChallenge eligibilityKey levelAtRequest acceptedDrawsBefore state randomWords freeOrderWon firstTriggerIndex refundPoints finalPointsConsumed accountingFinalized membershipConsumptionId observedMembershipRewardPoints previousLevel newLevel expiresAt claimedCount series { seriesId } draws(first:10,orderBy:drawIndex,orderDirection:asc) { id drawId drawIndex settled roll prizeId claimed initialRecipient nft { tokenId currentOwner mintRecipient claimRecipient exchanged } }`;
 const seriesFields = `id seriesId configHash configData status acceptedDraws ${configFields.join(' ')} prizes(first:32,orderBy:prizeIndex,orderDirection:asc) { prizeId prizeIndex weight intervalStart intervalEndExclusive }`;
 const metaFields = 'block { number hash } deployment hasIndexingErrors';
 
@@ -115,27 +120,27 @@ export async function runParity(options) {
       const d = o.draws[i], id = String(BigInt(o.firstDrawId) + BigInt(i));
       same(d.drawId, id, 'DRAW_ID_MISMATCH'); same(d.id, entityId('draw', id), 'DRAW_ENTITY_MISMATCH'); same(d.drawIndex, i, 'DRAW_INDEX_MISMATCH');
       same(d.settled, o.state === 'SETTLED', 'DRAW_STATE_MISMATCH');
-      // getDraw rejects IDs whose orders have not settled. Pending placeholders remain null.
-      if (d.settled) {
-        const cd = await call('getDraw', [id]);
-        for (const key of ['drawId', 'drawIndex', 'roll', 'prizeId', 'claimed']) same(d[key], cd[key], `DRAW_${key}_MISMATCH`);
-        same(cd.orderId, o.orderId, 'DRAW_ORDER_MISMATCH');
-        same(d.initialRecipient, cd.claimed ? cd.recipient : null, 'DRAW_RECIPIENT_MISMATCH');
-        if (d.claimed) {
-          if (!d.nft) throw Error('CLAIM_NFT_MISSING');
-          same(d.nft.tokenId, id, 'NFT_ID_MISMATCH'); same(d.nft.mintRecipient, cd.recipient, 'MINT_RECIPIENT_MISMATCH'); same(d.nft.claimRecipient, cd.recipient, 'CLAIM_RECIPIENT_MISMATCH');
-          same(d.nft.currentOwner, await call('ownerOf', [id]), 'NFT_OWNER_MISMATCH'); nftCount++;
-        } else same(d.nft, null, 'UNCLAIMED_NFT');
-      } else { for (const k of ['roll', 'prizeId', 'initialRecipient', 'nft']) same(d[k], null, 'PENDING_DRAW_NON_NULL'); same(d.claimed, false, 'PENDING_CLAIM'); }
+      const cd = await call('getDraw', [id]);
+      for (const key of ['drawId', 'drawIndex']) same(d[key], cd[key], `DRAW_${key}_MISMATCH`);
+      same(cd.orderId, o.orderId, 'DRAW_ORDER_MISMATCH');
+      for (const key of ['roll', 'prizeId']) same(d[key], d.settled ? cd[key] : null, `DRAW_${key}_MISMATCH`);
+      if (!d.settled) { same(cd.roll, '0', 'PENDING_CHAIN_ROLL'); same(cd.prizeId, '0', 'PENDING_CHAIN_PRIZE'); }
+      same(d.initialRecipient, cd.recipient, 'DRAW_RECIPIENT_MISMATCH');
+      if (!d.nft || !d.claimed) throw Error('IMMEDIATE_NFT_MISSING');
+      same(cd.tokenId, id, 'DRAW_TOKEN_MISMATCH');
+      same(d.nft.tokenId, id, 'NFT_ID_MISMATCH');
+      same(d.nft.mintRecipient, cd.recipient, 'MINT_RECIPIENT_MISMATCH');
+      same(d.nft.claimRecipient, cd.recipient, 'CLAIM_RECIPIENT_MISMATCH');
+      same(d.nft.currentOwner, await call('ownerOf', [id]), 'NFT_OWNER_MISMATCH');
+      same(d.nft.exchanged, cd.exchanged, 'NFT_EXCHANGED_MISMATCH');
+      nftCount++;
       drawCount++;
     }
   }
   const scopes = await page('fixedProbabilityEligibilityScopes', 'id scope policyId maxEligibleDraws');
   for (const scope of scopes) {
-    const chain = await call('getEligibilityScope', [scope.scope]);
-    same(scope.policyId, chain.policyId, 'SCOPE_POLICY_MISMATCH');
-    same(scope.maxEligibleDraws, chain.maxEligibleDraws, 'SCOPE_QUOTA_MISMATCH');
-    same(chain.exists, true, 'SCOPE_MISSING');
+    same(scope.policyId, await call('eligibilityScopePolicy', [scope.scope]), 'SCOPE_POLICY_MISMATCH');
+    same(scope.maxEligibleDraws, await call('eligibilityScopeMaximum', [scope.scope]), 'SCOPE_QUOTA_MISMATCH');
   }
   const allDraws = await page('fixedProbabilityDraws', 'id');
   same(allDraws.map(d => d.id).sort(), orders.flatMap(o => o.draws.map(d => d.id)).sort(), 'ORPHAN_DRAW');
@@ -149,7 +154,7 @@ export async function runParity(options) {
   const step = 10000n;
   for (let from = BigInt(deployment.startBlock); from <= BigInt(blockNumber); from += step) {
     const to = from + step - 1n < BigInt(blockNumber) ? from + step - 1n : BigInt(blockNumber);
-    const logs = await rpc('eth_getLogs', [{address: deployment.address, fromBlock: '0x' + from.toString(16), toBlock: '0x' + to.toString(16)}]);
+    const logs = await rpc('eth_getLogs', [{address: deployment.address, topics: [abi.filter(x => x.type === 'event').map(x => iface.getEventTopic(x.name))], fromBlock: '0x' + from.toString(16), toBlock: '0x' + to.toString(16)}]);
     if (!Array.isArray(logs)) throw Error('RPC_LOGS_UNAVAILABLE');
     sourceLogs.push(...logs);
   }
@@ -183,5 +188,5 @@ export async function runParity(options) {
   same(series.length, created, 'SERIES_COUNT_MISMATCH'); same(orders.length, requested, 'ORDER_COUNT_MISMATCH'); same(drawCount, expectedDraws, 'DRAW_TOTAL_MISMATCH'); same(nftCount, minted, 'NFT_TOTAL_MISMATCH');
   const finalBlock = await rpc('eth_getBlockByNumber', [blockTag, false]);
   same(finalBlock?.hash, snapshot.hash, 'SNAPSHOT_REORG');
-  return {schemaVersion: 'fixed-probability-parity-v2', deployment: dep, candidateCid: expectedCid, block: {number: String(blockNumber), hash: snapshot.hash}, projectionParity: true, coverage: orders.length ? 'ORDERS_PRESENT' : 'NO_ORDERS', counts: {series: series.length, orders: orders.length, draws: drawCount, nfts: nftCount, usages: usages.length, events: events.length}, vrfVerified: false, ledgerVerified: false, legacyParityVerified: false};
+  return {schemaVersion: 'fixed-probability-parity-v3', deployment: dep, candidateCid: expectedCid, block: {number: String(blockNumber), hash: snapshot.hash}, projectionParity: true, coverage: orders.length ? 'ORDERS_PRESENT' : 'NO_ORDERS', counts: {series: series.length, orders: orders.length, draws: drawCount, nfts: nftCount, usages: usages.length, events: events.length}, vrfVerified: false, ledgerVerified: false, legacyParityVerified: false};
 }

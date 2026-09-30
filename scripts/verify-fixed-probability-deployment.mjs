@@ -21,7 +21,7 @@ export function validateFixedProbabilityDeployment(network, config, evidence, ma
   const block = manifest.split('    name: FixedProbabilityLottery\n')[1]?.split(/^  - kind:|^templates:/m)[0] ?? '';
   const contextField = (name, type, value) => new RegExp(`${name}:\\s*\\n\\s+type: ${type}\\s*\\n\\s+data: "${value}"`).test(block);
   if (!contextField('chainId', 'BigInt', deployment.chainId) || !contextField('startBlock', 'BigInt', deployment.startBlock) ||
-      !contextField('protocolVersion', 'String', '2') || !block.includes(`address: "${deployment.address}"`) || !block.includes(`startBlock: ${deployment.startBlock}`)) {
+      !contextField('protocolVersion', 'String', '3') || !block.includes(`address: "${deployment.address}"`) || !block.includes(`startBlock: ${deployment.startBlock}`)) {
     throw new Error('FixedProbabilityLottery manifest source/context mismatch.');
   }
   const expected = JSON.parse(abi).filter(x => x.type === 'event').map(e => `${e.name}(${e.inputs.map(p => `${p.indexed ? 'indexed ' : ''}${p.type}`).join(',')})`).sort();
