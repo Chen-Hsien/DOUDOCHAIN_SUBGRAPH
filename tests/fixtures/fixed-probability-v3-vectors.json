@@ -1,0 +1,49 @@
+{
+  "schemaVersion": "fixed-probability-lottery-vectors-v2",
+  "deployment": {
+    "chainId": "421614",
+    "lotteryAddress": "0x1111111111111111111111111111111111111111"
+  },
+  "series": {
+    "seriesId": "1",
+    "pricePoints": "100000000000000000000",
+    "drawCap": "1000",
+    "maxBatchSize": "10",
+    "prizeIds": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "weights": [
+      "100",
+      "900",
+      "3000",
+      "6000"
+    ],
+    "discountQuantities": [
+      "5",
+      "10"
+    ],
+    "discountPoints": [
+      "20000000000000000000",
+      "60000000000000000000"
+    ],
+    "freeOrderMode": "1",
+    "freeOrderFirstDraws": "100",
+    "freeOrderPrizeIds": [
+      "1"
+    ],
+    "gateMode": "3",
+    "minMemberLevel": "3",
+    "eligibilityPolicyId": "0x3ea8993e228914950eedf52cd07546a524a132e0f44c4b607b02429b46825e0f",
+    "eligibilityScope": "0x719af3933a7634689496e7b2581dd6b9f0c7296da3935cf398815bb63bf5d7b6",
+    "maxEligibleDraws": "20",
+    "contentHash": "0x22c2af53df337e93cd0032a6561260ca1163334941f69e27028671e94353e27f",
+    "contentURI": "ipfs://spec-fixture-only/series-v2.json",
+    "prizeHash": "0x5caf5ff92ad6afb45cff69a3ed3b4da94e91c905d12cdf126ed94bc0e0d4a30d",
+    "promotionHash": "0xe7e8090f9f7725e75e8a12e076b9d85ac60bf845c8fd7c11cf74b48a62d470e4",
+    "gateHash": "0xa4f564753874e72fc5a1e617c951d5be1daca526804182014adeff922a2f6279",
+    "configHash": "0x39e762a12c0f9774d957b86b60f3469cb85227c31e9b3b0f13784f841fb160c0"
+  }
+}
