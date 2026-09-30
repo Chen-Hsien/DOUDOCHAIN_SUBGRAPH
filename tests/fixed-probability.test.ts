@@ -88,6 +88,20 @@ test('NFT ownership transfers remain visible after purchase', () => {
   assert.fieldEquals('FixedProbabilityNFT', entityId(transfer, 'nft', n(1)), 'currentOwner', NEXT.toHexString());
 });
 
+test('paid free-order refund retains purchase membership levels', () => {
+  setup();
+  const order = purchase(2);
+  h.handleRandomnessStored(m.mockRandomnessStored(n(1), n(101), [n(0), n(5000)]));
+  h.handleDrawSettled(m.mockDrawSettled(n(1), n(1), n(0), n(0), n(1)));
+  h.handleDrawSettled(m.mockDrawSettled(n(1), n(2), n(1), n(5000), n(4)));
+  h.handleOrderSettled(m.mockOrderSettled(n(1), true, n(0), points(200)));
+  h.handleOrderAccountingFinalized(m.mockOrderAccountingFinalized(n(1), BUYER, KEY, n(0), points(200), n(0), n(3), n(4), n(1900000000)));
+  assert.fieldEquals('FixedProbabilityOrder', order, 'accountingFinalized', 'true');
+  assert.fieldEquals('FixedProbabilityOrder', order, 'previousLevel', '3');
+  assert.fieldEquals('FixedProbabilityOrder', order, 'newLevel', '4');
+  assert.fieldEquals('FixedProbabilityOrder', order, 'refundPoints', points(200).toString());
+});
+
 test('incorrect VRF prize mapping is rejected', () => {
   setup();
   purchase(1);

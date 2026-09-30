@@ -193,7 +193,8 @@ export function handleOrderAccountingFinalized(e: OrderAccountingFinalized): voi
   assert(o.state == 'SETTLED' && !o.accountingFinalized, 'FixedProbability: invalid accounting');
   assert(p.buyer.equals(o.buyer) && p.refundPoints.equals(o.refundPoints!) && p.finalPointsConsumed.equals(o.finalPointsConsumed!), 'FixedProbability: accounting binding');
   assert(p.membershipRewardPoints.le(p.finalPointsConsumed) && p.previousLevel <= 5 && p.newLevel <= 5, 'FixedProbability: membership response');
-  if (p.finalPointsConsumed.equals(ZERO)) assert(p.membershipRewardPoints.equals(ZERO) && p.previousLevel == 0 && p.newLevel == 0 && p.expiresAt.equals(ZERO), 'FixedProbability: free consumption snapshot');
+  if (p.finalPointsConsumed.equals(ZERO)) assert(p.membershipRewardPoints.equals(ZERO), 'FixedProbability: refunded reward');
+  if (o.netPoints.equals(ZERO)) assert(p.previousLevel == 0 && p.newLevel == 0 && p.expiresAt.equals(ZERO), 'FixedProbability: free consumption snapshot');
   o.accountingFinalized = true; o.membershipConsumptionId = p.membershipConsumptionId;
   o.observedMembershipRewardPoints = p.membershipRewardPoints;
   o.previousLevel = p.previousLevel; o.newLevel = p.newLevel; o.expiresAt = p.expiresAt;
