@@ -16,6 +16,7 @@ function points(value: i32): BigInt { return n(value).times(BigInt.fromString('1
 function setup(): void {
   h.handleEligibilityScopeRegistered(m.mockEligibilityScopeRegistered(Bytes.fromHexString(SCOPE), Bytes.fromHexString(POLICY), n(20)));
   h.handleSeriesCreated(m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString(GOLDEN_CONFIG)));
+  h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(0), n(1)));
   h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(1), n(2)));
 }
 
@@ -120,3 +121,48 @@ test('eligibility consumption remains scoped and accounting is independent', () 
   assert.fieldEquals('FixedProbabilityOrder', order, 'accountingFinalized', 'true');
   assert.fieldEquals('FixedProbabilityOrder', order, 'claimedCount', '1');
 });
+
+test('createSeries indexes the complete SeriesCreated then NONE to DRAFT sequence', () => {
+  h.handleEligibilityScopeRegistered(m.mockEligibilityScopeRegistered(Bytes.fromHexString(SCOPE), Bytes.fromHexString(POLICY), n(20)));
+  const created = m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString(GOLDEN_CONFIG));
+  h.handleSeriesCreated(created);
+  const initial = m.mockSeriesStatusChanged(n(1), n(0), n(1));
+  h.handleSeriesStatusChanged(initial);
+  const id = entityId(created, 'series', n(1));
+  assert.fieldEquals('FixedProbabilitySeries', id, 'status', 'DRAFT');
+  assert.entityCount('FixedProbabilityEvent', 3);
+  h.handleSeriesStatusChanged(initial); // Exact replay remains idempotent.
+  assert.entityCount('FixedProbabilityEvent', 3);
+});
+test('all nine contract-reachable status transitions index without halting', () => {
+  const names = ['NONE', 'DRAFT', 'ACTIVE', 'PAUSED', 'CLOSED'];
+  for (let previous = 1; previous <= 3; previous++) {
+    for (let next = 1; next <= 4; next++) {
+      if (previous == next) continue;
+      clearStore(); m.resetLogs(); setup();
+      if (previous != 2) h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(2), n(previous)));
+      const changed = m.mockSeriesStatusChanged(n(1), n(previous), n(next));
+      h.handleSeriesStatusChanged(changed);
+      assert.fieldEquals('FixedProbabilitySeries', entityId(changed, 'series', n(1)), 'status', names[next]);
+    }
+  }
+});
+test('closed series cannot reopen', () => {
+  setup(); h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(2), n(4)));
+  h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(4), n(2)));
+}, true);
+test('NONE to ACTIVE is not a valid initialization', () => {
+  h.handleEligibilityScopeRegistered(m.mockEligibilityScopeRegistered(Bytes.fromHexString(SCOPE), Bytes.fromHexString(POLICY), n(20)));
+  h.handleSeriesCreated(m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString(GOLDEN_CONFIG)));
+  h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(0), n(2)));
+}, true);
+test('a distinct duplicate initialization is rejected', () => {
+  h.handleEligibilityScopeRegistered(m.mockEligibilityScopeRegistered(Bytes.fromHexString(SCOPE), Bytes.fromHexString(POLICY), n(20)));
+  h.handleSeriesCreated(m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString(GOLDEN_CONFIG)));
+  h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(0), n(1)));
+  h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(0), n(1)));
+}, true);
+test('an event with the wrong previous status is rejected', () => {
+  setup();
+  h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(1), n(3)));
+}, true);

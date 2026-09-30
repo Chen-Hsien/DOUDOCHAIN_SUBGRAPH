@@ -64,10 +64,16 @@ export function handleSeriesCreated(e: SeriesCreated): void {
 export function handleSeriesStatusChanged(e: SeriesStatusChanged): void {
   if (!audit(e, 'SeriesStatusChanged')) return;
   const p = e.params, s = seriesAt(entityId(e, 'series', p.seriesId));
-  assert(s.status == statusName(p.previousStatus), 'FixedProbability: previous status mismatch');
-  const allowed = (p.nextStatus == 2 && (p.previousStatus == 1 || p.previousStatus == 3)) ||
-    (p.nextStatus == 3 && p.previousStatus == 2) || (p.nextStatus == 4 && p.previousStatus != 4);
-  assert(allowed, 'FixedProbability: invalid status transition');
+  if (p.previousStatus == 0) {
+    // createSeries emits SeriesCreated, then NONE -> DRAFT in the same transaction.
+    assert(p.nextStatus == 1 && s.status == 'DRAFT' && s.updatedEvent == s.createdEvent,
+      'FixedProbability: invalid initialization');
+  } else {
+    assert(s.status == statusName(p.previousStatus), 'FixedProbability: previous status mismatch');
+    // Match setSeriesStatus: NONE, CLOSED and unchanged transitions are rejected on-chain.
+    assert(p.previousStatus < 4 && p.nextStatus > 0 && p.nextStatus <= 4 && p.previousStatus != p.nextStatus,
+      'FixedProbability: invalid status transition');
+  }
   s.status = statusName(p.nextStatus); s.updatedEvent = eventId(e); s.save();
 }
 export function handleEligibilityScopeRegistered(e: EligibilityScopeRegistered): void {
