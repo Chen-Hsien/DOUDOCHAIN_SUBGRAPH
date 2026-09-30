@@ -6,6 +6,7 @@ import { entityId, scopeId, uintKey } from '../src/fixed-probability-ids';
 import * as h from '../src/fixed-probability';
 import * as m from './fixed-probability-utils';
 import { CONFIG_HASH, EMPTY_CONFIG, GOLDEN_CONFIG, POLICY, SCOPE } from './fixtures/fixed-probability-config';
+import { LIVE_CONFIG, LIVE_CONFIG_HASH } from './fixtures/fixed-probability-v3-live';
 
 const BUYER = Address.fromString('0x1111111111111111111111111111111111111111');
 const NEXT = Address.fromString('0x2222222222222222222222222222222222222222');
@@ -15,7 +16,7 @@ function points(value: i32): BigInt { return n(value).times(BigInt.fromString('1
 
 function setup(): void {
   h.handleEligibilityScopeRegistered(m.mockEligibilityScopeRegistered(Bytes.fromHexString(SCOPE), Bytes.fromHexString(POLICY), n(20)));
-  h.handleSeriesCreated(m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString(GOLDEN_CONFIG)));
+  h.handleSeriesCreated(m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString('0x' + '00'.repeat(31) + '20' + GOLDEN_CONFIG.slice(2))));
   h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(0), n(1)));
   h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(1), n(2)));
 }
@@ -42,7 +43,7 @@ afterEach(() => { clearStore(); dataSourceMock.resetValues(); });
 
 test('v3 config keeps prize intervals and content bytes', () => {
   setup();
-  const created = m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString(GOLDEN_CONFIG));
+  const created = m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString('0x' + '00'.repeat(31) + '20' + GOLDEN_CONFIG.slice(2)));
   const id = entityId(created, 'series', n(1));
   assert.fieldEquals('FixedProbabilitySeries', id, 'configData', GOLDEN_CONFIG);
   assert.fieldEquals('FixedProbabilitySeries', id, 'pricePoints', points(100).toString());
@@ -50,9 +51,20 @@ test('v3 config keeps prize intervals and content bytes', () => {
   assert.entityCount('FixedProbabilityPrize', 4);
 });
 
+test('real Sepolia V3 publication indexes its tuple-encoded config and initialization', () => {
+  const created = m.mockSeriesCreated(n(1), Bytes.fromHexString(LIVE_CONFIG_HASH), Bytes.fromHexString(LIVE_CONFIG));
+  h.handleSeriesCreated(created);
+  h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(0), n(1)));
+  const id = entityId(created, 'series', n(1));
+  assert.fieldEquals('FixedProbabilitySeries', id, 'status', 'DRAFT');
+  assert.fieldEquals('FixedProbabilitySeries', id, 'pricePoints', points(100).toString());
+  assert.fieldEquals('FixedProbabilitySeries', id, 'configData', '0x' + LIVE_CONFIG.slice(66));
+  assert.entityCount('FixedProbabilityPrize', 3);
+});
+
 test('empty arrays and unicode content URI decode without losing offsets', () => {
   const series = new FixedProbabilitySeries('decode-only');
-  decodeConfig(series, Bytes.fromHexString(EMPTY_CONFIG));
+  decodeConfig(series, Bytes.fromHexString('0x' + '00'.repeat(31) + '20' + EMPTY_CONFIG.slice(2)));
   assert.i32Equals(series.discountQuantities.length, 0);
   assert.stringEquals(series.contentURI, 'ipfs://測試/獎品.json');
 });
@@ -124,7 +136,7 @@ test('eligibility consumption remains scoped and accounting is independent', () 
 
 test('createSeries indexes the complete SeriesCreated then NONE to DRAFT sequence', () => {
   h.handleEligibilityScopeRegistered(m.mockEligibilityScopeRegistered(Bytes.fromHexString(SCOPE), Bytes.fromHexString(POLICY), n(20)));
-  const created = m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString(GOLDEN_CONFIG));
+  const created = m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString('0x' + '00'.repeat(31) + '20' + GOLDEN_CONFIG.slice(2)));
   h.handleSeriesCreated(created);
   const initial = m.mockSeriesStatusChanged(n(1), n(0), n(1));
   h.handleSeriesStatusChanged(initial);
@@ -153,12 +165,12 @@ test('closed series cannot reopen', () => {
 }, true);
 test('NONE to ACTIVE is not a valid initialization', () => {
   h.handleEligibilityScopeRegistered(m.mockEligibilityScopeRegistered(Bytes.fromHexString(SCOPE), Bytes.fromHexString(POLICY), n(20)));
-  h.handleSeriesCreated(m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString(GOLDEN_CONFIG)));
+  h.handleSeriesCreated(m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString('0x' + '00'.repeat(31) + '20' + GOLDEN_CONFIG.slice(2))));
   h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(0), n(2)));
 }, true);
 test('a distinct duplicate initialization is rejected', () => {
   h.handleEligibilityScopeRegistered(m.mockEligibilityScopeRegistered(Bytes.fromHexString(SCOPE), Bytes.fromHexString(POLICY), n(20)));
-  h.handleSeriesCreated(m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString(GOLDEN_CONFIG)));
+  h.handleSeriesCreated(m.mockSeriesCreated(n(1), Bytes.fromHexString(CONFIG_HASH), Bytes.fromHexString('0x' + '00'.repeat(31) + '20' + GOLDEN_CONFIG.slice(2))));
   h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(0), n(1)));
   h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(0), n(1)));
 }, true);
