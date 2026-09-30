@@ -5,12 +5,12 @@ import { ZERO, ZERO_BYTES, UINT_MAX } from './fixed-probability-ids';
 const TYPES = '(uint256,uint256,uint16,uint256[],uint16[],uint16[],uint256[],uint8,uint256,uint256[],uint8,uint8,bytes32,bytes32,uint256,bytes32,string)';
 
 export function decodeConfig(series: FixedProbabilitySeries, data: Bytes): void {
-  const prefix = Bytes.fromHexString('0x' + '00'.repeat(31) + '20');
-  const decoded = ethereum.decode(TYPES, prefix.concat(data));
-  assert(decoded != null, 'FixedProbability: invalid flat configData');
+  const decoded = ethereum.decode(TYPES, data);
+  assert(decoded != null, 'FixedProbability: invalid V3 tuple configData');
   const c = decoded!.toTuple();
   assert(c.length == 17, 'FixedProbability: config field count');
-  series.configData = data;
+  // Keep the canonical flat projection used by existing artifacts and proof APIs.
+  series.configData = Bytes.fromUint8Array(data.subarray(32));
   series.pricePoints = c[0].toBigInt();
   series.drawCap = c[1].toBigInt();
   series.maxBatchSize = c[2].toI32();

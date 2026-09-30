@@ -6,7 +6,7 @@
 
 測試來源：Arbitrum Sepolia，chainId 421614，FixedProbabilityLottery 位址 0x745Cb4540696Cf67a453aA3cE301CA50e1239fc5，部署起始區塊 313999040。
 
-固定機率事件與既有一番賞分開投影。系列保存完整 17 欄設定和原始 flat configData；訂單最多 10 抽，每抽一個 Draw，購買交易立即每抽鑄一張 NFT，VRF callback 揭露同一批 NFT。prizes 的權重固定，不提供剩餘獎品數量。
+固定機率事件與既有一番賞分開投影。系列保存完整 17 欄設定和標準化 flat configData；V3 SeriesCreated 的原始 bytes 是 abi.encode(config) 的 tuple 格式，audit 保留原始事件，解碼後才轉為 flat 投影；訂單最多 10 抽，每抽一個 Draw，購買交易立即每抽鑄一張 NFT，VRF callback 揭露同一批 NFT。prizes 的權重固定，不提供剩餘獎品數量。
 
 - EligibilityConsumed 可以先於 OrderRequested；暫存關聯後在相同交易內綁定。
 - 所有 DrawSettled 到齊才接受 OrderSettled；可重複中同獎，多個免單命中仍只退整筆折後金額一次。
