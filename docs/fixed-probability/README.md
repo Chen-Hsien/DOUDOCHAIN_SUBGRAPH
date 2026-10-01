@@ -52,6 +52,14 @@ Read ABI 獨立存於 abis/FixedProbabilityLotteryV3Read.json，取自 V3 編譯
 
 ## 消費端
 
+### 共用系列素材（2026-10-01，本地調整尚未部署）
+
+SeriesCreated 的 contentURI 對應不可變 FixedProbabilitySeriesMetadata，透過 FixedProbabilitySeriesIpfsContent file/IPFS template 解析 name、description、image、條款及各獎項商品圖／NFT 圖／動畫，並保留 contentUtf8、contentHash。Backend 在帳戶共用接口核對原始 bytes 與鏈上 contentHash，轉成既有 rewards、reveal records、mint orders DTO。
+
+檔案 handler 不寫鏈上系列、Order、Draw 或 NFT；JSON 錯誤或重複獎項記為 valid=false，且不留下部分獎項，不能讓素材錯誤停止鏈上索引。未解析的 metadata 可為 null；消費端必須顯示載入問題，不能當作沒有資產。一般系列原有 metadata mapping 與事件 ABI 不變。
+
+發布時先部署含此 schema 的 Graph、等待索引與檔案資料完成並確認候選 parity，再更新 Backend endpoint／部署 CID 與程式，最後更新 Frontend。此段本地 codegen、兩個環境 build、檔案 mapping 正常／錯誤測試通過，不代表新 schema 已部署或已完成候選端點驗收。
+
 Backend 使用新 FixedProbabilityGraphClient，同快照 keyset cursor；buyer、resource、部署 CID、lastId 與 blockHash 均受 HMAC 綁定。Admin／Frontend 只經 backend 查詢，Graph token 不進瀏覽器。
 
 新增 GET /v1/fixed-probability/orders/:id/verification-data 將訂單與完整系列放在同一快照，供前端重算；不是完整 proof-v2。正式金流、授權、到期保留釋放、會員資格與退款仍由 RPC／DB 處理，不能用 Graph 查無資料來重送交易或退回保留。
