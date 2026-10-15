@@ -3,46 +3,35 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { targetManifest } from '../scripts/target-manifest.mjs';
 import { validateFixedProbabilityDeployment } from '../scripts/verify-fixed-probability-deployment.mjs';
-import { validateNetworkConfig, verifyNetworkState } from '../scripts/validate-network-config.mjs';
+import { validateNetworkConfig } from '../scripts/validate-network-config.mjs';
 const read = p => readFileSync(new URL(p, import.meta.url), 'utf8');
 const source = 'FixedProbabilityLottery';
+const retiredAddress = '0x745cb4540696cf67a453aa3ce301ca50e1239fc5';
 
-test('test includes all 15 events; production and original sources are unchanged', () => {
+test('staging indexes only the new fixed-probability proxy and preserves all Core sources', () => {
   const base = read('../subgraph.yaml');
   assert.equal(targetManifest('arbitrum-one'), base);
-  const spec = validateNetworkConfig('arbitrum-sepolia');
-  assert.equal(spec.dataSourceNames.filter(x => x === source).length, 1);
+  const staging = validateNetworkConfig('arbitrum-sepolia');
   const prod = validateNetworkConfig('arbitrum-one');
-  assert.deepEqual(spec.dataSourceNames.filter(x => x !== source && !x.startsWith('FixedProbabilityBuyback_') && !x.startsWith('BuybackMarketplace_')), prod.dataSourceNames);
-  assert.equal(prod.config[source], undefined);
-  assert.throws(() => targetManifest('arbitrum-sepolia', targetManifest('arbitrum-sepolia')), /fragment/);
+  assert.equal(staging.config[source], undefined);
+  assert.equal(staging.dataSourceNames.includes(source), false);
+  assert.deepEqual(staging.dataSourceNames.filter(x => !x.startsWith('FixedProbabilityBuyback_') && !x.startsWith('BuybackMarketplace_')), prod.dataSourceNames);
+  const manifest = targetManifest('arbitrum-sepolia');
+  assert.equal(manifest.toLowerCase().includes(retiredAddress), false);
+  assert.equal(JSON.stringify(staging.config).toLowerCase().includes(retiredAddress), false);
+  assert.ok(staging.dataSourceNames.some(x => x.startsWith('FixedProbabilityBuyback_')));
+  assert.match(manifest.toLowerCase(), /0x51a9f7f467498fee72efbe37043897a3c225f235/);
+  assert.match(manifest, /handler: handleUpgraded/);
+  assert.match(manifest, /handler: handleNativePrizeBuybackBurned/);
 });
-test('changed address, start block, receipt, ABI, handler or context fails the deployment gate', () => {
-  const v = validateNetworkConfig('arbitrum-sepolia'), manifest = targetManifest('arbitrum-sepolia');
-  for (const field of ['address', 'startBlock']) {
-    const c = structuredClone(v.config); c[source][field] = field === 'address' ? '0x' + '1'.repeat(40) : 1;
-    assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', c, v.evidence, manifest), /artifact/);
+
+test('a retired V3 source, network entry or evidence entry cannot reenter a deployment', () => {
+  const empty = {};
+  assert.doesNotThrow(() => validateFixedProbabilityDeployment('arbitrum-sepolia', empty, null, 'templates:'));
+  for (const network of ['arbitrum-sepolia', 'arbitrum-one']) {
+    assert.throws(() => validateFixedProbabilityDeployment(network, {[source]: {}}, null, ''), /Retired/);
+    assert.throws(() => validateFixedProbabilityDeployment(network, empty, {[source]: {}}, ''), /Retired/);
+    assert.throws(() => validateFixedProbabilityDeployment(network, empty, null, '    name: FixedProbabilityLottery\n'), /Retired/);
+    assert.throws(() => targetManifest(network, '    name: FixedProbabilityLottery\ntemplates:'), /fragment/);
   }
-  const e = structuredClone(v.evidence); e[source].transactionHash = '0x' + '2'.repeat(64);
-  assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, e, manifest), /transaction mismatch/);
-  assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest, '[]'), /ABI hash/);
-  assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest.replace('event: RandomnessStored', 'event: WrongRandomnessStored')), /handlers/);
-  assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest.replace('data: "421614"', 'data: "42161"')), /context/);
-  assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest.replace('protocolVersion:', 'unexpectedVersion:')), /context/);
-  assert.throws(() => validateFixedProbabilityDeployment('arbitrum-sepolia', v.config, v.evidence, manifest.replace('data: \"3\"', 'data: \"1\"')), /context/);
-  assert.throws(() => validateFixedProbabilityDeployment('arbitrum-one', v.config, v.evidence, manifest), /only deployed/);
-});
-test('Sepolia new source always checks deployment receipt, even without production receipt mode', async () => {
-  const original = globalThis.fetch, calls = [], v = validateNetworkConfig('arbitrum-sepolia');
-  const config = v.config[source];
-  globalThis.fetch = async (_url, opts) => {
-    const r = JSON.parse(opts.body); calls.push(r.method);
-    return {ok: true, json: async () => ({result: r.method === 'eth_chainId' ? '0x66eee' : r.method === 'eth_getTransactionReceipt' ? {status: '0x1', contractAddress: config.address, blockNumber: '0x' + config.startBlock.toString(16)} : '0x6000'})};
-  };
-  try {
-    await verifyNetworkState('https://rpc.invalid', 'arbitrum-sepolia', {...v, nativeBuybacks: [], dataSourceNames: [source]});
-    assert.deepEqual(calls, ['eth_chainId', 'eth_getTransactionReceipt', 'eth_getCode', 'eth_getCode']);
-    globalThis.fetch = async (_url, opts) => ({ok: true, json: async () => ({result: JSON.parse(opts.body).method === 'eth_chainId' ? '0x66eee' : null})});
-    await assert.rejects(verifyNetworkState('https://rpc.invalid', 'arbitrum-sepolia', {...v, nativeBuybacks: [], dataSourceNames: [source]}), /missing or failed/);
-  } finally { globalThis.fetch = original; }
 });

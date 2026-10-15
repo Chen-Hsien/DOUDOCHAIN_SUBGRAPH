@@ -10,8 +10,7 @@ export function targetManifest(network, base = readFileSync(resolve(root, 'subgr
   if (/name:\s*FixedProbabilityLottery\b/.test(base)) throw new Error('FixedProbabilityLottery must use the Sepolia-only fragment.');
   const native = nativeBuybackFragment(network,nativeBuybackDeployments(network));
   if (network === 'arbitrum-one') return native ? base.replace(/^templates:/m,`${native}\ntemplates:`) : base;
-  const fragment = readFileSync(resolve(root, 'config/fixed-probability-source.yaml'), 'utf8');
   const marker = /^templates:/m;
   if (!marker.test(base)) throw new Error('Base manifest templates section missing.');
-  return base.replace(marker, `${fragment}\n${native}\ntemplates:`);
+  return base.replace(marker, `${native}\ntemplates:`);
 }
