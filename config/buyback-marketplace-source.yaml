@@ -1,0 +1,24 @@
+  - kind: ethereum/contract
+    name: BuybackMarketplace
+    network: arbitrum-sepolia
+    source:
+      abi: MarketplaceV3
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Listing
+      abis:
+        - name: MarketplaceV3
+          file: ./abis/MarketplaceV3.json
+      eventHandlers:
+        - event: NewListing(indexed address,indexed uint256,indexed address,(uint256,uint256,uint256,uint256,uint128,uint128,address,address,address,uint8,uint8,bool))
+          handler: handleNewListing
+        - event: UpdatedListing(indexed address,indexed uint256,indexed address,(uint256,uint256,uint256,uint256,uint128,uint128,address,address,address,uint8,uint8,bool))
+          handler: handleUpdatedListing
+        - event: NewSale(indexed address,indexed uint256,indexed address,uint256,address,uint256,uint256)
+          handler: handleNewSale
+        - event: CancelledListing(indexed address,indexed uint256)
+          handler: handleCancelledListing
+      file: ./src/buyback-marketplace.ts

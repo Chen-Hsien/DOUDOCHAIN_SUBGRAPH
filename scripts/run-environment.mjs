@@ -1,4 +1,4 @@
-import { writeFileSync, existsSync, readFileSync } from "node:fs";
+import { writeFileSync, existsSync, readFileSync, rmSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 import { delimiter, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -8,6 +8,10 @@ import {
 } from "./validate-network-config.mjs";
 
 import { targetManifest } from "./target-manifest.mjs";
+import {
+  createDeploymentRecord, GRAPH_IPFS_URL, publishWithHistory,
+  QUERY_ENDPOINT_KEYS, verifyDeploymentRecord,
+} from './deployment-history.mjs';
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 export const TARGETS = Object.freeze({
@@ -58,7 +62,7 @@ export function validateDeploymentContext({
   }
 }
 
-function loadLocalEnv() {
+export function loadLocalEnv() {
   const envPath = resolve(root, ".env");
   if (!existsSync(envPath)) return;
 
@@ -90,6 +94,17 @@ function run(command, args, options = {}) {
   return result.status ?? 1;
 }
 
+function runCaptured(command, args, env, secrets) {
+  const result = spawnSync(command, args, {
+    cwd: root, env, encoding: 'utf8', maxBuffer: 16 * 1024 * 1024,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let output = `${result.stdout ?? ''}\n${result.stderr ?? ''}`;
+  for (const secret of secrets.filter(Boolean)) output = output.split(secret).join('[REDACTED]');
+  process.stdout.write(output);
+  return { status: result.status ?? 1, output };
+}
+
 function gitOutput(args) {
   const result = spawnSync("git", args, {
     cwd: root,
@@ -115,6 +130,7 @@ function assertDeploymentContext(targetName) {
     ]),
     confirmation: process.env.THEGRAPH_PROD_CONFIRM,
   });
+  return { branch, commit: gitOutput(['rev-parse', 'HEAD']), clean: true };
 }
 
 function prepareManifest(target) {
@@ -169,6 +185,9 @@ export async function main(argv = process.argv.slice(2)) {
     .filter(Boolean)
     .join(delimiter);
   const outputDir = resolve(root, `build/${targetName}`);
+  // Native deployments are resolved from their receipt-backed registry, not duplicated in networks.json.
+  const resolvedNetworkPath = resolve(root, `.networks.${target.network}.generated.json`);
+  writeFileSync(resolvedNetworkPath, JSON.stringify({ [target.network]: validation.config }, null, 2) + '\n');
 
   const codegenStatus = run(graphBin, ["codegen", generatedPath], {
     env: { ...process.env, PATH: path },
@@ -188,7 +207,7 @@ export async function main(argv = process.argv.slice(2)) {
         "--network",
         target.network,
         "--network-file",
-        resolve(root, "networks.json"),
+        resolvedNetworkPath,
         "--output-dir",
         outputDir,
       ],
@@ -223,25 +242,47 @@ export async function main(argv = process.argv.slice(2)) {
     process.exit(1);
   }
 
-  const status = run(
-    graphBin,
-    [
-      "deploy",
-      target.slug,
-      generatedPath,
-      "--network",
-      target.network,
-      "--network-file",
-      resolve(root, "networks.json"),
-      "--output-dir",
-      outputDir,
-      "--deploy-key",
-      deployKey,
-      "--version-label",
-      versionLabel,
+  const git = assertDeploymentContext(targetName);
+  const directory = createDeploymentRecord({
+    root, targetName, target, versionLabel, git, generatedPath, resolvedNetworkPath,
+    checks: [
+      { name: 'branch_and_clean_worktree', status: 'passed' },
+      { name: 'network_configuration', status: 'passed' },
+      { name: 'codegen', status: 'passed' },
+      { name: 'rpc_chain_and_runtime', status: 'passed', receiptsRequired: targetName === 'prod' },
     ],
-    { env: { ...process.env, PATH: path } },
-  );
+  });
+  console.log(`Deployment evidence: ${directory}`);
+  // Keep old build files from being mistaken for this attempt's artifacts.
+  rmSync(outputDir, { recursive: true, force: true });
+  let status;
+  try {
+    status = await publishWithHistory({
+      directory, generatedPath, outputDir,
+      upload: () => runCaptured(graphBin, [
+        'build', generatedPath, '--network', target.network,
+        '--network-file', resolvedNetworkPath, '--output-dir', outputDir,
+        '--ipfs', GRAPH_IPFS_URL,
+      ], { ...process.env, PATH: path }, [deployKey, rpcUrl]),
+      deploy: deploymentId => {
+        assertSourceManifestUnchanged(sourceBefore);
+        if (assertDeploymentContext(targetName).commit !== git.commit) throw new Error('Git commit changed during build.');
+        // Deploy the exact CID already saved with the snapshot; do not rebuild it.
+        return runCaptured(graphBin, [
+          'deploy', target.slug, '--ipfs-hash', deploymentId,
+          '--ipfs', GRAPH_IPFS_URL, '--deploy-key', deployKey, '--version-label', versionLabel,
+        ], { ...process.env, PATH: path }, [deployKey, rpcUrl]).status;
+      },
+    });
+    const endpoint = process.env[QUERY_ENDPOINT_KEYS[targetName]]?.trim();
+    if (status === 0 && endpoint) {
+      const result = await verifyDeploymentRecord({ directory, targetName, target, endpoint });
+      console.log(`Initial indexing observation: ${result.verification.status} (${result.verification.reason ?? 'metadata matched'}). Evidence: ${result.path}`);
+    }
+  } catch {
+    console.error(`Deployment evidence is saved at ${directory}; inspect it before retrying. Remote acceptance may be unconfirmed.`);
+    process.exit(1);
+  }
   assertSourceManifestUnchanged(sourceBefore);
   process.exit(status);
 }

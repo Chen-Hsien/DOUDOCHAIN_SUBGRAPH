@@ -1,12 +1,13 @@
+export { handleNativePrizeBuybackBurned } from './fixed-probability-buyback';
 import { Address, BigInt, DataSourceTemplate, ethereum, store } from '@graphprotocol/graph-ts';
 import {
-  Approval, ApprovalForAll, DrawSettled,
+  Upgraded, Approval, ApprovalForAll, DrawSettled,
   EligibilityConsumed, EligibilityScopeRegistered, OrderAccountingFinalized,
   OrderRequested, OrderSettled, RandomnessStored, SeriesCreated,
   SeriesStatusChanged, Transfer, UpdateTicketStatus,
-} from '../generated/FixedProbabilityLottery/FixedProbabilityLottery';
+} from '../generated/templates/FixedProbabilityBuyback/FixedProbabilityLotteryBuyback';
 import {
-  FixedProbabilitySeries, FixedProbabilityPrize, FixedProbabilityOrder,
+  FixedProbabilityProxyState, FixedProbabilitySeries, FixedProbabilityPrize, FixedProbabilityOrder,
   FixedProbabilityRequest, FixedProbabilityDraw, FixedProbabilityNFT,
   FixedProbabilityEligibilityScope, FixedProbabilityEligibilityUsage,
   FixedProbabilityEligibilityConsumption, FixedProbabilityPendingEligibility,
@@ -217,19 +218,24 @@ export function handleOrderAccountingFinalized(e: OrderAccountingFinalized): voi
 export function handleTransfer(e: Transfer): void {
   if (!audit(e, 'Transfer')) return;
   const p = e.params, d = drawAt(e, p.tokenId), id = entityId(e, 'nft', p.tokenId);
-  assert(!p.to.equals(Address.zero()), 'FixedProbability: burned NFT');
   let nft = FixedProbabilityNFT.load(id);
   if (p.from.equals(Address.zero())) {
     assert(nft == null && !d.claimed && !d.settled, 'FixedProbability: duplicate/late mint');
     nft = new FixedProbabilityNFT(id); nft.deployment = deploymentId(e); nft.tokenId = p.tokenId;
     nft.draw = d.id; nft.mintRecipient = p.to; nft.claimRecipient = p.to;
+    assert(!p.to.equals(Address.zero()), 'FixedProbability: zero mint');
+    nft.burned = false;
     nft.mintEvent = eventId(e); nft.claimEvent = eventId(e); nft.exchanged = false;
     d.claimed = true; d.initialRecipient = p.to; d.nft = id; d.claimEvent = eventId(e); d.save();
     const order = orderByEntityId(d.order);
     order.claimedCount += 1; assert(order.claimedCount <= order.quantity, 'FixedProbability: mint count');
     order.updatedEvent = eventId(e); order.save();
   } else {
-    assert(nft != null && nft!.currentOwner.equals(p.from), 'FixedProbability: transfer owner mismatch');
+    assert(nft != null && !nft!.burned && nft!.currentOwner.equals(p.from), 'FixedProbability: transfer owner mismatch');
+    if (p.to.equals(Address.zero())) {
+      assert(d.settled && !nft!.exchanged, 'FixedProbability: ineligible burn');
+      nft!.burned=true; nft!.burnedBy=p.from; nft!.burnedEvent=eventId(e);
+    }
   }
   nft!.currentOwner = p.to; nft!.lastTransferEvent = eventId(e); nft!.save();
 }
@@ -249,3 +255,13 @@ export function handleUpdateTicketStatus(e: UpdateTicketStatus): void {
 }
 export function handleApproval(e: Approval): void { audit(e, 'Approval'); }
 export function handleApprovalForAll(e: ApprovalForAll): void { audit(e, 'ApprovalForAll'); }
+
+export function handleUpgraded(e: Upgraded): void {
+  if(!audit(e,'Upgraded')) return;
+  const id=deploymentId(e);
+  let state=FixedProbabilityProxyState.load(id);
+  if(state==null) {state=new FixedProbabilityProxyState(id);state.deployment=id;}
+  state.implementation=e.params.implementation;
+  state.upgradeEvent=eventId(e);
+  state.save();
+}

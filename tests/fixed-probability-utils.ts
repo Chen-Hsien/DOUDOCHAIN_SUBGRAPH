@@ -1,6 +1,7 @@
 import { Address, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts';
 import { newMockEvent } from 'matchstick-as';
 import {
+  Upgraded, PrizeBuybackBurned,
   DrawSettled,
   EligibilityConsumed,
   EligibilityScopeRegistered,
@@ -12,7 +13,7 @@ import {
   SeriesStatusChanged,
   Transfer,
   UpdateTicketStatus,
-} from '../generated/FixedProbabilityLottery/FixedProbabilityLottery';
+} from '../generated/templates/FixedProbabilityBuyback/FixedProbabilityLotteryBuyback';
 
 export const LOTTERY = '0x51f8fff05d504d9e4f8e95276e12099feb357fef';
 let nextLog: i32 = 0;
@@ -133,5 +134,23 @@ export function mockUpdateTicketStatus(tokenID: BigInt, seriesID: BigInt, prizeI
   e.parameters.push(uint('tokenRevealedPrize', prizeId));
   e.parameters.push(new ethereum.EventParam('tokenExchange', ethereum.Value.fromBoolean(exchanged)));
   e.parameters.push(new ethereum.EventParam('tokenRevealed', ethereum.Value.fromBoolean(revealed)));
+  return e;
+}
+
+export function mockPrizeBuybackBurned(batchId: Bytes, buyer: Address, core: Address, ids: BigInt[], points: BigInt[], total: BigInt, quote: Bytes): PrizeBuybackBurned {
+  const e=event<PrizeBuybackBurned>();
+  e.parameters.push(bytes('batchId',batchId));
+  e.parameters.push(new ethereum.EventParam('buyer',ethereum.Value.fromAddress(buyer)));
+  e.parameters.push(new ethereum.EventParam('coreAddress',ethereum.Value.fromAddress(core)));
+  e.parameters.push(new ethereum.EventParam('tokenIds',ethereum.Value.fromUnsignedBigIntArray(ids)));
+  e.parameters.push(new ethereum.EventParam('points',ethereum.Value.fromUnsignedBigIntArray(points)));
+  e.parameters.push(uint('totalPoints',total));
+  e.parameters.push(bytes('quoteHash',quote));
+  return e;
+}
+
+export function mockUpgraded(implementation:Address):Upgraded {
+  const e=event<Upgraded>();
+  e.parameters=[new ethereum.EventParam('implementation',ethereum.Value.fromAddress(implementation))];
   return e;
 }
