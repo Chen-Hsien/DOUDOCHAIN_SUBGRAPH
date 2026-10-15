@@ -26,6 +26,10 @@ yarn-error.log*
 
 # Environment-specific manifests generated from subgraph.yaml
 .subgraph.*.generated.yaml
+.networks.*.generated.json
+
+# Local deployment evidence; CI uploads this directory as an artifact.
+/.deployment-history/
 
 # Testing
 coverage

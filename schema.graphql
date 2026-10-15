@@ -203,6 +203,7 @@ type IchibanKujiSubPrize @entity(immutable: true) {
 }
 
 type NewTicketStatus @entity(immutable: false) {
+  assetContract: Bytes
   id: Bytes!
   tokenID: BigInt! # uint256
   seriesID: BigInt! # uint256
@@ -1464,7 +1465,7 @@ type Listing @entity(immutable: false) {
   transactionHash: Bytes!
 
   # Add ticket reference
-  ticket: NewTicketStatus!
+  ticket: NewTicketStatus
 }
 
 type Currency @entity(immutable: false) {
@@ -1959,6 +1960,10 @@ type FixedProbabilityDraw @entity {
 }
 
 type FixedProbabilityNFT @entity {
+  burned: Boolean!
+  burnedBy: Bytes
+  burnedEvent: FixedProbabilityEvent
+  buybackBurn: PrizeBuybackBurn
   id: ID!
   deployment: FixedProbabilityDeployment!
   tokenId: BigInt!
@@ -2017,4 +2022,12 @@ type FixedProbabilityEvent @entity(immutable: true) {
   blockHash: Bytes!
   timestamp: BigInt!
   logIndex: BigInt!
+}
+
+# Mutable proxy routing is separate from the immutable deployment identity.
+type FixedProbabilityProxyState @entity {
+  id: ID!
+  deployment: FixedProbabilityDeployment!
+  implementation: Bytes!
+  upgradeEvent: FixedProbabilityEvent!
 }

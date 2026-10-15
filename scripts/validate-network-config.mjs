@@ -1,3 +1,4 @@
+import { nativeBuybackDeployments, nativeBuybackMarkets, verifyNativeBuybackRuntime } from './native-buyback-deployments.mjs';
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -27,7 +28,9 @@ export function validateNetworkConfig(network, manifest = targetManifest(network
     (name, index) => dataSourceNames.indexOf(name) !== index,
   );
   const networks = readJson(resolve(root, "networks.json"));
-  const config = networks[network];
+  const nativeBuybacks=nativeBuybackDeployments(network);
+  const nativeSources=[...nativeBuybacks,...nativeBuybackMarkets(nativeBuybacks)];
+  const config = {...networks[network],...Object.fromEntries(nativeSources.map(d=>[d.name,{address:d.address,startBlock:d.startBlock}]))};
   const invalid = [];
 
   if (duplicates.length > 0) {
@@ -67,7 +70,7 @@ export function validateNetworkConfig(network, manifest = targetManifest(network
     const allEvidence = readJson(
       resolve(root, "config/deployment-evidence.json"),
     );
-    evidence = allEvidence[network];
+    evidence = allEvidence[network] ? {...allEvidence[network],...Object.fromEntries(nativeSources.map(d=>[d.name,d]))} : null;
     if (!evidence) {
       invalid.push(`missing deployment evidence for ${network}`);
     } else if (config) {
@@ -109,7 +112,7 @@ export function validateNetworkConfig(network, manifest = targetManifest(network
     buyback = readJson(resolve(root, "config/buyback-deployment.json"));
     validateBuybackDeployment(buyback, config.ICHICHAIN);
   }
-  return { config, dataSourceNames, evidence, buyback };
+  return { config, dataSourceNames, evidence, buyback, nativeBuybacks };
 }
 
 const expectedChainIds = {
@@ -158,6 +161,7 @@ export async function verifyNetworkState(
   if (verifyReceipts && validation.buyback) {
     await verifyBuybackDeployment(rpcCall, validation.buyback);
   }
+  for(const native of validation.nativeBuybacks??[]) await verifyNativeBuybackRuntime(rpcCall,native);
   const receiptCache = new Map();
   for (const name of validation.dataSourceNames) {
     const source = validation.config[name];

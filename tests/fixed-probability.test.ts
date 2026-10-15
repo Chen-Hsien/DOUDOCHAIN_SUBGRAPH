@@ -2,7 +2,7 @@ import { afterEach, assert, beforeEach, clearStore, dataSourceMock, test } from 
 import { Address, BigInt, Bytes, DataSourceContext } from '@graphprotocol/graph-ts';
 import { FixedProbabilitySeries } from '../generated/schema';
 import { decodeConfig } from '../src/fixed-probability-config';
-import { entityId, scopeId, uintKey } from '../src/fixed-probability-ids';
+import { deploymentId, entityId, scopeId, uintKey } from '../src/fixed-probability-ids';
 import * as h from '../src/fixed-probability';
 import * as m from './fixed-probability-utils';
 import { CONFIG_HASH, EMPTY_CONFIG, GOLDEN_CONFIG, POLICY, SCOPE } from './fixtures/fixed-probability-config';
@@ -180,3 +180,48 @@ test('an event with the wrong previous status is rejected', () => {
   setup();
   h.handleSeriesStatusChanged(m.mockSeriesStatusChanged(n(1), n(1), n(3)));
 }, true);
+
+function buybackSetup(): string {
+  setup();
+  const order=purchase(2);
+  h.handleRandomnessStored(m.mockRandomnessStored(n(1),n(101),[n(0),n(5000)]));
+  h.handleDrawSettled(m.mockDrawSettled(n(1),n(1),n(0),n(0),n(1)));
+  h.handleDrawSettled(m.mockDrawSettled(n(1),n(2),n(1),n(5000),n(4)));
+  h.handleOrderSettled(m.mockOrderSettled(n(1),true,n(0),points(200)));
+  return order;
+}
+test('native burn preserves NFT and draw history without reducing claimed count',()=>{
+  const order=buybackSetup();
+  const transfer=m.mockTransfer(BUYER,Address.zero(),n(1));
+  h.handleTransfer(transfer);
+  const e=m.mockPrizeBuybackBurned(KEY,BUYER,Address.fromString(m.LOTTERY),[n(1)],[points(30)],points(30),KEY);
+  h.handleNativePrizeBuybackBurned(e);
+  h.handleNativePrizeBuybackBurned(e);
+  assert.entityCount('PrizeBuybackBurn',1);
+  assert.fieldEquals('FixedProbabilityNFT',entityId(e,'nft',n(1)),'burned','true');
+  assert.fieldEquals('FixedProbabilityNFT',entityId(e,'nft',n(1)),'exchanged','false');
+  assert.fieldEquals('FixedProbabilityOrder',order,'claimedCount','2');
+  assert.entityCount('FixedProbabilityNFT',2);
+  assert.fieldEquals('PrizeBuybackBurn',e.address.concat(KEY).toHexString(),'totalPointsRaw',points(30).toString());
+});
+test('native entitlement without matching transfer burn is rejected',()=>{
+  buybackSetup();
+  h.handleNativePrizeBuybackBurned(m.mockPrizeBuybackBurned(KEY,BUYER,Address.fromString(m.LOTTERY),[n(1)],[points(30)],points(30),KEY));
+},true);
+test('native entitlement cannot use another NFT deployment or buyer',()=>{
+  buybackSetup();h.handleTransfer(m.mockTransfer(BUYER,Address.zero(),n(1)));
+  h.handleNativePrizeBuybackBurned(m.mockPrizeBuybackBurned(KEY,NEXT,Address.fromString(m.LOTTERY),[n(1)],[points(30)],points(30),KEY));
+},true);
+
+test('implementation upgrades keep the same deployment, NFT identities and reveal history',()=>{
+  const order=buybackSetup();
+  const first=m.mockUpgraded(NEXT);h.handleUpgraded(first);h.handleUpgraded(first);
+  assert.fieldEquals('FixedProbabilityProxyState',deploymentId(first),'implementation',NEXT.toHexString());
+  const implementation=Address.fromString('0x7777777777777777777777777777777777777777');
+  const second=m.mockUpgraded(implementation);h.handleUpgraded(second);
+  assert.entityCount('FixedProbabilityDeployment',1);assert.entityCount('FixedProbabilityProxyState',1);
+  assert.fieldEquals('FixedProbabilityProxyState',deploymentId(first),'implementation',implementation.toHexString());
+  assert.fieldEquals('FixedProbabilityNFT',entityId(first,'nft',n(1)),'currentOwner',BUYER.toHexString());
+  assert.fieldEquals('FixedProbabilityOrder',order,'claimedCount','2');
+  assert.fieldEquals('FixedProbabilityDraw',entityId(first,'draw',n(1)),'settled','true');
+});

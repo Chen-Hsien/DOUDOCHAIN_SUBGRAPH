@@ -725,6 +725,7 @@ export function handleNewTicketStatus(event: NewTicketStatusEvent): void {
     }
   }
 
+  entity.assetContract = event.address
   entity.save();
 
   if (!existed && !event.params.tokenRevealed) {

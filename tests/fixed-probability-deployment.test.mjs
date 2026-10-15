@@ -13,7 +13,7 @@ test('test includes all 15 events; production and original sources are unchanged
   const spec = validateNetworkConfig('arbitrum-sepolia');
   assert.equal(spec.dataSourceNames.filter(x => x === source).length, 1);
   const prod = validateNetworkConfig('arbitrum-one');
-  assert.deepEqual(spec.dataSourceNames.filter(x => x !== source), prod.dataSourceNames);
+  assert.deepEqual(spec.dataSourceNames.filter(x => x !== source && !x.startsWith('FixedProbabilityBuyback_') && !x.startsWith('BuybackMarketplace_')), prod.dataSourceNames);
   assert.equal(prod.config[source], undefined);
   assert.throws(() => targetManifest('arbitrum-sepolia', targetManifest('arbitrum-sepolia')), /fragment/);
 });
@@ -40,9 +40,9 @@ test('Sepolia new source always checks deployment receipt, even without producti
     return {ok: true, json: async () => ({result: r.method === 'eth_chainId' ? '0x66eee' : r.method === 'eth_getTransactionReceipt' ? {status: '0x1', contractAddress: config.address, blockNumber: '0x' + config.startBlock.toString(16)} : '0x6000'})};
   };
   try {
-    await verifyNetworkState('https://rpc.invalid', 'arbitrum-sepolia', {...v, dataSourceNames: [source]});
+    await verifyNetworkState('https://rpc.invalid', 'arbitrum-sepolia', {...v, nativeBuybacks: [], dataSourceNames: [source]});
     assert.deepEqual(calls, ['eth_chainId', 'eth_getTransactionReceipt', 'eth_getCode', 'eth_getCode']);
     globalThis.fetch = async (_url, opts) => ({ok: true, json: async () => ({result: JSON.parse(opts.body).method === 'eth_chainId' ? '0x66eee' : null})});
-    await assert.rejects(verifyNetworkState('https://rpc.invalid', 'arbitrum-sepolia', {...v, dataSourceNames: [source]}), /missing or failed/);
+    await assert.rejects(verifyNetworkState('https://rpc.invalid', 'arbitrum-sepolia', {...v, nativeBuybacks: [], dataSourceNames: [source]}), /missing or failed/);
   } finally { globalThis.fetch = original; }
 });
