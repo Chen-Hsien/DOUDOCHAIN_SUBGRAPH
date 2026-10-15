@@ -65,12 +65,5 @@
       "startBlock": 488650833,
       "transactionHash": "0xa724528c6f17945e38fee0f7d88f99049199df200d30b71338bae248bcce44e7"
     }
-  },
-  "arbitrum-sepolia": {
-    "FixedProbabilityLottery": {
-      "address": "0x745Cb4540696Cf67a453aA3cE301CA50e1239fc5",
-      "startBlock": 313999040,
-      "transactionHash": "0x8abff1838fac92e2d8e10c70581dc66075f6401ec90b1ba71e5f0c2f4211e8b0"
-    }
   }
 }

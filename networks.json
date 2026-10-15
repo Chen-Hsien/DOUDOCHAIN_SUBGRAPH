@@ -51,10 +51,6 @@
     "Contract": {
       "address": "0x1F1150AC2d7a8208A2743a4E74e8401Ff9F1ED53",
       "startBlock": 290203262
-    },
-    "FixedProbabilityLottery": {
-      "address": "0x745Cb4540696Cf67a453aA3cE301CA50e1239fc5",
-      "startBlock": 313999040
     }
   },
   "arbitrum-one": {

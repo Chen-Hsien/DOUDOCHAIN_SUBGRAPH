@@ -1,3 +1,5 @@
+> 2026-10-15：使用者確認 staging 舊 V3 測試資料可移除。舊 FixedProbabilityLottery datasource、networks 設定與部署證據已退出部署輸入；staging 僅索引新 UUPS Proxy。下列舊 V3 說明及 parity fixture 僅為歷史測試資料，不代表線上來源。切換版本必須完整重建，不可 graft 舊版本，否則舊 entity 仍會保留。
+
 # 固定機率抽獎 V3 索引與驗收
 
 更新：2026-09-30。V3 合約與初版 subgraph v3.0.0 已部署至 Arbitrum Sepolia；本 PR 的免單會員快照修正仍需部署。沒有真實 V3 購買／揭獎／兌換聯合驗收，不能把離線測試當成實網交易證據。
