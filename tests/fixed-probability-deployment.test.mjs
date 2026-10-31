@@ -8,14 +8,20 @@ const read = p => readFileSync(new URL(p, import.meta.url), 'utf8');
 const source = 'FixedProbabilityLottery';
 const retiredAddress = '0x745cb4540696cf67a453aa3ce301ca50e1239fc5';
 
-test('staging indexes only the new fixed-probability proxy and preserves all Core sources', () => {
+test('both networks index their native fixed-probability proxy and preserve all Core sources', () => {
   const base = read('../subgraph.yaml');
-  assert.equal(targetManifest('arbitrum-one'), base);
   const staging = validateNetworkConfig('arbitrum-sepolia');
   const prod = validateNetworkConfig('arbitrum-one');
-  assert.equal(staging.config[source], undefined);
-  assert.equal(staging.dataSourceNames.includes(source), false);
-  assert.deepEqual(staging.dataSourceNames.filter(x => !x.startsWith('FixedProbabilityBuyback_') && !x.startsWith('BuybackMarketplace_')), prod.dataSourceNames);
+  const coreNames = validation => validation.dataSourceNames.filter(x => !x.startsWith('FixedProbabilityBuyback_') && !x.startsWith('BuybackMarketplace_'));
+  const historicalConfig = JSON.parse(read('../networks.json'));
+  assert.deepEqual(coreNames(staging), coreNames(prod));
+  for (const [network, validation] of [['arbitrum-sepolia', staging], ['arbitrum-one', prod]]) {
+    assert.equal(validation.config[source], undefined);
+    assert.equal(validation.dataSourceNames.includes(source), false);
+    assert.equal(JSON.stringify(validation.config).toLowerCase().includes(retiredAddress), false);
+    for (const name of coreNames(validation)) assert.deepEqual(validation.config[name], historicalConfig[network][name]);
+    assert.ok(targetManifest(network).startsWith(base.split(/^templates:/m)[0]));
+  }
   const manifest = targetManifest('arbitrum-sepolia');
   assert.equal(manifest.toLowerCase().includes(retiredAddress), false);
   assert.equal(JSON.stringify(staging.config).toLowerCase().includes(retiredAddress), false);
@@ -23,6 +29,23 @@ test('staging indexes only the new fixed-probability proxy and preserves all Cor
   assert.match(manifest.toLowerCase(), /0x51a9f7f467498fee72efbe37043897a3c225f235/);
   assert.match(manifest, /handler: handleUpgraded/);
   assert.match(manifest, /handler: handleNativePrizeBuybackBurned/);
+  const mainnetSource = 'FixedProbabilityBuyback_8fc4977a5a999db2efaccd1ecea090a542a61723';
+  assert.deepEqual(prod.dataSourceNames.filter(x => !coreNames(prod).includes(x)), [mainnetSource]);
+  assert.deepEqual(prod.config[mainnetSource], {
+    address: '0x8Fc4977a5A999DB2Efaccd1EcEA090A542a61723',
+    startBlock: 520016196,
+  });
+  const mainnetManifest = targetManifest('arbitrum-one');
+  assert.equal(mainnetManifest.toLowerCase().includes(retiredAddress), false);
+  assert.equal(mainnetManifest.toLowerCase().includes('0x51a9f7f467498fee72efbe37043897a3c225f235'), false);
+  assert.match(mainnetManifest, /name: FixedProbabilityBuyback_8fc4977a5a999db2efaccd1ecea090a542a61723/);
+  assert.match(mainnetManifest, /data: "42161"/);
+  assert.match(mainnetManifest, /data: "520016196"/);
+  assert.match(mainnetManifest, /protocolVersion:\n\s+type: String\n\s+data: "3"/);
+  assert.match(mainnetManifest, /handler: handleUpgraded/);
+  assert.match(mainnetManifest, /handler: handleNativePrizeBuybackBurned/);
+  assert.equal(prod.nativeBuybacks[0].protocolVersion, 1);
+  assert.equal(prod.nativeBuybacks[0].marketplace, undefined);
 });
 
 test('a retired V3 source, network entry or evidence entry cannot reenter a deployment', () => {

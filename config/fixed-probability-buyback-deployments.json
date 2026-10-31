@@ -55,5 +55,52 @@
         "implementationAddress": "0xcca97b4c1dc264f7f1a18e913507c7e853b5cb7e"
       }
     }
+  },
+  {
+    "chainId": 42161,
+    "address": "0x8Fc4977a5A999DB2Efaccd1EcEA090A542a61723",
+    "startBlock": 520016196,
+    "transactionHash": "0x3787935fd3d74a6ee051cc590108d9ac9f8f7c237502e630fc88d8d44fe8e4cf",
+    "runtimeHash": "0x5e4dcb0bb1910f6429e5fe91678990088a51c6d1cfe1b31d05fb9d948cc7867c",
+    "proxyKind": "uups",
+    "protocolVersion": 1,
+    "implementation": {
+      "address": "0x9CAC1EeaeCE9e2C6674340Ce3171b0452A124ff3",
+      "transactionHash": "0x8bdb349b7ce5ed7ccbe3d70d8f8ca3b691bd370fdf832a38f073796737465be8",
+      "startBlock": 520016184,
+      "blockHash": "0x960775fc2c90223d38d43a2c43a1a6abd9cde65027ea30d63657ddef1753721b",
+      "runtimeHash": "0x5321836a1afcf741c4990d04faa08a9c5e9e5a7ffd64184efc15c27030d54b71",
+      "runtimeBytes": 24014
+    },
+    "libraries": [
+      {
+        "name": "FixedProbabilityConfigValidation",
+        "address": "0x45a5b6a99252756Ff2F586D0EE44dB18668E6F89",
+        "transactionHash": "0x25fdb30272e449a1b81f04b79ed2954929fd334ccda6bf97e33d9c948c3ac6c7",
+        "startBlock": 520016162,
+        "blockHash": "0x76bde5a63e6631d25eb7757207d6a4bbf2e3e136a6cc16eb500702ba1d0bdcbe",
+        "runtimeHash": "0xe398d56ecdd4e405bcfd016f3f31dca93503a8440f3b4d1f101a2a95e68ec6a2",
+        "runtimeBytes": 3240
+      },
+      {
+        "name": "FixedProbabilitySettlement",
+        "address": "0xe5d9D0a3b6Acc8a6B3324c00a50D0BE7B9a6648B",
+        "transactionHash": "0x1592ac816e180046649575b84187ed0c4764ba5be5ac99a6d74999b7ba262911",
+        "startBlock": 520016168,
+        "blockHash": "0x331d9bbb1e76f5a1fae0a7a58c7e448dcd132cceeab7be4bc130f074e74dc18a",
+        "runtimeHash": "0x758f3c7a39fe93c05fdd8a05147a7022a382d03b6fdd18472fb095b094327a7e",
+        "runtimeBytes": 3494
+      },
+      {
+        "name": "FixedProbabilityBuybackValidation",
+        "address": "0x372B821A4640B440FE5E6D697aAd1f381ed7deAf",
+        "transactionHash": "0xd4d7e6dcd12da6254d0394683e1586ecce58b288b3cdb946854b11703092fb89",
+        "startBlock": 520016174,
+        "blockHash": "0x7650a9dd8f96ed4f6e553b2127ff58a8358ed024ef1472571277fff2a3aab6ec",
+        "runtimeHash": "0xde43513708cd5b6d3bb7f1b332e98b4821ff10f7abb54817b784f18cbcc61ad2",
+        "runtimeBytes": 1852
+      }
+    ],
+    "abiSha256": "5edf72536bedbf79b8144111b170284d9b20fb04379866f6e0b0bdb96daf06e1"
   }
 ]
