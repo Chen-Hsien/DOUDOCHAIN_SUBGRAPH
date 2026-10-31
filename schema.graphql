@@ -203,6 +203,7 @@ type IchibanKujiSubPrize @entity(immutable: true) {
 }
 
 type NewTicketStatus @entity(immutable: false) {
+  assetContract: Bytes
   id: Bytes!
   tokenID: BigInt! # uint256
   seriesID: BigInt! # uint256
@@ -1464,7 +1465,7 @@ type Listing @entity(immutable: false) {
   transactionHash: Bytes!
 
   # Add ticket reference
-  ticket: NewTicketStatus!
+  ticket: NewTicketStatus
 }
 
 type Currency @entity(immutable: false) {
@@ -1817,4 +1818,216 @@ type PrizeBuybackModuleRegistration @entity(immutable: true) {
   id: Bytes!
   core: Bytes!
   blockNumber: BigInt!
+}
+
+# Fixed probability v2 is a distinct collection, with deployment-qualified IDs.
+type FixedProbabilityDeployment @entity(immutable: true) {
+  id: ID!
+  chainId: BigInt!
+  contractAddress: Bytes!
+  eventSourceAddress: Bytes!
+  startBlock: BigInt!
+  protocolVersion: String!
+}
+
+type FixedProbabilitySeries @entity {
+  id: ID!
+  deployment: FixedProbabilityDeployment!
+  seriesId: BigInt!
+  configHash: Bytes!
+  configData: Bytes!
+  pricePoints: BigInt!
+  drawCap: BigInt!
+  maxBatchSize: Int!
+  prizeIds: [BigInt!]!
+  weights: [Int!]!
+  discountQuantities: [Int!]!
+  discountPoints: [BigInt!]!
+  freeOrderMode: Int!
+  freeOrderFirstDraws: BigInt!
+  freeOrderPrizeIds: [BigInt!]!
+  gateMode: Int!
+  minMemberLevel: Int!
+  eligibilityPolicyId: Bytes!
+  eligibilityScope: Bytes!
+  maxEligibleDraws: BigInt!
+  contentHash: Bytes!
+  contentURI: String!
+  metadata: FixedProbabilitySeriesMetadata
+  status: String!
+  acceptedDraws: BigInt!
+  createdEvent: FixedProbabilityEvent!
+  updatedEvent: FixedProbabilityEvent!
+  prizes: [FixedProbabilityPrize!]! @derivedFrom(field: "series")
+  orders: [FixedProbabilityOrder!]! @derivedFrom(field: "series")
+}
+
+# Public presentation data is resolved once by an IPFS file data source, as for IchibanSeries.
+type FixedProbabilitySeriesMetadata @entity(immutable: true) {
+  id: ID!
+  contentUtf8: String!
+  contentHash: Bytes!
+  valid: Boolean!
+  name: String
+  description: String
+  image: String
+  redemptionTerms: String
+  freeOrderTerms: String
+  prizes: [FixedProbabilityPrizeMetadata!]! @derivedFrom(field: "seriesMetadata")
+}
+
+type FixedProbabilityPrizeMetadata @entity(immutable: true) {
+  id: ID!
+  seriesMetadata: FixedProbabilitySeriesMetadata!
+  prizeId: String!
+  prizeIndex: Int!
+  name: String!
+  description: String!
+  image: String!
+  nftImage: String!
+  animationUrl: String
+}
+
+type FixedProbabilityPrize @entity(immutable: true) {
+  id: ID!
+  series: FixedProbabilitySeries!
+  prizeId: BigInt!
+  prizeIndex: Int!
+  weight: Int!
+  intervalStart: Int!
+  intervalEndExclusive: Int!
+}
+
+type FixedProbabilityOrder @entity {
+  id: ID!
+  deployment: FixedProbabilityDeployment!
+  orderId: BigInt!
+  series: FixedProbabilitySeries!
+  buyer: Bytes!
+  authorizationId: Bytes!
+  configHash: Bytes!
+  requestId: BigInt!
+  quantity: Int!
+  firstDrawId: BigInt!
+  grossPoints: BigInt!
+  rebatePoints: BigInt!
+  netPoints: BigInt!
+  freeOrderChallenge: Boolean!
+  eligibilityKey: Bytes!
+  levelAtRequest: Int!
+  acceptedDrawsBefore: BigInt!
+  state: String!
+  randomWords: [BigInt!]!
+  freeOrderWon: Boolean
+  firstTriggerIndex: Int
+  refundPoints: BigInt
+  finalPointsConsumed: BigInt
+  accountingFinalized: Boolean!
+  membershipConsumptionId: Bytes
+  observedMembershipRewardPoints: BigInt
+  previousLevel: Int
+  newLevel: Int
+  expiresAt: BigInt
+  claimedCount: Int!
+  createdEvent: FixedProbabilityEvent!
+  updatedEvent: FixedProbabilityEvent!
+  randomnessEvent: FixedProbabilityEvent
+  settledEvent: FixedProbabilityEvent
+  accountingEvent: FixedProbabilityEvent
+  draws: [FixedProbabilityDraw!]! @derivedFrom(field: "order")
+}
+
+type FixedProbabilityRequest @entity(immutable: true) {
+  id: ID!
+  requestId: BigInt!
+  order: FixedProbabilityOrder!
+}
+
+type FixedProbabilityDraw @entity {
+  id: ID!
+  deployment: FixedProbabilityDeployment!
+  drawId: BigInt!
+  order: FixedProbabilityOrder!
+  drawIndex: Int!
+  settled: Boolean!
+  roll: Int
+  prizeId: BigInt
+  claimed: Boolean!
+  initialRecipient: Bytes
+  nft: FixedProbabilityNFT
+  settledEvent: FixedProbabilityEvent
+  claimEvent: FixedProbabilityEvent
+}
+
+type FixedProbabilityNFT @entity {
+  burned: Boolean!
+  burnedBy: Bytes
+  burnedEvent: FixedProbabilityEvent
+  buybackBurn: PrizeBuybackBurn
+  id: ID!
+  deployment: FixedProbabilityDeployment!
+  tokenId: BigInt!
+  draw: FixedProbabilityDraw!
+  currentOwner: Bytes!
+  mintRecipient: Bytes!
+  claimRecipient: Bytes
+  mintEvent: FixedProbabilityEvent!
+  claimEvent: FixedProbabilityEvent
+  lastTransferEvent: FixedProbabilityEvent!
+  exchanged: Boolean!
+}
+
+type FixedProbabilityEligibilityScope @entity(immutable: true) {
+  id: ID!
+  deployment: FixedProbabilityDeployment!
+  scope: Bytes!
+  policyId: Bytes!
+  maxEligibleDraws: BigInt!
+}
+
+type FixedProbabilityEligibilityUsage @entity {
+  id: ID!
+  scope: FixedProbabilityEligibilityScope!
+  eligibilityKey: Bytes!
+  usedDraws: BigInt!
+  updatedEvent: FixedProbabilityEvent!
+}
+
+type FixedProbabilityEligibilityConsumption @entity {
+  id: ID!
+  orderLocalId: BigInt!
+  scope: FixedProbabilityEligibilityScope!
+  eligibilityKey: Bytes!
+  quantity: Int!
+  usedAfter: BigInt!
+  order: FixedProbabilityOrder
+  event: FixedProbabilityEvent!
+}
+
+# Bounded bridge for EligibilityConsumed, which precedes OrderRequested.
+# Deleted when the request event links the consumption to its order.
+type FixedProbabilityPendingEligibility @entity {
+  id: ID!
+  consumption: FixedProbabilityEligibilityConsumption!
+  transactionHash: Bytes!
+}
+
+type FixedProbabilityEvent @entity(immutable: true) {
+  id: ID!
+  deployment: FixedProbabilityDeployment!
+  eventName: String!
+  parameters: String!
+  transactionHash: Bytes!
+  blockNumber: BigInt!
+  blockHash: Bytes!
+  timestamp: BigInt!
+  logIndex: BigInt!
+}
+
+# Mutable proxy routing is separate from the immutable deployment identity.
+type FixedProbabilityProxyState @entity {
+  id: ID!
+  deployment: FixedProbabilityDeployment!
+  implementation: Bytes!
+  upgradeEvent: FixedProbabilityEvent!
 }

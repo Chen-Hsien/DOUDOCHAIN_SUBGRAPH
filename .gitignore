@@ -26,6 +26,10 @@ yarn-error.log*
 
 # Environment-specific manifests generated from subgraph.yaml
 .subgraph.*.generated.yaml
+.networks.*.generated.json
+
+# Local deployment evidence; CI uploads this directory as an artifact.
+/.deployment-history/
 
 # Testing
 coverage
@@ -41,3 +45,9 @@ cache
 # memory
 .codebase-memory/
 AGENTS.md
+
+# Local dependency link used by isolated worktrees
+/node_modules
+
+# Generated Matchstick test binary
+/tests/.bin/*.wasm

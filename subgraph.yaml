@@ -600,6 +600,20 @@ templates:
           handler: handleMembershipMigrated
       file: ./src/membership-v2.ts
   - kind: file/ipfs
+    name: FixedProbabilitySeriesIpfsContent
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - FixedProbabilitySeriesMetadata
+        - FixedProbabilityPrizeMetadata
+      abis:
+        - name: Contract
+          file: ./abis/DOUDOCHAINV2CoreUpgradeable.json
+      handler: handleFixedProbabilitySeriesContent
+      file: ./src/fixed-probability-metadata.ts
+  - kind: file/ipfs
     name: IpfsContent
     mapping:
       kind: ethereum/events
@@ -657,3 +671,87 @@ templates:
           file: ./abis/DOUDOCHAINV2CoreUpgradeable.json
       handler: handleRevealTokenContent
       file: ./src/ichichain.ts
+
+  - kind: ethereum/contract
+    name: FixedProbabilityBuyback
+    network: arbitrum-sepolia
+    source:
+      abi: FixedProbabilityLotteryBuyback
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - FixedProbabilityDeployment
+        - FixedProbabilityProxyState
+        - FixedProbabilitySeries
+        - FixedProbabilityPrize
+        - FixedProbabilityOrder
+        - FixedProbabilityRequest
+        - FixedProbabilityDraw
+        - FixedProbabilityNFT
+        - FixedProbabilityEligibilityScope
+        - FixedProbabilityEligibilityUsage
+        - FixedProbabilityEligibilityConsumption
+        - FixedProbabilityPendingEligibility
+        - FixedProbabilityEvent
+      abis:
+        - name: FixedProbabilityLotteryBuyback
+          file: ./abis/FixedProbabilityLotteryBuyback.json
+      eventHandlers:
+        - event: Upgraded(indexed address)
+          handler: handleUpgraded
+        - event: Approval(indexed address,indexed address,indexed uint256)
+          handler: handleApproval
+        - event: ApprovalForAll(indexed address,indexed address,bool)
+          handler: handleApprovalForAll
+        - event: DrawSettled(indexed uint256,indexed uint256,uint16,uint256,uint256)
+          handler: handleDrawSettled
+        - event: EligibilityConsumed(indexed bytes32,indexed bytes32,indexed uint256,uint16,uint256)
+          handler: handleEligibilityConsumed
+        - event: EligibilityScopeRegistered(indexed bytes32,indexed bytes32,uint256)
+          handler: handleEligibilityScopeRegistered
+        - event: OrderAccountingFinalized(indexed uint256,indexed address,indexed bytes32,uint256,uint256,uint256,uint8,uint8,uint64)
+          handler: handleOrderAccountingFinalized
+        - event: OrderRequested(indexed uint256,indexed uint256,indexed address,uint256,bytes32,bytes32,uint16,uint256,uint256,uint256,uint256,bool,bytes32,uint8,uint256)
+          handler: handleOrderRequested
+        - event: OrderSettled(indexed uint256,bool,uint16,uint256)
+          handler: handleOrderSettled
+        - event: RandomnessStored(indexed uint256,indexed uint256,uint256[])
+          handler: handleRandomnessStored
+        - event: SeriesCreated(indexed uint256,indexed bytes32,bytes)
+          handler: handleSeriesCreated
+        - event: SeriesStatusChanged(indexed uint256,uint8,uint8)
+          handler: handleSeriesStatusChanged
+        - event: Transfer(indexed address,indexed address,indexed uint256)
+          handler: handleTransfer
+        - event: UpdateTicketStatus(uint256,uint256,uint256,bool,bool)
+          handler: handleUpdateTicketStatus
+        - event: PrizeBuybackBurned(indexed bytes32,indexed address,indexed address,uint256[],uint256[],uint256,bytes32)
+          handler: handleNativePrizeBuybackBurned
+      file: ./src/fixed-probability.ts
+
+  - kind: ethereum/contract
+    name: BuybackMarketplace
+    network: arbitrum-sepolia
+    source:
+      abi: MarketplaceV3
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Listing
+      abis:
+        - name: MarketplaceV3
+          file: ./abis/MarketplaceV3.json
+      eventHandlers:
+        - event: NewListing(indexed address,indexed uint256,indexed address,(uint256,uint256,uint256,uint256,uint128,uint128,address,address,address,uint8,uint8,bool))
+          handler: handleNewListing
+        - event: UpdatedListing(indexed address,indexed uint256,indexed address,(uint256,uint256,uint256,uint256,uint128,uint128,address,address,address,uint8,uint8,bool))
+          handler: handleUpdatedListing
+        - event: NewSale(indexed address,indexed uint256,indexed address,uint256,address,uint256,uint256)
+          handler: handleNewSale
+        - event: CancelledListing(indexed address,indexed uint256)
+          handler: handleCancelledListing
+      file: ./src/buyback-marketplace.ts

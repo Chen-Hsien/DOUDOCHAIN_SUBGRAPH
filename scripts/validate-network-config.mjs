@@ -1,7 +1,11 @@
+import { nativeBuybackDeployments, nativeBuybackMarkets, verifyNativeBuybackRuntime } from './native-buyback-deployments.mjs';
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { validateBuybackDeployment, verifyBuybackDeployment } from "./verify-buyback-deployment.mjs";
+
+import { validateFixedProbabilityDeployment } from "./verify-fixed-probability-deployment.mjs";
+import { targetManifest } from "./target-manifest.mjs";
 
 const root = resolve(fileURLToPath(new URL("..", import.meta.url)));
 const addressPattern = /^0x[0-9a-fA-F]{40}$/;
@@ -11,21 +15,22 @@ function readJson(path) {
   return JSON.parse(readFileSync(path, "utf8"));
 }
 
-function getDataSourceNames() {
-  const manifest = readFileSync(resolve(root, "subgraph.yaml"), "utf8");
+function getDataSourceNames(manifest) {
   const dataSourcesBlock = manifest.split(/^templates:/m)[0];
   return [
     ...dataSourcesBlock.matchAll(/^    name:\s*([^\s#]+)\s*$/gm),
   ].map((match) => match[1]);
 }
 
-export function validateNetworkConfig(network) {
-  const dataSourceNames = getDataSourceNames();
+export function validateNetworkConfig(network, manifest = targetManifest(network)) {
+  const dataSourceNames = getDataSourceNames(manifest);
   const duplicates = dataSourceNames.filter(
     (name, index) => dataSourceNames.indexOf(name) !== index,
   );
   const networks = readJson(resolve(root, "networks.json"));
-  const config = networks[network];
+  const nativeBuybacks=nativeBuybackDeployments(network);
+  const nativeSources=[...nativeBuybacks,...nativeBuybackMarkets(nativeBuybacks)];
+  const config = {...networks[network],...Object.fromEntries(nativeSources.map(d=>[d.name,{address:d.address,startBlock:d.startBlock}]))};
   const invalid = [];
 
   if (duplicates.length > 0) {
@@ -61,15 +66,16 @@ export function validateNetworkConfig(network) {
   }
 
   let evidence = null;
-  if (network === "arbitrum-one") {
+  if (network === "arbitrum-one" || dataSourceNames.includes("FixedProbabilityLottery")) {
     const allEvidence = readJson(
       resolve(root, "config/deployment-evidence.json"),
     );
-    evidence = allEvidence[network];
+    evidence = allEvidence[network] ? {...allEvidence[network],...Object.fromEntries(nativeSources.map(d=>[d.name,d]))} : null;
     if (!evidence) {
       invalid.push(`missing deployment evidence for ${network}`);
     } else if (config) {
       for (const name of dataSourceNames) {
+        if (network !== "arbitrum-one" && name !== "FixedProbabilityLottery") continue;
         const record = evidence[name];
         const source = config[name];
         if (!record) {
@@ -99,12 +105,14 @@ export function validateNetworkConfig(network) {
     throw error;
   }
 
+  validateFixedProbabilityDeployment(network, config, evidence, manifest);
+
   let buyback;
   if (network === "arbitrum-one") {
     buyback = readJson(resolve(root, "config/buyback-deployment.json"));
     validateBuybackDeployment(buyback, config.ICHICHAIN);
   }
-  return { config, dataSourceNames, evidence, buyback };
+  return { config, dataSourceNames, evidence, buyback, nativeBuybacks };
 }
 
 const expectedChainIds = {
@@ -153,11 +161,13 @@ export async function verifyNetworkState(
   if (verifyReceipts && validation.buyback) {
     await verifyBuybackDeployment(rpcCall, validation.buyback);
   }
+  for(const native of validation.nativeBuybacks??[]) await verifyNativeBuybackRuntime(rpcCall,native);
   const receiptCache = new Map();
   for (const name of validation.dataSourceNames) {
     const source = validation.config[name];
-    if (verifyReceipts) {
-      const record = validation.evidence[name];
+    if (verifyReceipts || name === "FixedProbabilityLottery") {
+      const record = validation.evidence?.[name];
+      if (!record) throw new Error(`${name}: missing deployment receipt evidence.`);
       let receipt = receiptCache.get(record.transactionHash);
       if (!receipt) {
         receipt = await rpcCall("eth_getTransactionReceipt", [

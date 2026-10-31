@@ -23,6 +23,7 @@ jobs:
       - run: npm run codegen
       - run: npm run build:test
       - run: npm run test:deployment
+      - run: npm run test:fixed-probability-parity
       - run: npm test
 
   production-config:
