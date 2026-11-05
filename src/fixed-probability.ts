@@ -59,6 +59,8 @@ export function handleSeriesCreated(e: SeriesCreated): void {
     assert(scope!.policyId.equals(s.eligibilityPolicyId) && scope!.maxEligibleDraws.equals(s.maxEligibleDraws), 'FixedProbability: scope conflict');
   }
   s.status = 'DRAFT'; s.acceptedDraws = ZERO;
+  s.latestRevealAt = ZERO;
+  s.latestRevealSortKey = uintKey(ZERO) + ':' + uintKey(p.seriesId);
   s.createdEvent = eventId(e); s.updatedEvent = eventId(e); s.save();
   const ids = s.prizeIds, weights = s.weights;
   let start = 0;
@@ -200,6 +202,9 @@ export function handleOrderSettled(e: OrderSettled): void {
   o.freeOrderWon = won; o.firstTriggerIndex = first; o.refundPoints = refund;
   o.finalPointsConsumed = o.netPoints.minus(refund); o.state = 'SETTLED';
   o.settledEvent = eventId(e); o.updatedEvent = eventId(e); o.save();
+  s.latestRevealAt = e.block.timestamp;
+  s.latestRevealSortKey = uintKey(e.block.timestamp) + ':' + uintKey(s.seriesId);
+  s.save();
 }
 export function handleOrderAccountingFinalized(e: OrderAccountingFinalized): void {
   if (!audit(e, 'OrderAccountingFinalized')) return;

@@ -1856,6 +1856,9 @@ type FixedProbabilitySeries @entity {
   metadata: FixedProbabilitySeriesMetadata
   status: String!
   acceptedDraws: BigInt!
+  latestRevealAt: BigInt!
+  # Zero-padded uint256 timestamp and seriesId, separated by a colon.
+  latestRevealSortKey: String!
   createdEvent: FixedProbabilityEvent!
   updatedEvent: FixedProbabilityEvent!
   prizes: [FixedProbabilityPrize!]! @derivedFrom(field: "series")

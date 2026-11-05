@@ -2,6 +2,16 @@
 
 # 固定機率抽獎 V3 索引與驗收
 
+## 開獎證明系列排序（2026-11-05）
+
+公開 `series-history` 按最近一次完成開獎的時間由新到舊排列。`OrderSettled` 更新系列的 `latestRevealAt` 與 `latestRevealSortKey`。購買、取得亂數、單張開獎、帳務結算與系列狀態切換都不更新這兩個欄位。
+
+`latestRevealSortKey` 由左補零至 78 位的時間戳、冒號與左補零至 78 位的系列 ID 組成。同時間的系列按數值 ID 由大到小排列。尚未完成開獎的系列使用時間戳 0，排在已開獎系列之後；公開狀態仍只包含 ACTIVE、PAUSED 與 CLOSED。
+
+Backend 先按此欄位排序，再以嚴格小於上一頁末筆 key 的條件分頁。游標綁定快照與 `series-history:latest-reveal` 資源，不能沿用舊的系列 ID 游標。Frontend 保留 API 回傳順序。
+
+上線時先部署新 Graph schema 與 mapping，從既有 startBlock 重建歷史，並完成候選端點的資料比對，再發布 Backend。不能 graft 缺少新欄位的舊資料。`parity:fixed-probability` 會以 canonical `OrderSettled` logs 的時間核對新欄位。部署、重建與候選端點比對尚未執行。
+
 更新：2026-09-30。V3 合約與初版 subgraph v3.0.0 已部署至 Arbitrum Sepolia；本 PR 的免單會員快照修正仍需部署。沒有真實 V3 購買／揭獎／兌換聯合驗收，不能把離線測試當成實網交易證據。
 
 ## 資料契約
