@@ -463,6 +463,32 @@ type DatabasePointsPurchaseMint @entity(immutable: true) {
   transactionHash: Bytes!
 }
 
+# Coupon purchases retain original pre-coupon gross separately from the immediate debit.
+type DatabasePointsPurchaseMintV2 @entity(immutable: true) {
+  id: Bytes!
+  contractAddress: Bytes!
+  sourceMode: String!
+  authorizationId: Bytes!
+  seriesID: BigInt!
+  buyer: Bytes!
+  ticketQuantity: BigInt!
+  grossPoints: BigInt!
+  rebatePoints: BigInt!
+  couponDiscount: BigInt!
+  debitNowPoints: BigInt!
+  netPointsConsumed: BigInt!
+  membershipRewardPoints: BigInt!
+  revealImmediately: Boolean!
+  freeOrderChallenge: Boolean!
+  firstTokenID: BigInt!
+  challengeRequestId: BigInt!
+  pricingSnapshotHash: Bytes!
+  pricingVersion: BigInt!
+  blockNumber: BigInt!
+  blockTimestamp: BigInt!
+  transactionHash: Bytes!
+}
+
 type DatabasePointsRebateEntitlement @entity(immutable: true) {
   id: Bytes!
   authorizationId: Bytes!
@@ -1915,6 +1941,10 @@ type FixedProbabilityOrder @entity {
   grossPoints: BigInt!
   rebatePoints: BigInt!
   netPoints: BigInt!
+  couponDiscount: BigInt!
+  debitNowPoints: BigInt!
+  pricingSnapshotHash: Bytes
+  pricingVersion: BigInt!
   freeOrderChallenge: Boolean!
   eligibilityKey: Bytes!
   levelAtRequest: Int!
