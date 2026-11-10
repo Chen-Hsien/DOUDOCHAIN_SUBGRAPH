@@ -8,40 +8,40 @@
     "proxyKind": "uups",
     "protocolVersion": 1,
     "implementation": {
-      "address": "0x0213973159DC44e9AfDB04eeD6a9e4f8F42d8975",
-      "transactionHash": "0x60fb3c39372cc4130134a85305a8efa72253b920af68cf629514008a2fc6268a",
-      "startBlock": 319353153,
-      "blockHash": "0xfe36773308df59dab11d2c2bb3567a6dea9c3436488242a7b1d6df3161db78b6",
-      "runtimeHash": "0x599e5a3c4044d93b472593d78d276dd631adc8e6dfdcf1cc001e1e7961537be5",
-      "runtimeBytes": 24014
+      "address": "0x02904B450DC737fFEFA940c1DEe3424b739FF65b",
+      "transactionHash": "0xc01107eaae5a823bfd5641d15c048c2ab0b21bcfa681ea47de7654e1542c8cb6",
+      "blockHash": "0xfa7830bff31c8847c4453728f61de94c2a088fc81801e50229d06e26736dfc10",
+      "runtimeHash": "0x4d9d3bf555f3ab5c6a7d6a62eed1ed94160aba22aee01fb207df3c04917d7468",
+      "runtimeBytes": 22603,
+      "startBlock": 327750400
     },
     "libraries": [
       {
         "name": "FixedProbabilityConfigValidation",
-        "address": "0x6F32A51e6A0a9A1267A86A88C408A0dF4A51148A",
-        "transactionHash": "0x668db69e16b8a20c6ec16afb3f1e5abfb67fcee6800b4486e0997ecee0c6e0f7",
-        "startBlock": 319352626,
-        "blockHash": "0xa6ceecf359b48954d826be2a49c5a38a31f99ff7a6990094e8a8100d38555ce9",
-        "runtimeHash": "0xe398d56ecdd4e405bcfd016f3f31dca93503a8440f3b4d1f101a2a95e68ec6a2",
-        "runtimeBytes": 3240
+        "address": "0x4e122Ad035d037499131a29054034eCa4C15a688",
+        "transactionHash": "0xda230df5634d8b498bc53735cd793dd0799355dc14857f459c23f9bb2e253e63",
+        "blockHash": "0xd738e2fa603afb4941c54d35022f65e2946e8aab3b83ca8f7320133c5656a86b",
+        "runtimeHash": "0xe2e61da2d4ee47ed244f682cec4605c5d4a350db8dc070db42549181d407e4bd",
+        "runtimeBytes": 6712,
+        "startBlock": 327750057
       },
       {
         "name": "FixedProbabilitySettlement",
-        "address": "0x383B816c0343510976e8dFE8861b9B20e1E9F5A3",
-        "transactionHash": "0x9b5e6e75ff504fba47ed26394d5340609da5b9689e0ea4022d944134b9fe431f",
-        "startBlock": 319353126,
-        "blockHash": "0x00b0eab7a04dba9a195e6a532c248651a69eea5d66236928104898679e8b777a",
-        "runtimeHash": "0x166a2c6518a1c8fb623b845a4f3605a68758562cd5dc2660a20fe6af01a30f75",
-        "runtimeBytes": 3494
+        "address": "0xF050c943e8132B9A1d6f5F4db604215633D201c7",
+        "transactionHash": "0xea4b95892a94174b2a792fef6ab9c829745cb4b97a37d38af53763134b8317e5",
+        "blockHash": "0x8a36ce2d8b610ff214d9ee8bffe0d55c5e14d6c2dd6d25cec6dae3ee11b4a945",
+        "runtimeHash": "0x5a2e93fa829664b5fb76a5725167f0b6692a0f586045034c65f7de72a311625d",
+        "runtimeBytes": 4421,
+        "startBlock": 327750288
       },
       {
         "name": "FixedProbabilityBuybackValidation",
-        "address": "0x269E93CF4e7c9f371307b1Ff62BcC387ff381EF6",
-        "transactionHash": "0xefc0a0f14864473a87af1cf34f63fda3b27ac22420176b5a0e37dc6ededd52ff",
-        "startBlock": 319353137,
-        "blockHash": "0x996a06c3708ccf0bbbc9814b9243deb77f8430bb291a75a4853efd1be854ffe2",
+        "address": "0x07F0e709f6772e4f2BB6Dbd2cf489F3ea886a632",
+        "transactionHash": "0xbd64826fcae37692dd251624abcfa60f9c9eb522618274dc78f1c10b5e13f236",
+        "blockHash": "0xa15229ac9d363c9eb03214bd241a746f6c966367f383a9f6cea4a7aef6840005",
         "runtimeHash": "0xde43513708cd5b6d3bb7f1b332e98b4821ff10f7abb54817b784f18cbcc61ad2",
-        "runtimeBytes": 1852
+        "runtimeBytes": 1852,
+        "startBlock": 327750305
       }
     ],
     "abiSha256": "5edf72536bedbf79b8144111b170284d9b20fb04379866f6e0b0bdb96daf06e1",
@@ -54,6 +54,57 @@
         "address": "0x25548ba29a0071f30e4bdcd98ea72f79341b07a1",
         "implementationAddress": "0xcca97b4c1dc264f7f1a18e913507c7e853b5cb7e"
       }
+    },
+    "implementationHistory": [
+      {
+        "implementation": {
+          "address": "0x0213973159DC44e9AfDB04eeD6a9e4f8F42d8975",
+          "transactionHash": "0x60fb3c39372cc4130134a85305a8efa72253b920af68cf629514008a2fc6268a",
+          "startBlock": 319353153,
+          "blockHash": "0xfe36773308df59dab11d2c2bb3567a6dea9c3436488242a7b1d6df3161db78b6",
+          "runtimeHash": "0x599e5a3c4044d93b472593d78d276dd631adc8e6dfdcf1cc001e1e7961537be5",
+          "runtimeBytes": 24014
+        },
+        "libraries": [
+          {
+            "name": "FixedProbabilityConfigValidation",
+            "address": "0x6F32A51e6A0a9A1267A86A88C408A0dF4A51148A",
+            "transactionHash": "0x668db69e16b8a20c6ec16afb3f1e5abfb67fcee6800b4486e0997ecee0c6e0f7",
+            "startBlock": 319352626,
+            "blockHash": "0xa6ceecf359b48954d826be2a49c5a38a31f99ff7a6990094e8a8100d38555ce9",
+            "runtimeHash": "0xe398d56ecdd4e405bcfd016f3f31dca93503a8440f3b4d1f101a2a95e68ec6a2",
+            "runtimeBytes": 3240
+          },
+          {
+            "name": "FixedProbabilitySettlement",
+            "address": "0x383B816c0343510976e8dFE8861b9B20e1E9F5A3",
+            "transactionHash": "0x9b5e6e75ff504fba47ed26394d5340609da5b9689e0ea4022d944134b9fe431f",
+            "startBlock": 319353126,
+            "blockHash": "0x00b0eab7a04dba9a195e6a532c248651a69eea5d66236928104898679e8b777a",
+            "runtimeHash": "0x166a2c6518a1c8fb623b845a4f3605a68758562cd5dc2660a20fe6af01a30f75",
+            "runtimeBytes": 3494
+          },
+          {
+            "name": "FixedProbabilityBuybackValidation",
+            "address": "0x269E93CF4e7c9f371307b1Ff62BcC387ff381EF6",
+            "transactionHash": "0xefc0a0f14864473a87af1cf34f63fda3b27ac22420176b5a0e37dc6ededd52ff",
+            "startBlock": 319353137,
+            "blockHash": "0x996a06c3708ccf0bbbc9814b9243deb77f8430bb291a75a4853efd1be854ffe2",
+            "runtimeHash": "0xde43513708cd5b6d3bb7f1b332e98b4821ff10f7abb54817b784f18cbcc61ad2",
+            "runtimeBytes": 1852
+          }
+        ],
+        "supersededByUpgradeTransaction": "0xd430971a274653bdae58d7f66ff9643541157aa00b54474c01fbcea09510e53b",
+        "supersededAtBlock": 327750427
+      }
+    ],
+    "couponV2Upgrade": {
+      "transactionHash": "0xd430971a274653bdae58d7f66ff9643541157aa00b54474c01fbcea09510e53b",
+      "blockNumber": 327750427,
+      "blockHash": "0xc71b4b48495672b31e33a4122f4a926490610eb3d6efdb687d60a3a8e216416b",
+      "couponAuthorizationVersion": 2,
+      "implementationAbiSha256": "5834d489a12a4d6e4d2590d38132f2bfa36dd5b26b37d5c9081b2f94406e1b3f",
+      "indexingAbiSha256": "5834d489a12a4d6e4d2590d38132f2bfa36dd5b26b37d5c9081b2f94406e1b3f"
     }
   },
   {

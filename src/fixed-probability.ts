@@ -1,9 +1,9 @@
 export { handleNativePrizeBuybackBurned } from './fixed-probability-buyback';
-import { Address, BigInt, DataSourceTemplate, ethereum, store } from '@graphprotocol/graph-ts';
+import { Address, BigInt, Bytes, DataSourceTemplate, ethereum, store } from '@graphprotocol/graph-ts';
 import {
   Upgraded, Approval, ApprovalForAll, DrawSettled,
   EligibilityConsumed, EligibilityScopeRegistered, OrderAccountingFinalized,
-  OrderRequested, OrderSettled, RandomnessStored, SeriesCreated,
+  OrderRequested, OrderRequestedV2, DatabasePointsPurchaseMintedV2, OrderSettled, RandomnessStored, SeriesCreated,
   SeriesStatusChanged, Transfer, UpdateTicketStatus,
 } from '../generated/templates/FixedProbabilityBuyback/FixedProbabilityLotteryBuyback';
 import {
@@ -13,6 +13,7 @@ import {
   FixedProbabilityEligibilityConsumption, FixedProbabilityPendingEligibility,
 } from '../generated/schema';
 import { audit, deploymentId, entityId, eventId, scopeId, uintKey, ZERO, ZERO_BYTES, UINT_MAX } from './fixed-probability-ids';
+import { saveCouponPurchase } from './coupon-purchase';
 import { contains, decodeConfig, prizeForRoll } from './fixed-probability-config';
 
 function orderAt(e: ethereum.Event, id: BigInt): FixedProbabilityOrder {
@@ -118,43 +119,65 @@ export function handleEligibilityConsumed(e: EligibilityConsumed): void {
   pending.consumption = c.id; pending.transactionHash = e.transaction.hash; pending.save();
 }
 export function handleOrderRequested(e: OrderRequested): void {
-  if (!audit(e, 'OrderRequested')) return;
-  const p = e.params, id = entityId(e, 'order', p.orderId);
-  const s = seriesAt(entityId(e, 'series', p.seriesId));
-  assert(p.orderId.gt(ZERO) && FixedProbabilityOrder.load(id) == null && s.status == 'ACTIVE', 'FixedProbability: invalid request');
-  assert(p.quantity > 0 && p.quantity <= s.maxBatchSize && p.firstDrawId.gt(ZERO), 'FixedProbability: invalid quantity');
-  assert(p.configHash.equals(s.configHash) && p.acceptedDrawsBefore.equals(s.acceptedDraws), 'FixedProbability: request config/counter');
-  const after = s.acceptedDraws.plus(BigInt.fromI32(p.quantity));
+  processOrderRequested(e, ZERO, ZERO_BYTES, BigInt.fromI32(1));
+}
+export function handleOrderRequestedV2(e: OrderRequestedV2): void {
+  assert(e.params.pricingVersion.equals(BigInt.fromI32(2)), 'FixedProbability: unsupported pricing version');
+  processOrderRequested(e, e.params.couponDiscount, e.params.pricingSnapshotHash, e.params.pricingVersion);
+}
+function processOrderRequested(e: ethereum.Event, couponDiscount: BigInt, snapshotHash: Bytes, pricingVersion: BigInt): void {
+  if (!audit(e, pricingVersion.equals(BigInt.fromI32(2)) ? 'OrderRequestedV2' : 'OrderRequested')) return;
+  const values = e.parameters;
+  const orderId = values[0].value.toBigInt(), requestId = values[1].value.toBigInt();
+  const buyer = values[2].value.toAddress(), seriesId = values[3].value.toBigInt();
+  const configHash = values[4].value.toBytes(), authorizationId = values[5].value.toBytes();
+  const quantity = values[6].value.toI32(), firstDrawId = values[7].value.toBigInt();
+  const grossPoints = values[8].value.toBigInt(), rebatePoints = values[9].value.toBigInt();
+  const netPoints = values[10].value.toBigInt(), freeOrderChallenge = values[11].value.toBoolean();
+  const eligibilityKey = values[12].value.toBytes(), levelAtRequest = values[13].value.toI32();
+  const acceptedDrawsBefore = values[14].value.toBigInt();
+  const id = entityId(e, 'order', orderId);
+  const s = seriesAt(entityId(e, 'series', seriesId));
+  assert(orderId.gt(ZERO) && FixedProbabilityOrder.load(id) == null && s.status == 'ACTIVE', 'FixedProbability: invalid request');
+  assert(quantity > 0 && quantity <= s.maxBatchSize && firstDrawId.gt(ZERO), 'FixedProbability: invalid quantity');
+  assert(configHash.equals(s.configHash) && acceptedDrawsBefore.equals(s.acceptedDraws), 'FixedProbability: request config/counter');
+  const after = s.acceptedDraws.plus(BigInt.fromI32(quantity));
   assert(after.le(UINT_MAX) && (s.drawCap.equals(ZERO) || after.le(s.drawCap)), 'FixedProbability: draw cap');
-  const gross = s.pricePoints.times(BigInt.fromI32(p.quantity));
+  const gross = s.pricePoints.times(BigInt.fromI32(quantity));
   let rebate = ZERO;
   const quantities = s.discountQuantities, discounts = s.discountPoints;
-  for (let i = 0; i < quantities.length; i++) if (p.quantity >= quantities[i]) rebate = discounts[i];
-  assert(gross.le(UINT_MAX) && p.grossPoints.equals(gross) && p.rebatePoints.equals(rebate) && p.netPoints.equals(gross.minus(rebate)), 'FixedProbability: quote mismatch');
-  if (p.freeOrderChallenge) assert(p.netPoints.gt(ZERO) && (s.freeOrderMode == 2 || (s.freeOrderMode == 1 && after.le(s.freeOrderFirstDraws))), 'FixedProbability: challenge window');
-  if (s.gateMode == 1 || s.gateMode == 3) assert(p.levelAtRequest >= s.minMemberLevel && p.levelAtRequest <= 5, 'FixedProbability: membership gate');
+  for (let i = 0; i < quantities.length; i++) if (quantity >= quantities[i]) rebate = discounts[i];
+  assert(gross.le(UINT_MAX) && grossPoints.equals(gross) && rebatePoints.equals(rebate) && rebate.le(gross) && couponDiscount.le(gross.minus(rebate)) && netPoints.equals(gross.minus(rebate).minus(couponDiscount)), 'FixedProbability: quote mismatch');
+  if (pricingVersion.equals(BigInt.fromI32(2))) {
+    const unit = BigInt.fromString('1000000000000000000');
+    assert(couponDiscount.gt(ZERO) && couponDiscount.mod(unit).equals(ZERO) && netPoints.ge(unit) && !snapshotHash.equals(ZERO_BYTES), 'FixedProbability: invalid coupon pricing');
+  } else assert(couponDiscount.equals(ZERO), 'FixedProbability: legacy coupon');
+  if (freeOrderChallenge) assert(netPoints.gt(ZERO) && (s.freeOrderMode == 2 || (s.freeOrderMode == 1 && after.le(s.freeOrderFirstDraws))), 'FixedProbability: challenge window');
+  if (s.gateMode == 1 || s.gateMode == 3) assert(levelAtRequest >= s.minMemberLevel && levelAtRequest <= 5, 'FixedProbability: membership gate');
   const pending = FixedProbabilityPendingEligibility.load(id);
   if (s.gateMode == 2 || s.gateMode == 3) {
     assert(pending != null && pending!.transactionHash.equals(e.transaction.hash), 'FixedProbability: missing earlier consumption');
     const consumption = FixedProbabilityEligibilityConsumption.load(pending!.consumption)!;
-    assert(consumption.orderLocalId.equals(p.orderId) && consumption.quantity == p.quantity && consumption.eligibilityKey.equals(p.eligibilityKey) && consumption.scope == scopeId(e, s.eligibilityScope), 'FixedProbability: consumption binding');
+    assert(consumption.orderLocalId.equals(orderId) && consumption.quantity == quantity && consumption.eligibilityKey.equals(eligibilityKey) && consumption.scope == scopeId(e, s.eligibilityScope), 'FixedProbability: consumption binding');
     consumption.order = id; consumption.save(); store.remove('FixedProbabilityPendingEligibility', id);
-  } else assert(pending == null && p.eligibilityKey.equals(ZERO_BYTES), 'FixedProbability: unexpected consumption');
+  } else assert(pending == null && eligibilityKey.equals(ZERO_BYTES), 'FixedProbability: unexpected consumption');
   const o = new FixedProbabilityOrder(id);
-  o.deployment = deploymentId(e); o.orderId = p.orderId; o.series = s.id;
-  o.buyer = p.buyer; o.authorizationId = p.authorizationId; o.configHash = p.configHash;
-  o.requestId = p.requestId; o.quantity = p.quantity; o.firstDrawId = p.firstDrawId;
-  o.grossPoints = p.grossPoints; o.rebatePoints = p.rebatePoints; o.netPoints = p.netPoints;
-  o.freeOrderChallenge = p.freeOrderChallenge; o.eligibilityKey = p.eligibilityKey;
-  o.levelAtRequest = p.levelAtRequest; o.acceptedDrawsBefore = p.acceptedDrawsBefore;
+  o.deployment = deploymentId(e); o.orderId = orderId; o.series = s.id;
+  o.buyer = buyer; o.authorizationId = authorizationId; o.configHash = configHash;
+  o.requestId = requestId; o.quantity = quantity; o.firstDrawId = firstDrawId;
+  o.grossPoints = grossPoints; o.rebatePoints = rebatePoints; o.netPoints = netPoints;
+  o.couponDiscount = couponDiscount; o.debitNowPoints = grossPoints.minus(couponDiscount); o.pricingVersion = pricingVersion;
+  if (pricingVersion.equals(BigInt.fromI32(2))) o.pricingSnapshotHash = snapshotHash;
+  o.freeOrderChallenge = freeOrderChallenge; o.eligibilityKey = eligibilityKey;
+  o.levelAtRequest = levelAtRequest; o.acceptedDrawsBefore = acceptedDrawsBefore;
   o.state = 'PENDING'; o.randomWords = []; o.accountingFinalized = false; o.claimedCount = 0;
   o.createdEvent = eventId(e); o.updatedEvent = eventId(e); o.save();
-  const requestId = entityId(e, 'request', p.requestId);
-  assert(p.requestId.gt(ZERO) && FixedProbabilityRequest.load(requestId) == null, 'FixedProbability: duplicate request');
-  const request = new FixedProbabilityRequest(requestId);
-  request.requestId = p.requestId; request.order = id; request.save();
-  for (let i = 0; i < p.quantity; i++) {
-    const drawId = p.firstDrawId.plus(BigInt.fromI32(i));
+  const requestEntityId = entityId(e, 'request', requestId);
+  assert(requestId.gt(ZERO) && FixedProbabilityRequest.load(requestEntityId) == null, 'FixedProbability: duplicate request');
+  const request = new FixedProbabilityRequest(requestEntityId);
+  request.requestId = requestId; request.order = id; request.save();
+  for (let i = 0; i < quantity; i++) {
+    const drawId = firstDrawId.plus(BigInt.fromI32(i));
     const drawKey = entityId(e, 'draw', drawId);
     assert(FixedProbabilityDraw.load(drawKey) == null, 'FixedProbability: duplicate draw');
     const draw = new FixedProbabilityDraw(drawKey);
@@ -269,4 +292,8 @@ export function handleUpgraded(e: Upgraded): void {
   state.implementation=e.params.implementation;
   state.upgradeEvent=eventId(e);
   state.save();
+}
+
+export function handleDatabasePointsPurchaseMintedV2(e: DatabasePointsPurchaseMintedV2): void {
+  saveCouponPurchase(e, 'FIXED_PROBABILITY');
 }

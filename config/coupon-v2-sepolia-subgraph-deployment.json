@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "coupon-v2-sepolia-subgraph-release-v1",
+  "target": "test",
+  "network": "arbitrum-sepolia",
+  "slug": "doudochain-arb-v-2",
+  "versionLabel": "10ddd723183e5599b3e875f834d6e286535b173c",
+  "deploymentId": "QmSMuLLcsPH4bMCeVS3MmFVqJG6yoiAHWyJrpDd4muYjrb",
+  "publishStatus": "deployment_accepted",
+  "historyAttempt": "2026-11-10T03-35-47-193Z-e5ecddd6-373c-484e-b7c5-37c7e00666bb",
+  "recordSha256": "7cc95b0c2641ae5827d89331ef3a1b266dc97db75a072799c0ef509abadeb572",
+  "verification": {
+    "formatVersion": 1,
+    "checkedAt": "2026-11-10T03:38:00.223Z",
+    "deploymentId": "QmSMuLLcsPH4bMCeVS3MmFVqJG6yoiAHWyJrpDd4muYjrb",
+    "target": "test",
+    "recordSha256": "7cc95b0c2641ae5827d89331ef3a1b266dc97db75a072799c0ef509abadeb572",
+    "requestedBlock": null,
+    "status": "healthy_observed",
+    "reason": null,
+    "meta": {
+      "deployment": "QmSMuLLcsPH4bMCeVS3MmFVqJG6yoiAHWyJrpDd4muYjrb",
+      "block": {
+        "number": 271876628,
+        "hash": "0x0f76bd825bfcc617976bbabc3b0d56c1483e9f3f57f29705054f893ca9afc82a"
+      },
+      "hasIndexingErrors": false
+    },
+    "syncCompletion": "not_assessed",
+    "graftEligibility": "not_assessed"
+  },
+  "schemaObservation": {
+    "httpStatus": 200,
+    "response": {
+      "data": {
+        "_meta": {
+          "deployment": "QmSMuLLcsPH4bMCeVS3MmFVqJG6yoiAHWyJrpDd4muYjrb",
+          "hasIndexingErrors": false,
+          "block": {
+            "number": 271876628,
+            "hash": "0x0f76bd825bfcc617976bbabc3b0d56c1483e9f3f57f29705054f893ca9afc82a"
+          }
+        },
+        "__type": {
+          "name": "DatabasePointsPurchaseMintV2",
+          "fields": [
+            {
+              "name": "id"
+            },
+            {
+              "name": "contractAddress"
+            },
+            {
+              "name": "sourceMode"
+            },
+            {
+              "name": "authorizationId"
+            },
+            {
+              "name": "seriesID"
+            },
+            {
+              "name": "buyer"
+            },
+            {
+              "name": "ticketQuantity"
+            },
+            {
+              "name": "grossPoints"
+            },
+            {
+              "name": "rebatePoints"
+            },
+            {
+              "name": "couponDiscount"
+            },
+            {
+              "name": "debitNowPoints"
+            },
+            {
+              "name": "netPointsConsumed"
+            },
+            {
+              "name": "membershipRewardPoints"
+            },
+            {
+              "name": "revealImmediately"
+            },
+            {
+              "name": "freeOrderChallenge"
+            },
+            {
+              "name": "firstTokenID"
+            },
+            {
+              "name": "challengeRequestId"
+            },
+            {
+              "name": "pricingSnapshotHash"
+            },
+            {
+              "name": "pricingVersion"
+            },
+            {
+              "name": "blockNumber"
+            },
+            {
+              "name": "blockTimestamp"
+            },
+            {
+              "name": "transactionHash"
+            }
+          ]
+        }
+      }
+    },
+    "observedChainHead": 327752638,
+    "observedAt": "2026-11-10T03:38:30.235Z"
+  },
+  "syncCompletion": "in_progress_not_caught_up",
+  "parity": "not_assessed",
+  "originalProxyAddressesAndStartBlocksPreserved": true
+}
