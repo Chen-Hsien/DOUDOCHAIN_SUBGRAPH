@@ -3220,5 +3220,110 @@
     "outputs": [],
     "stateMutability": "payable",
     "type": "function"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "seriesId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "revision",
+        "type": "uint64"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint64",
+        "name": "expectedDelistAt",
+        "type": "uint64"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "inactive",
+        "type": "bool"
+      }
+    ],
+    "name": "SeriesSaleScheduleChanged",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "SeriesSaleEnded",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "StaleSaleSchedule",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "seriesId",
+        "type": "uint256"
+      }
+    ],
+    "name": "saleSchedules",
+    "outputs": [
+      {
+        "components": [
+          {
+            "internalType": "uint64",
+            "name": "revision",
+            "type": "uint64"
+          },
+          {
+            "internalType": "uint64",
+            "name": "expectedDelistAt",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bool",
+            "name": "inactive",
+            "type": "bool"
+          }
+        ],
+        "internalType": "struct SeriesSaleSchedule.SaleSchedule",
+        "name": "",
+        "type": "tuple"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "seriesId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint64",
+        "name": "expectedRevision",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint64",
+        "name": "expectedDelistAt",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bool",
+        "name": "inactive",
+        "type": "bool"
+      }
+    ],
+    "name": "setSeriesSaleSchedule",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
   }
 ]

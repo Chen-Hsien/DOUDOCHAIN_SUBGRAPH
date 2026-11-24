@@ -78,6 +78,9 @@ type LastPrizeWinner @entity(immutable: true) {
 }
 
 type NewSeries @entity(immutable: false) {
+  expectedDelistAt: BigInt
+  saleScheduleRevision: BigInt
+  saleInactive: Boolean
   id: Bytes!
   seriesContract: Bytes! # address
   seriesID: BigInt! # uint256
@@ -1857,6 +1860,9 @@ type FixedProbabilityDeployment @entity(immutable: true) {
 }
 
 type FixedProbabilitySeries @entity {
+  expectedDelistAt: BigInt
+  saleScheduleRevision: BigInt
+  saleInactive: Boolean
   id: ID!
   deployment: FixedProbabilityDeployment!
   seriesId: BigInt!

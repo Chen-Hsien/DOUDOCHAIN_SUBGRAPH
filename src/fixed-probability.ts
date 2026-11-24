@@ -1,6 +1,7 @@
 export { handleNativePrizeBuybackBurned } from './fixed-probability-buyback';
 import { Address, BigInt, Bytes, DataSourceTemplate, ethereum, store } from '@graphprotocol/graph-ts';
 import {
+  SeriesSaleScheduleChanged,
   Upgraded, Approval, ApprovalForAll, DrawSettled,
   EligibilityConsumed, EligibilityScopeRegistered, OrderAccountingFinalized,
   OrderRequested, OrderRequestedV2, DatabasePointsPurchaseMintedV2, OrderSettled, RandomnessStored, SeriesCreated,
@@ -296,4 +297,13 @@ export function handleUpgraded(e: Upgraded): void {
 
 export function handleDatabasePointsPurchaseMintedV2(e: DatabasePointsPurchaseMintedV2): void {
   saveCouponPurchase(e, 'FIXED_PROBABILITY');
+}
+
+export function handleFixedSeriesSaleScheduleChanged(event: SeriesSaleScheduleChanged): void {
+  if (!audit(event, 'SeriesSaleScheduleChanged')) return;
+  let series = seriesAt(entityId(event, 'series', event.params.seriesId));
+  series!.expectedDelistAt = event.params.expectedDelistAt.isZero() ? null : event.params.expectedDelistAt;
+  series!.saleScheduleRevision = event.params.revision;
+  series!.saleInactive = event.params.inactive;
+  series!.save();
 }

@@ -1,7 +1,7 @@
 import { Address, BigInt, Bytes, ethereum } from '@graphprotocol/graph-ts';
 import { newMockEvent } from 'matchstick-as';
 import {
-  Upgraded, PrizeBuybackBurned,
+  Upgraded, PrizeBuybackBurned, SeriesSaleScheduleChanged,
   DrawSettled,
   EligibilityConsumed,
   EligibilityScopeRegistered,
@@ -152,5 +152,14 @@ export function mockPrizeBuybackBurned(batchId: Bytes, buyer: Address, core: Add
 export function mockUpgraded(implementation:Address):Upgraded {
   const e=event<Upgraded>();
   e.parameters=[new ethereum.EventParam('implementation',ethereum.Value.fromAddress(implementation))];
+  return e;
+}
+
+export function mockSaleSchedule(revision: i32, cutoff: i32, inactive: bool): SeriesSaleScheduleChanged {
+  const e = event<SeriesSaleScheduleChanged>();
+  e.parameters.push(uint('seriesId', BigInt.fromI32(1)));
+  e.parameters.push(uint('revision', BigInt.fromI32(revision)));
+  e.parameters.push(uint('expectedDelistAt', BigInt.fromI32(cutoff)));
+  e.parameters.push(new ethereum.EventParam('inactive', ethereum.Value.fromBoolean(inactive)));
   return e;
 }

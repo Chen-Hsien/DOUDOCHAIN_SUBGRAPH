@@ -52,6 +52,8 @@
           handler: handleRandomnessStored
         - event: SeriesCreated(indexed uint256,indexed bytes32,bytes)
           handler: handleSeriesCreated
+        - event: SeriesSaleScheduleChanged(indexed uint256,uint64,uint64,bool)
+          handler: handleFixedSeriesSaleScheduleChanged
         - event: SeriesStatusChanged(indexed uint256,uint8,uint8)
           handler: handleSeriesStatusChanged
         - event: Transfer(indexed address,indexed address,indexed uint256)
