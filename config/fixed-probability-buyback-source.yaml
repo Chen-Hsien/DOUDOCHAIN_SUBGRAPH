@@ -13,6 +13,7 @@
         - FixedProbabilitySeries
         - FixedProbabilityPrize
         - FixedProbabilityOrder
+        - DatabasePointsPurchaseMintV2
         - FixedProbabilityRequest
         - FixedProbabilityDraw
         - FixedProbabilityNFT
@@ -23,7 +24,7 @@
         - FixedProbabilityEvent
       abis:
         - name: FixedProbabilityLotteryBuyback
-          file: ./abis/FixedProbabilityLotteryBuyback.json
+          file: ./abis/FixedProbabilityLotteryCouponV2.json
       eventHandlers:
         - event: Upgraded(indexed address)
           handler: handleUpgraded
@@ -41,6 +42,10 @@
           handler: handleOrderAccountingFinalized
         - event: OrderRequested(indexed uint256,indexed uint256,indexed address,uint256,bytes32,bytes32,uint16,uint256,uint256,uint256,uint256,bool,bytes32,uint8,uint256)
           handler: handleOrderRequested
+        - event: OrderRequestedV2(indexed uint256,indexed uint256,indexed address,uint256,bytes32,bytes32,uint16,uint256,uint256,uint256,uint256,bool,bytes32,uint8,uint256,uint256,bytes32,uint256)
+          handler: handleOrderRequestedV2
+        - event: DatabasePointsPurchaseMintedV2(indexed bytes32,indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256,bool,bool,uint256,uint256,uint256,bytes32,uint256)
+          handler: handleDatabasePointsPurchaseMintedV2
         - event: OrderSettled(indexed uint256,bool,uint16,uint256)
           handler: handleOrderSettled
         - event: RandomnessStored(indexed uint256,indexed uint256,uint256[])

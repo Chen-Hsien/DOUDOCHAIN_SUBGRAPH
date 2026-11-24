@@ -81,6 +81,58 @@ test('purchase mints one NFT per draw before VRF settlement', () => {
   assert.fieldEquals('FixedProbabilityDraw', entityId(m.mockTransfer(Address.zero(), BUYER, n(1)), 'draw', n(1)), 'claimed', 'true');
 });
 
+test('series history advances only after a completed reveal and ignores purchases and status changes', () => {
+  setup();
+  const order = purchase(1);
+  const series = entityId(m.mockTransfer(Address.zero(), BUYER, n(1)), 'series', n(1));
+  const unopenedKey = uintKey(n(0)) + ':' + uintKey(n(1));
+  assert.fieldEquals('FixedProbabilitySeries', series, 'latestRevealAt', '0');
+  assert.fieldEquals('FixedProbabilitySeries', series, 'latestRevealSortKey', unopenedKey);
+  h.handleRandomnessStored(m.mockRandomnessStored(n(1), n(101), [n(0)]));
+  const draw = m.mockDrawSettled(n(1), n(1), n(0), n(0), n(1));
+  draw.block.timestamp = n(100);
+  h.handleDrawSettled(draw);
+  assert.fieldEquals('FixedProbabilitySeries', series, 'latestRevealSortKey', unopenedKey);
+  const settled = m.mockOrderSettled(n(1), true, n(0), points(100));
+  settled.block.timestamp = n(100);
+  h.handleOrderSettled(settled);
+  const revealedKey = uintKey(n(100)) + ':' + uintKey(n(1));
+  assert.fieldEquals('FixedProbabilityOrder', order, 'state', 'SETTLED');
+  assert.fieldEquals('FixedProbabilitySeries', series, 'latestRevealAt', '100');
+  assert.fieldEquals('FixedProbabilitySeries', series, 'latestRevealSortKey', revealedKey);
+  // Replaying the same log leaves the projection unchanged.
+  h.handleOrderSettled(settled);
+  const paused = m.mockSeriesStatusChanged(n(1), n(2), n(3));
+  paused.block.timestamp = n(200);
+  h.handleSeriesStatusChanged(paused);
+  assert.fieldEquals('FixedProbabilitySeries', series, 'latestRevealSortKey', revealedKey);
+});
+
+test('a later reveal moves the same series ahead of newer series IDs', () => {
+  setup();
+  purchase(1);
+  h.handleRandomnessStored(m.mockRandomnessStored(n(1), n(101), [n(0)]));
+  h.handleDrawSettled(m.mockDrawSettled(n(1), n(1), n(0), n(0), n(1)));
+  const first = m.mockOrderSettled(n(1), true, n(0), points(100));
+  first.block.timestamp = n(100);
+  h.handleOrderSettled(first);
+
+  h.handleEligibilityConsumed(m.mockEligibilityConsumed(Bytes.fromHexString(SCOPE), KEY, n(2), n(1), n(2)));
+  h.handleOrderRequested(m.mockOrderRequested(n(2), n(102), BUYER, n(1), Bytes.fromHexString(CONFIG_HASH), KEY, n(1), n(2), points(100), n(0), points(100), true, KEY, n(3), n(1)));
+  assert.fieldEquals('FixedProbabilitySeries', entityId(first, 'series', n(1)), 'latestRevealAt', '100');
+  h.handleTransfer(m.mockTransfer(Address.zero(), BUYER, n(2)));
+  h.handleRandomnessStored(m.mockRandomnessStored(n(2), n(102), [n(0)]));
+  h.handleDrawSettled(m.mockDrawSettled(n(2), n(2), n(0), n(0), n(1)));
+  const second = m.mockOrderSettled(n(2), true, n(0), points(100));
+  second.block.timestamp = n(300);
+  h.handleOrderSettled(second);
+  const series = entityId(second, 'series', n(1));
+  assert.fieldEquals('FixedProbabilitySeries', series, 'latestRevealAt', '300');
+  assert.fieldEquals('FixedProbabilitySeries', series, 'latestRevealSortKey', uintKey(n(300)) + ':' + uintKey(n(1)));
+  assert.assertTrue((uintKey(n(300)) + ':' + uintKey(n(1))) > (uintKey(n(200)) + ':' + uintKey(n(999))));
+  assert.assertTrue((uintKey(n(300)) + ':' + uintKey(n(9))) > (uintKey(n(300)) + ':' + uintKey(n(1))));
+});
+
 test('VRF reveals the already minted NFTs and exchange updates the same asset', () => {
   setup();
   const order = purchase(2);
