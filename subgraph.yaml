@@ -135,6 +135,8 @@ dataSources:
       eventHandlers:
         - event: MintLockUpdated(indexed uint256,indexed address,uint256)
           handler: handleSeriesOpsMintLockUpdated
+        - event: SeriesSaleScheduleChanged(indexed uint256,uint64,uint64,bool)
+          handler: handleSeriesSaleScheduleChanged
         - event: SeriesLockDurationUpdated(indexed uint256,uint256)
           handler: handleSeriesLockDurationUpdated
         - event: SeriesMaxPerWalletUpdated(indexed uint256,uint256)
@@ -260,6 +262,7 @@ dataSources:
       entities:
         - DatabasePointsAuthorizationConfigUpdate
         - DatabasePointsPurchaseMint
+        - DatabasePointsPurchaseMintV2
         - DatabasePointsRebateEntitlement
         - BundleRebateTierConfigured
         - BundleRebateTiersCleared
@@ -286,6 +289,8 @@ dataSources:
           handler: handleDatabasePointsAuthorizationConfigured
         - event: DatabasePointsPurchaseMinted(indexed bytes32,indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256,bool,bool,uint256,uint256)
           handler: handleDatabasePointsPurchaseMinted
+        - event: DatabasePointsPurchaseMintedV2(indexed bytes32,indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256,bool,bool,uint256,uint256,uint256,bytes32,uint256)
+          handler: handleDatabasePointsPurchaseMintedV2
         - event: DatabasePointsRebateEntitled(indexed bytes32,indexed uint256,indexed address,uint256)
           handler: handleDatabasePointsRebateEntitled
         - event: BundleRebateTiersCleared(indexed uint256)
@@ -687,6 +692,7 @@ templates:
         - FixedProbabilitySeries
         - FixedProbabilityPrize
         - FixedProbabilityOrder
+        - DatabasePointsPurchaseMintV2
         - FixedProbabilityRequest
         - FixedProbabilityDraw
         - FixedProbabilityNFT
@@ -697,7 +703,7 @@ templates:
         - FixedProbabilityEvent
       abis:
         - name: FixedProbabilityLotteryBuyback
-          file: ./abis/FixedProbabilityLotteryBuyback.json
+          file: ./abis/FixedProbabilityLotteryCouponV2.json
       eventHandlers:
         - event: Upgraded(indexed address)
           handler: handleUpgraded
@@ -715,12 +721,18 @@ templates:
           handler: handleOrderAccountingFinalized
         - event: OrderRequested(indexed uint256,indexed uint256,indexed address,uint256,bytes32,bytes32,uint16,uint256,uint256,uint256,uint256,bool,bytes32,uint8,uint256)
           handler: handleOrderRequested
+        - event: OrderRequestedV2(indexed uint256,indexed uint256,indexed address,uint256,bytes32,bytes32,uint16,uint256,uint256,uint256,uint256,bool,bytes32,uint8,uint256,uint256,bytes32,uint256)
+          handler: handleOrderRequestedV2
+        - event: DatabasePointsPurchaseMintedV2(indexed bytes32,indexed uint256,indexed address,uint256,uint256,uint256,uint256,uint256,bool,bool,uint256,uint256,uint256,bytes32,uint256)
+          handler: handleDatabasePointsPurchaseMintedV2
         - event: OrderSettled(indexed uint256,bool,uint16,uint256)
           handler: handleOrderSettled
         - event: RandomnessStored(indexed uint256,indexed uint256,uint256[])
           handler: handleRandomnessStored
         - event: SeriesCreated(indexed uint256,indexed bytes32,bytes)
           handler: handleSeriesCreated
+        - event: SeriesSaleScheduleChanged(indexed uint256,uint64,uint64,bool)
+          handler: handleFixedSeriesSaleScheduleChanged
         - event: SeriesStatusChanged(indexed uint256,uint8,uint8)
           handler: handleSeriesStatusChanged
         - event: Transfer(indexed address,indexed address,indexed uint256)

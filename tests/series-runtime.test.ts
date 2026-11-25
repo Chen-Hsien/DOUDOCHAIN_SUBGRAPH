@@ -14,6 +14,7 @@ import {
   UpdateTicketStatus,
 } from "../generated/ICHICHAIN/ICHICHAIN";
 import {
+  SeriesSaleScheduleChanged,
   MintLockUpdated as SeriesOpsMintLockUpdated,
   SeriesLockDurationUpdated,
   SeriesRevealEnabledUpdated,
@@ -25,6 +26,7 @@ import {
   handleUpdateTicketStatus,
 } from "../src/ichichain";
 import {
+  handleSeriesSaleScheduleChanged,
   handleSeriesLockDurationUpdated,
   handleSeriesOpsMintLockUpdated,
   handleSeriesRevealEnabledUpdated,
@@ -370,4 +372,20 @@ describe("Series runtime state", () => {
     assert.entityCount("SeriesLockDurationUpdated", 1);
     assert.entityCount("SeriesRevealEnabledUpdated", 1);
   });
+});
+
+test("Core series zero receives its own on-chain sale deadline", () => {
+  let id = BigInt.zero();
+  seedSeries(id);
+  let e = changetype<SeriesSaleScheduleChanged>(newMockEvent());
+  e.parameters = [
+    new ethereum.EventParam("seriesId", ethereum.Value.fromUnsignedBigInt(id)),
+    new ethereum.EventParam("revision", ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(1))),
+    new ethereum.EventParam("expectedDelistAt", ethereum.Value.fromUnsignedBigInt(BigInt.fromI32(2000000000))),
+    new ethereum.EventParam("inactive", ethereum.Value.fromBoolean(false))
+  ];
+  handleSeriesSaleScheduleChanged(e);
+  assert.fieldEquals("NewSeries", runtimeId(id), "expectedDelistAt", "2000000000");
+  assert.fieldEquals("NewSeries", runtimeId(id), "saleScheduleRevision", "1");
+  clearStore();
 });

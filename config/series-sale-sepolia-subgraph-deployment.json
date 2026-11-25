@@ -1,0 +1,31 @@
+{
+  "network": "arbitrum-sepolia",
+  "target": "test",
+  "studioSlug": "doudochain-arb-v-2",
+  "versionLabel": "235c4e2479fe71986db2a2c07a2e2488107603c3",
+  "deploymentId": "QmcZMdb2cqwaAGh2KoF5HY1djoGPGtfp8qXtmQKwzYVSCM",
+  "endpoint": "https://api.studio.thegraph.com/query/79631/doudochain-arb-v-2/235c4e2479fe71986db2a2c07a2e2488107603c3",
+  "publishStatus": "deployment_accepted",
+  "verifiedAt": "2026-11-24T13:06:09.408Z",
+  "meta": {
+    "deployment": "QmcZMdb2cqwaAGh2KoF5HY1djoGPGtfp8qXtmQKwzYVSCM",
+    "hasIndexingErrors": false,
+    "block": {
+      "number": 271876628,
+      "hash": "0x0f76bd825bfcc617976bbabc3b0d56c1483e9f3f57f29705054f893ca9afc82a"
+    }
+  },
+  "chainHead": 332296522,
+  "verifiedFields": {
+    "NewSeries": [
+      "expectedDelistAt",
+      "saleScheduleRevision",
+      "saleInactive"
+    ],
+    "FixedProbabilitySeries": [
+      "expectedDelistAt",
+      "saleScheduleRevision",
+      "saleInactive"
+    ]
+  }
+}

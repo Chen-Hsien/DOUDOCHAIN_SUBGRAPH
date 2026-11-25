@@ -277,3 +277,15 @@ test('implementation upgrades keep the same deployment, NFT identities and revea
   assert.fieldEquals('FixedProbabilityOrder',order,'claimedCount','2');
   assert.fieldEquals('FixedProbabilityDraw',entityId(first,'draw',n(1)),'settled','true');
 });
+
+test('fixed sale schedule updates only the sale state and clears the deadline', () => {
+  setup();
+  const first = m.mockSaleSchedule(1, 2000000000, false);
+  const id = entityId(first, 'series', n(1));
+  h.handleFixedSeriesSaleScheduleChanged(first);
+  assert.fieldEquals('FixedProbabilitySeries', id, 'expectedDelistAt', '2000000000');
+  h.handleFixedSeriesSaleScheduleChanged(m.mockSaleSchedule(2, 0, true));
+  assert.fieldEquals('FixedProbabilitySeries', id, 'saleScheduleRevision', '2');
+  assert.fieldEquals('FixedProbabilitySeries', id, 'saleInactive', 'true');
+  assert.assertTrue(FixedProbabilitySeries.load(id)!.expectedDelistAt === null);
+});
