@@ -161,42 +161,96 @@
     "proxyKind": "uups",
     "protocolVersion": 1,
     "implementation": {
-      "address": "0x9CAC1EeaeCE9e2C6674340Ce3171b0452A124ff3",
-      "transactionHash": "0x8bdb349b7ce5ed7ccbe3d70d8f8ca3b691bd370fdf832a38f073796737465be8",
-      "startBlock": 520016184,
-      "blockHash": "0x960775fc2c90223d38d43a2c43a1a6abd9cde65027ea30d63657ddef1753721b",
-      "runtimeHash": "0x5321836a1afcf741c4990d04faa08a9c5e9e5a7ffd64184efc15c27030d54b71",
-      "runtimeBytes": 24014
+      "address": "0x8902BdB5034DbE137d851f8783A976c98ee2b605",
+      "transactionHash": "0x817d59c3213ba47bc41aa56db1736e4bb1bab145a5d976e310c6238211fb7035",
+      "startBlock": 527473433,
+      "blockHash": "0xb1a217586f1e46eb56fab53a799ed4edb9344987569ae7b7699dba889baa3bbd",
+      "runtimeHash": "0xb3513f413c94fb4c837bcb992c91564c433d005cab036808144b81bca151f132",
+      "runtimeBytes": 23269
     },
     "libraries": [
       {
         "name": "FixedProbabilityConfigValidation",
-        "address": "0x45a5b6a99252756Ff2F586D0EE44dB18668E6F89",
-        "transactionHash": "0x25fdb30272e449a1b81f04b79ed2954929fd334ccda6bf97e33d9c948c3ac6c7",
-        "startBlock": 520016162,
-        "blockHash": "0x76bde5a63e6631d25eb7757207d6a4bbf2e3e136a6cc16eb500702ba1d0bdcbe",
-        "runtimeHash": "0xe398d56ecdd4e405bcfd016f3f31dca93503a8440f3b4d1f101a2a95e68ec6a2",
-        "runtimeBytes": 3240
+        "address": "0xcF214EF38A006b64E2cE76b517A6fe04D336f62c",
+        "transactionHash": "0xa4feb891c0806b6b2343a973c55f6d822142c4574ccea5e5d398ccf9119f3082",
+        "startBlock": 527473131,
+        "blockHash": "0x55f31f94e9e9a0d23b1545b1303d69f27f03d2de0b2fa25e828cf38e1be45ced",
+        "runtimeHash": "0xd186cc6115236f7d1096fdd54da2754b36a76a6bd7ff3b4ccbba7ed72353d007",
+        "runtimeBytes": 6712
       },
       {
         "name": "FixedProbabilitySettlement",
-        "address": "0xe5d9D0a3b6Acc8a6B3324c00a50D0BE7B9a6648B",
-        "transactionHash": "0x1592ac816e180046649575b84187ed0c4764ba5be5ac99a6d74999b7ba262911",
-        "startBlock": 520016168,
-        "blockHash": "0x331d9bbb1e76f5a1fae0a7a58c7e448dcd132cceeab7be4bc130f074e74dc18a",
-        "runtimeHash": "0x758f3c7a39fe93c05fdd8a05147a7022a382d03b6fdd18472fb095b094327a7e",
-        "runtimeBytes": 3494
+        "address": "0x756658005b5125026f4b277a070793848aeB9b5f",
+        "transactionHash": "0xed3b0021fd588892c15b469025f6ff553840589bbe5b916cdda3a4acb5561573",
+        "startBlock": 527473315,
+        "blockHash": "0xe2b922ddd6b4c76a161b84805cbbfd01a121b0227b6b6f2a3a01232b7c52bb4c",
+        "runtimeHash": "0x67da6283bc0f36ac2368039227fe2931c10cacaddbe368aa43b15f19654801c6",
+        "runtimeBytes": 4421
       },
       {
         "name": "FixedProbabilityBuybackValidation",
-        "address": "0x372B821A4640B440FE5E6D697aAd1f381ed7deAf",
-        "transactionHash": "0xd4d7e6dcd12da6254d0394683e1586ecce58b288b3cdb946854b11703092fb89",
-        "startBlock": 520016174,
-        "blockHash": "0x7650a9dd8f96ed4f6e553b2127ff58a8358ed024ef1472571277fff2a3aab6ec",
+        "address": "0xB77D552d358618b08B071EAf69Ba7236aa7D3d73",
+        "transactionHash": "0x577721da7fc0de89d11b8efe6cc52830d7163004625c36f365d85924e57298b1",
+        "startBlock": 527473349,
+        "blockHash": "0x04930a0c76e600b4d3a34655c56c33d6ad1471990ea81d33df923bee83cc67f1",
         "runtimeHash": "0xde43513708cd5b6d3bb7f1b332e98b4821ff10f7abb54817b784f18cbcc61ad2",
         "runtimeBytes": 1852
       }
     ],
-    "abiSha256": "5edf72536bedbf79b8144111b170284d9b20fb04379866f6e0b0bdb96daf06e1"
+    "abiSha256": "5edf72536bedbf79b8144111b170284d9b20fb04379866f6e0b0bdb96daf06e1",
+    "implementationHistory": [
+      {
+        "implementation": {
+          "address": "0x9CAC1EeaeCE9e2C6674340Ce3171b0452A124ff3",
+          "transactionHash": "0x8bdb349b7ce5ed7ccbe3d70d8f8ca3b691bd370fdf832a38f073796737465be8",
+          "startBlock": 520016184,
+          "blockHash": "0x960775fc2c90223d38d43a2c43a1a6abd9cde65027ea30d63657ddef1753721b",
+          "runtimeHash": "0x5321836a1afcf741c4990d04faa08a9c5e9e5a7ffd64184efc15c27030d54b71",
+          "runtimeBytes": 24014
+        },
+        "libraries": [
+          {
+            "name": "FixedProbabilityConfigValidation",
+            "address": "0x45a5b6a99252756Ff2F586D0EE44dB18668E6F89",
+            "transactionHash": "0x25fdb30272e449a1b81f04b79ed2954929fd334ccda6bf97e33d9c948c3ac6c7",
+            "startBlock": 520016162,
+            "blockHash": "0x76bde5a63e6631d25eb7757207d6a4bbf2e3e136a6cc16eb500702ba1d0bdcbe",
+            "runtimeHash": "0xe398d56ecdd4e405bcfd016f3f31dca93503a8440f3b4d1f101a2a95e68ec6a2",
+            "runtimeBytes": 3240
+          },
+          {
+            "name": "FixedProbabilitySettlement",
+            "address": "0xe5d9D0a3b6Acc8a6B3324c00a50D0BE7B9a6648B",
+            "transactionHash": "0x1592ac816e180046649575b84187ed0c4764ba5be5ac99a6d74999b7ba262911",
+            "startBlock": 520016168,
+            "blockHash": "0x331d9bbb1e76f5a1fae0a7a58c7e448dcd132cceeab7be4bc130f074e74dc18a",
+            "runtimeHash": "0x758f3c7a39fe93c05fdd8a05147a7022a382d03b6fdd18472fb095b094327a7e",
+            "runtimeBytes": 3494
+          },
+          {
+            "name": "FixedProbabilityBuybackValidation",
+            "address": "0x372B821A4640B440FE5E6D697aAd1f381ed7deAf",
+            "transactionHash": "0xd4d7e6dcd12da6254d0394683e1586ecce58b288b3cdb946854b11703092fb89",
+            "startBlock": 520016174,
+            "blockHash": "0x7650a9dd8f96ed4f6e553b2127ff58a8358ed024ef1472571277fff2a3aab6ec",
+            "runtimeHash": "0xde43513708cd5b6d3bb7f1b332e98b4821ff10f7abb54817b784f18cbcc61ad2",
+            "runtimeBytes": 1852
+          }
+        ],
+        "supersededAtBlock": 527473767,
+        "supersededByUpgradeTransaction": "0x13b301c2370ea5c119ace8320ce10dde3992c9dc592156bd831a7444db6f7a7b"
+      }
+    ],
+    "saleScheduleUpgrade": {
+      "transactionHash": "0x13b301c2370ea5c119ace8320ce10dde3992c9dc592156bd831a7444db6f7a7b",
+      "blockNumber": 527473767,
+      "blockHash": "0x9f9cde50758c0098dc6b5f3fa0e09fb4d63913206175b727d9e1eccedec5e0a1"
+    },
+    "couponV2Upgrade": {
+      "transactionHash": "0x13b301c2370ea5c119ace8320ce10dde3992c9dc592156bd831a7444db6f7a7b",
+      "blockNumber": 527473767,
+      "blockHash": "0x9f9cde50758c0098dc6b5f3fa0e09fb4d63913206175b727d9e1eccedec5e0a1",
+      "couponAuthorizationVersion": 2
+    }
   }
 ]
