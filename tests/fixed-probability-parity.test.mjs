@@ -87,6 +87,7 @@ function populated(state, finalized = false, refunded = false, transferred = fal
   let end = 0;
   const series = {...v.series, id: entityId('series', '1'), configHash: chain.configHash,
     configData: defaultAbiCoder.encode(configTypes, configFields.map(k => v.series[k])), status: 'ACTIVE', acceptedDraws: '1',
+    latestRevealAt: state === 3 ? '1' : '0', latestRevealSortKey: `${(state === 3 ? '1' : '0').padStart(78, '0')}:${'1'.padStart(78, '0')}`,
     prizes: v.series.prizeIds.map((prizeId,i) => {const start = end; end += Number(v.series.weights[i]); return {prizeId, prizeIndex: i, weight: v.series.weights[i], intervalStart: start, intervalEndExclusive: end};})};
   const nft = {id: entityId('nft', '1'), tokenId: '1', mintRecipient: buyer, claimRecipient: buyer, currentOwner: transferred ? transferee : buyer, exchanged};
   const draw = {id: entityId('draw', '1'), drawId: '1', drawIndex: '0', settled: state === 3, roll: state === 3 ? '123' : null,
@@ -113,6 +114,7 @@ function populated(state, finalized = false, refunded = false, transferred = fal
   }
   addEvent('SeriesCreated', {}); addEvent('OrderRequested', {quantity: '1'}); addEvent('Transfer', {from: zeroAddress, to: buyer, tokenId: '1'});
   addEvent('EligibilityScopeRegistered', {scope, policyId, maxEligibleDraws: '20'}); addEvent('EligibilityConsumed', {scope, eligibilityKey});
+  if (state === 3) addEvent('OrderSettled', {orderId: '1'});
   if (transferred) addEvent('Transfer', {from: buyer, to: transferee, tokenId: '1'});
   return {h, chain, row, draw, nft, callValues};
 }
@@ -131,4 +133,17 @@ test('V3 parity rejects missing immediate NFT, bad prize, owner, exchange and se
     [f => f.nft.exchanged = false, /NFT_EXCHANGED/], [f => f.row.finalPointsConsumed = '0', /finalPointsConsumed/],
     [f => f.row.previousLevel = '0', /previousLevel/], [f => f.callValues.eligibilityScopeMaximum = '19', /SCOPE_QUOTA/],
   ]) { const f = populated(3,true,false,true,true); mutate(f); await assert.rejects(f.h.run(), pattern); }
+});
+
+test('history ordering projection must match canonical settlement timestamps, including pending series', async () => {
+  for (const state of [1, 3]) {
+    for (const [field, value, pattern] of [
+      ['latestRevealAt', '999', /LATEST_REVEAL_AT_MISMATCH/],
+      ['latestRevealSortKey', `${'999'.padStart(78, '0')}:${'1'.padStart(78, '0')}`, /LATEST_REVEAL_SORT_KEY_MISMATCH/],
+    ]) {
+      const f = populated(state);
+      f.h.state.entities.fixedProbabilitySeries_collection[0][field] = value;
+      await assert.rejects(f.h.run(), pattern);
+    }
+  }
 });

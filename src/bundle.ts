@@ -2,6 +2,7 @@ import { BigInt, Bytes, store } from "@graphprotocol/graph-ts";
 import {
   DatabasePointsAuthorizationConfigured as DatabasePointsAuthorizationConfiguredEvent,
   DatabasePointsPurchaseMinted as DatabasePointsPurchaseMintedEvent,
+  DatabasePointsPurchaseMintedV2 as DatabasePointsPurchaseMintedV2Event,
   DatabasePointsRebateEntitled as DatabasePointsRebateEntitledEvent,
   BundleRebateTierConfigured as BundleRebateTierConfiguredEvent,
   BundleRebateTiersCleared as BundleRebateTiersClearedEvent,
@@ -43,6 +44,7 @@ import {
   FreeOrderChallengeResult,
   FreeOrderChallengeRefund,
 } from "../generated/schema";
+import { saveCouponPurchase } from "./coupon-purchase";
 import { DoudoMembershipV2 } from "../generated/templates";
 
 function eventId(eventTxHash: Bytes, logIndex: BigInt): Bytes {
@@ -588,4 +590,8 @@ export function handleFreeOrderChallengeRefundDeferred(
     event.block.number,
     event.block.timestamp,
   );
+}
+
+export function handleDatabasePointsPurchaseMintedV2(event: DatabasePointsPurchaseMintedV2Event): void {
+  saveCouponPurchase(event, "CORE");
 }

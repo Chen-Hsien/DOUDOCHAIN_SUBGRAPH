@@ -1,4 +1,5 @@
 import {
+  SeriesSaleScheduleChanged,
   MintLockUpdated as MintLockUpdatedEvent,
   SeriesLockDurationUpdated as SeriesLockDurationUpdatedEvent,
   SeriesMaxPerWalletUpdated as SeriesMaxPerWalletUpdatedEvent,
@@ -111,4 +112,13 @@ export function handleSeriesRevealEnabledUpdated(
     event.block.timestamp,
     event.transaction.hash
   );
+}
+
+export function handleSeriesSaleScheduleChanged(event: SeriesSaleScheduleChanged): void {
+  let series = NewSeries.load(Bytes.fromUTF8(event.params.seriesId.toString()));
+  assert(series != null, "Missing Core series for sale schedule");
+  series!.expectedDelistAt = event.params.expectedDelistAt.isZero() ? null : event.params.expectedDelistAt;
+  series!.saleScheduleRevision = event.params.revision;
+  series!.saleInactive = event.params.inactive;
+  series!.save();
 }

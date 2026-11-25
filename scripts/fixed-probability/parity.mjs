@@ -68,7 +68,7 @@ export function compareOrder(row, chain) {
 }
 
 const orderFields = `id orderId buyer authorizationId configHash requestId quantity firstDrawId grossPoints rebatePoints netPoints freeOrderChallenge eligibilityKey levelAtRequest acceptedDrawsBefore state randomWords freeOrderWon firstTriggerIndex refundPoints finalPointsConsumed accountingFinalized membershipConsumptionId observedMembershipRewardPoints previousLevel newLevel expiresAt claimedCount series { seriesId } draws(first:10,orderBy:drawIndex,orderDirection:asc) { id drawId drawIndex settled roll prizeId claimed initialRecipient nft { tokenId currentOwner mintRecipient claimRecipient exchanged } }`;
-const seriesFields = `id seriesId configHash configData status acceptedDraws ${configFields.join(' ')} prizes(first:32,orderBy:prizeIndex,orderDirection:asc) { prizeId prizeIndex weight intervalStart intervalEndExclusive }`;
+const seriesFields = `id seriesId configHash configData status acceptedDraws latestRevealAt latestRevealSortKey ${configFields.join(' ')} prizes(first:32,orderBy:prizeIndex,orderDirection:asc) { prizeId prizeIndex weight intervalStart intervalEndExclusive }`;
 const metaFields = 'block { number hash } deployment hasIndexingErrors';
 
 // Read-only. A run proves projection parity at one block, not VRF or DB settlement.
@@ -161,6 +161,8 @@ export async function runParity(options) {
   let created = 0, requested = 0, expectedDraws = 0, minted = 0;
   const registeredScopes = new Set(), consumedKeys = new Set();
   const logBlocks = new Map();
+  const ordersById = new Map(orders.map(o => [o.orderId, o]));
+  const latestRevealBySeries = new Map();
   for (const log of sourceLogs) {
     if (log.removed || log.address.toLowerCase() !== deployment.address.toLowerCase()) throw Error('LOG_SOURCE_MISMATCH');
     const id = eventId(log), indexed = indexedEvents.get(id);
@@ -176,6 +178,13 @@ export async function runParity(options) {
     if (!b) { b = await rpc('eth_getBlockByNumber', [log.blockNumber, false]); logBlocks.set(log.blockNumber, b); }
     if (!b) throw Error('EVENT_BLOCK_UNAVAILABLE');
     same(b.hash, log.blockHash, 'EVENT_NONCANONICAL'); same(indexed.timestamp, BigInt(b.timestamp), 'EVENT_TIMESTAMP_MISMATCH');
+    if (parsed.name === 'OrderSettled') {
+      const order = ordersById.get(parsed.args.orderId.toString());
+      if (!order || order.state !== 'SETTLED') throw Error('SETTLED_ORDER_MISSING');
+      const seriesId = order.series.seriesId;
+      const timestamp = BigInt(b.timestamp);
+      if (timestamp > (latestRevealBySeries.get(seriesId) ?? 0n)) latestRevealBySeries.set(seriesId, timestamp);
+    }
     if (parsed.name === 'EligibilityScopeRegistered') registeredScopes.add(`${dep}:scope:${parsed.args.scope.toLowerCase()}`);
     if (parsed.name === 'EligibilityConsumed') consumedKeys.add(`${dep}:scope:${parsed.args.scope.toLowerCase()}:key:${parsed.args.eligibilityKey.toLowerCase()}`);
     if (parsed.name === 'SeriesCreated') created++;
@@ -183,6 +192,11 @@ export async function runParity(options) {
     if (parsed.name === 'Transfer' && parsed.args.from === '0x0000000000000000000000000000000000000000') minted++;
   }
   if (indexedEvents.size) throw Error('INDEX_EXTRA_EVENT');
+  for (const s of series) {
+    const timestamp = (latestRevealBySeries.get(s.seriesId) ?? 0n).toString();
+    same(s.latestRevealAt, timestamp, 'LATEST_REVEAL_AT_MISMATCH');
+    same(s.latestRevealSortKey, `${timestamp.padStart(78, '0')}:${s.seriesId.padStart(78, '0')}`, 'LATEST_REVEAL_SORT_KEY_MISMATCH');
+  }
   same(scopes.map(s => s.id).sort(), [...registeredScopes].sort(), 'SCOPE_COUNT_MISMATCH');
   same(usages.map(u => u.id).sort(), [...consumedKeys].sort(), 'USAGE_COUNT_MISMATCH');
   same(series.length, created, 'SERIES_COUNT_MISMATCH'); same(orders.length, requested, 'ORDER_COUNT_MISMATCH'); same(drawCount, expectedDraws, 'DRAW_TOTAL_MISMATCH'); same(nftCount, minted, 'NFT_TOTAL_MISMATCH');
